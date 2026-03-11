@@ -7,8 +7,6 @@
 
 <link rel="manifest" href="manifest.json">
 
-<link rel="stylesheet" href="css/estilos.css">
-
 <title>Accesos Valle Esmeralda</title>
 
 </head>
@@ -23,7 +21,17 @@
 
 <button onclick="login()">Entrar</button>
 
-<script type="module" src="js/login.js"></script>
+<script>
+
+if('serviceWorker' in navigator){
+
+navigator.serviceWorker.register('sw.js');
+
+}
+
+</script>
+
+<script type="module" src="login.js"></script>
 
 </body>
 
