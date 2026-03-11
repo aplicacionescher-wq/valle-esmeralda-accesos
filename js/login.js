@@ -9,12 +9,12 @@ getDocs
 
 window.login = async function(){
 
-let casa = document.getElementById("domicilio").value;
+let usuario = document.getElementById("domicilio").value;
 let pass = document.getElementById("password").value;
 
 const q = query(
 collection(db,"usuarios"),
-where("domicilio","==",casa),
+where("domicilio","==",usuario),
 where("password","==",pass)
 );
 
@@ -23,6 +23,7 @@ const querySnapshot = await getDocs(q);
 if(querySnapshot.empty){
 
 alert("Usuario incorrecto");
+
 return;
 
 }
