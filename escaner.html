@@ -1,37 +1,19 @@
 <!DOCTYPE html>
 <html>
 
-<head>
-
-<meta name="viewport" content="width=device-width,initial-scale=1">
-
-<link rel="stylesheet" href="css/estilos.css">
-
-<title>Caseta</title>
-
-</head>
-
 <body>
 
-<script>
-
-let rol = localStorage.getItem("rol");
-
-if(rol !== "caseta"){
-window.location="index.html";
-}
-
-</script>
-
-<h2>Escáner QR</h2>
+<h2>Escáner vigilancia</h2>
 
 <div id="reader" style="width:300px"></div>
 
 <div id="resultado"></div>
 
+<input type="file" id="fotoCaseta" accept="image/*" capture="environment">
+
 <script src="https://unpkg.com/html5-qrcode"></script>
 
-<script type="module" src="js/scanner.js"></script>
+<script type="module" src="scanner.js"></script>
 
 </body>
 
