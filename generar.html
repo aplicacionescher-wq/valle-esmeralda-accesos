@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -9,6 +10,9 @@
 <title>Generar QR</title>
 
 </head>
+
+<body>
+
 <script>
 
 let rol = localStorage.getItem("rol");
@@ -18,7 +22,6 @@ window.location="index.html";
 }
 
 </script>
-<body>
 
 <h2>Registrar visita</h2>
 
@@ -28,10 +31,12 @@ window.location="index.html";
 
 <option value="visita">Visita</option>
 <option value="proveedor">Proveedor</option>
-<option value="uber">Uber / Taxi</option>
+<option value="uber">Uber</option>
 <option value="paqueteria">Paquetería</option>
 
 </select>
+
+<input type="file" id="foto">
 
 <button onclick="crearQR()">Generar QR</button>
 
@@ -42,4 +47,5 @@ window.location="index.html";
 <script type="module" src="js/qr.js"></script>
 
 </body>
+
 </html>
