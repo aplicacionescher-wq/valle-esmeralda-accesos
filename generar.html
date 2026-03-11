@@ -1,27 +1,7 @@
 <!DOCTYPE html>
 <html>
 
-<head>
-
-<meta name="viewport" content="width=device-width,initial-scale=1">
-
-<link rel="stylesheet" href="css/estilos.css">
-
-<title>Generar QR</title>
-
-</head>
-
 <body>
-
-<script>
-
-let rol = localStorage.getItem("rol");
-
-if(rol !== "residente"){
-window.location="index.html";
-}
-
-</script>
 
 <h2>Registrar visita</h2>
 
@@ -33,24 +13,24 @@ window.location="index.html";
 
 <option value="visita">Visita</option>
 <option value="proveedor">Proveedor</option>
-<option value="uber">Uber</option>
+<option value="uber">Uber / Taxi</option>
 <option value="paqueteria">Paquetería</option>
 
 </select>
 
-<input type="file" id="foto">
+<h3>Identificación visitante</h3>
+
+<input type="file" id="identificacion" accept="image/*">
 
 <button onclick="crearQR()">Generar QR</button>
 
 <div id="qr"></div>
 
-<br>
-
-<button onclick="enviarWhatsApp()">Enviar por WhatsApp</button>
+<button onclick="enviarWhatsApp()">Enviar QR por WhatsApp</button>
 
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
 
-<script type="module" src="js/qr.js"></script>
+<script type="module" src="qr.js"></script>
 
 </body>
 
