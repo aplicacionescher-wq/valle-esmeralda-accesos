@@ -9,7 +9,15 @@
 <title>Panel Residente</title>
 
 </head>
+<script>
 
+let rol = localStorage.getItem("rol");
+
+if(rol !== "residente"){
+window.location="index.html";
+}
+
+</script>
 <body>
 
 <h2>Panel Residente</h2>
