@@ -10,6 +10,7 @@ getDocs
 window.login = async function(){
 
 let usuario = document.getElementById("domicilio").value;
+
 let pass = document.getElementById("password").value;
 
 const q = query(
@@ -23,7 +24,6 @@ const querySnapshot = await getDocs(q);
 if(querySnapshot.empty){
 
 alert("Usuario incorrecto");
-
 return;
 
 }
@@ -35,23 +35,9 @@ let data = doc.data();
 localStorage.setItem("rol",data.rol);
 localStorage.setItem("casa",data.domicilio);
 
-if(data.rol === "admin"){
-
-window.location="admin.html";
-
-}
-
-if(data.rol === "residente"){
-
-window.location="dashboard.html";
-
-}
-
-if(data.rol === "caseta"){
-
-window.location="escaner.html";
-
-}
+if(data.rol==="admin") window.location="admin.html";
+if(data.rol==="residente") window.location="dashboard.html";
+if(data.rol==="caseta") window.location="escaner.html";
 
 });
 
