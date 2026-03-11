@@ -1,19 +1,57 @@
-function login(){
+import { db } from "./firebase.js";
 
-let casa = document.getElementById("domicilio").value
+import {
+collection,
+query,
+where,
+getDocs
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-let pass = document.getElementById("password").value
+window.login = async function(){
 
-if(pass === "1234"){
+let casa = document.getElementById("domicilio").value;
+let pass = document.getElementById("password").value;
 
-localStorage.setItem("casa", casa)
+const q = query(
+collection(db,"usuarios"),
+where("domicilio","==",casa),
+where("password","==",pass)
+);
 
-window.location = "dashboard.html"
+const querySnapshot = await getDocs(q);
 
-}else{
+if(querySnapshot.empty){
 
-alert("Contraseña incorrecta")
+alert("Usuario incorrecto");
+return;
 
 }
+
+querySnapshot.forEach((doc)=>{
+
+let data = doc.data();
+
+localStorage.setItem("rol",data.rol);
+localStorage.setItem("casa",data.domicilio);
+
+if(data.rol === "admin"){
+
+window.location="admin.html";
+
+}
+
+if(data.rol === "residente"){
+
+window.location="dashboard.html";
+
+}
+
+if(data.rol === "caseta"){
+
+window.location="escaner.html";
+
+}
+
+});
 
 }
