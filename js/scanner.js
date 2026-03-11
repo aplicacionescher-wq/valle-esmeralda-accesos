@@ -13,24 +13,25 @@ paqueteria:43200000
 
 };
 
+let resultado = document.getElementById("resultado");
+
 if(ahora - data.hora > expiracion[data.tipo]){
 
-alert("QR EXPIRADO");
+resultado.innerHTML="❌ QR EXPIRADO";
+resultado.style.background="red";
 
 return;
 
 }
 
-alert("Acceso permitido\nCasa: " + data.casa);
+resultado.innerHTML="✅ ACCESO PERMITIDO<br>"+data.casa;
+
+resultado.style.background="green";
 
 }
 
 const html5QrCode = new Html5QrcodeScanner(
-
 "reader",
-
-{ fps: 10, qrbox: 250 }
-
-);
+{ fps:10, qrbox:250 });
 
 html5QrCode.render(onScanSuccess);
