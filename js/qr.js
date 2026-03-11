@@ -5,52 +5,45 @@ addDoc,
 collection
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-let qrData = "";
-
-function obtenerHora(){
-
-let ahora = new Date();
-
-let horas = ahora.getHours().toString().padStart(2,"0");
-let minutos = ahora.getMinutes().toString().padStart(2,"0");
-
-return horas + ":" + minutos + " hrs";
-
-}
+let qrData="";
 
 window.crearQR = async function(){
 
-let casa = localStorage.getItem("casa");
+let casa=localStorage.getItem("casa");
 
-let nombre = document.getElementById("nombre").value;
+let nombre=document.getElementById("nombre").value;
 
-let tipo = document.getElementById("tipo").value;
+let tipo=document.getElementById("tipo").value;
 
-let telefono = document.getElementById("telefono").value;
+let file=document.getElementById("identificacion").files[0];
 
-let timestamp = Date.now();
+let identificacion="";
 
-let hora = obtenerHora();
+if(file){
 
-let token = Math.random().toString(36).substring(2);
+identificacion=URL.createObjectURL(file);
 
-let data = {
+}
+
+let timestamp=Date.now();
+
+let token=Math.random().toString(36).substring(2);
+
+let data={
 
 token,
 casa,
 nombre,
 tipo,
-hora,
 timestamp,
+identificacion,
 usado:false
 
 };
 
 await addDoc(collection(db,"visitas"),data);
 
-qrData = JSON.stringify(data);
-
-document.getElementById("qr").innerHTML="";
+qrData=JSON.stringify(data);
 
 new QRCode(document.getElementById("qr"),{
 
@@ -62,13 +55,13 @@ height:200
 
 }
 
-window.enviarWhatsApp = function(){
+window.enviarWhatsApp=function(){
 
-let telefono = document.getElementById("telefono").value;
+let telefono=document.getElementById("telefono").value;
 
-let mensaje = "QR de acceso Valle Esmeralda: " + qrData;
+let mensaje="QR acceso Valle Esmeralda "+qrData;
 
-let url = "https://wa.me/"+telefono+"?text="+encodeURIComponent(mensaje);
+let url="https://wa.me/"+telefono+"?text="+encodeURIComponent(mensaje);
 
 window.open(url);
 
