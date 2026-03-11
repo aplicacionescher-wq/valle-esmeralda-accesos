@@ -7,37 +7,31 @@
 
 <link rel="stylesheet" href="css/estilos.css">
 
-<title>Vigilancia</title>
+<title>Caseta</title>
 
 </head>
+
+<body>
+
 <script>
 
 let rol = localStorage.getItem("rol");
 
-if(rol !== "residente"){
+if(rol !== "caseta"){
 window.location="index.html";
 }
 
 </script>
-<body>
 
-<h2>Control de accesos</h2>
+<h2>Escáner QR</h2>
 
 <div id="reader" style="width:300px"></div>
 
-<div id="resultado" style="
-
-margin-top:20px;
-padding:20px;
-color:white;
-font-size:22px;
-text-align:center;
-
-"></div>
+<div id="resultado"></div>
 
 <script src="https://unpkg.com/html5-qrcode"></script>
 
-<script src="js/scanner.js"></script>
+<script type="module" src="js/scanner.js"></script>
 
 </body>
 
