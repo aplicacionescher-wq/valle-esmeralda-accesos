@@ -10,8 +10,11 @@ getDocs
 window.login = async function(){
 
 let usuario = document.getElementById("domicilio").value;
-
 let pass = document.getElementById("password").value;
+
+console.log("Intentando login...");
+
+try{
 
 const q = query(
 collection(db,"usuarios"),
@@ -21,9 +24,11 @@ where("password","==",pass)
 
 const querySnapshot = await getDocs(q);
 
+console.log("Resultado consulta:",querySnapshot);
+
 if(querySnapshot.empty){
 
-alert("Usuario incorrecto");
+alert("❌ Usuario o contraseña incorrectos");
 return;
 
 }
@@ -31,6 +36,8 @@ return;
 querySnapshot.forEach((doc)=>{
 
 let data = doc.data();
+
+console.log("Usuario encontrado:",data);
 
 localStorage.setItem("rol",data.rol);
 localStorage.setItem("casa",data.domicilio);
@@ -40,5 +47,13 @@ if(data.rol==="residente") window.location="dashboard.html";
 if(data.rol==="caseta") window.location="escaner.html";
 
 });
+
+}catch(error){
+
+console.error("ERROR FIREBASE:",error);
+
+alert("Error conectando con Firebase");
+
+}
 
 }
