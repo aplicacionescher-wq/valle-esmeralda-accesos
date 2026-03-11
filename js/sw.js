@@ -6,7 +6,7 @@ event.waitUntil(
 
 caches.open(CACHE).then(cache => {
 
-return cache.addAll(["/"]);
+return cache.addAll(["./"]);
 
 })
 
