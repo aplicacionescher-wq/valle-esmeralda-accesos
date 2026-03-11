@@ -1,53 +1,15 @@
 <!DOCTYPE html>
 <html>
 
-<head>
-
-<meta name="viewport" content="width=device-width,initial-scale=1">
-
-<link rel="stylesheet" href="css/estilos.css">
-
-<title>Administrador</title>
-
-</head>
-
 <body>
-
-<script>
-
-let rol = localStorage.getItem("rol");
-
-if(rol !== "admin"){
-window.location="index.html";
-}
-
-</script>
 
 <h2>Panel Administrador</h2>
 
-<h3>Accesos registrados</h3>
+<p>Historial de visitas</p>
 
-<table border="1">
+<div id="lista"></div>
 
-<thead>
-
-<tr>
-<th>Casa</th>
-<th>Visitante</th>
-<th>Tipo</th>
-<th>Hora QR</th>
-<th>Foto</th>
-</tr>
-
-</thead>
-
-<tbody id="tablaAccesos">
-
-</tbody>
-
-</table>
-
-<script type="module" src="js/admin.js"></script>
+<script type="module" src="admin.js"></script>
 
 </body>
 
