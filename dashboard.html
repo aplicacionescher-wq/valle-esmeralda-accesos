@@ -1,14 +1,18 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
 <link rel="stylesheet" href="css/estilos.css">
 
-<title>Panel Residente</title>
+<title>Residente</title>
 
 </head>
+
+<body>
+
 <script>
 
 let rol = localStorage.getItem("rol");
@@ -18,246 +22,13 @@ window.location="index.html";
 }
 
 </script>
-<body>
 
 <h2>Panel Residente</h2>
 
-<button onclick="irQR()">Registrar Visita</button>
-
-<button onclick="irEscaner()">Escaner Vigilancia</button>
-
-<script>
-
-function irQR(){
-window.location="generar.html"
-}
-
-function irEscaner(){
-window.location="escaner.html"
-}
-
-</script>
+<button onclick="window.location='generar.html'">
+Generar QR
+</button>
 
 </body>
+
 </html>
-
-<!DOCTYPE html>
-<html>
-<head>
-
-<meta name="viewport" content="width=device-width,initial-scale=1">
-
-<link rel="stylesheet" href="css/estilos.css">
-
-<title>Generar QR</title>
-
-</head>
-
-<body>
-
-<h2>Registrar visita</h2>
-
-<input id="nombre" placeholder="Nombre visitante">
-
-<select id="tipo">
-
-<option value="visita">Visita</option>
-<option value="proveedor">Proveedor</option>
-<option value="uber">Uber / Taxi</option>
-<option value="paqueteria">Paquetería</option>
-
-</select>
-
-<button onclick="crearQR()">Generar QR</button>
-
-<div id="qr"></div>
-
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
-
-<script type="module" src="js/qr.js"></script>
-
-</body>
-</html>
-
-<!DOCTYPE html>
-<html>
-<head>
-
-<meta name="viewport" content="width=device-width,initial-scale=1">
-
-<link rel="stylesheet" href="css/estilos.css">
-
-<title>Escáner QR</title>
-
-</head>
-
-<body>
-
-<h2>Escáner Vigilancia</h2>
-
-<div id="reader" style="width:300px"></div>
-
-<script src="https://unpkg.com/html5-qrcode"></script>
-
-<script src="js/scanner.js"></script>
-
-</body>
-</html>
-
-{
-"name": "Accesos Valle Esmeralda",
-"short_name": "Accesos",
-"start_url": "/index.html",
-"display": "standalone",
-"background_color": "#0f172a",
-"theme_color": "#0f172a",
-"icons": []
-}
-
-body{
-font-family: Arial;
-padding:20px;
-background:#f2f2f2;
-}
-
-input,select,button{
-
-display:block;
-margin:10px 0;
-padding:10px;
-font-size:16px;
-
-}
-
-button{
-background:#0f172a;
-color:white;
-border:none;
-}
-
-function login(){
-
-let casa = document.getElementById("domicilio").value
-
-let pass = document.getElementById("password").value
-
-if(pass === "1234"){
-
-localStorage.setItem("casa", casa)
-
-window.location = "dashboard.html"
-
-}else{
-
-alert("Contraseña incorrecta")
-
-}
-
-}
-
-
-Este usa tu configuración real de Firebase.
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-
-import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
-
-const firebaseConfig = {
-apiKey: "AIzaSyCgK2hbNsL7kgUEQFFbuweiStbfbijKtX8",
-authDomain: "valle-esmeralda-accesos.firebaseapp.com",
-projectId: "valle-esmeralda-accesos",
-storageBucket: "valle-esmeralda-accesos.firebasestorage.app",
-messagingSenderId: "1075927284762",
-appId: "1:1075927284762:web:635b74230f88d8740e65a3",
-measurementId: "G-WCC09W0Y5W"
-};
-
-const app = initializeApp(firebaseConfig);
-
-const db = getFirestore(app);
-
-const analytics = getAnalytics(app);
-
-export { db };
-9️⃣ js/qr.js
-import { db } from "./firebase.js";
-
-import {
-addDoc,
-collection
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-window.crearQR = async function(){
-
-let casa = localStorage.getItem("casa");
-
-let nombre = document.getElementById("nombre").value;
-
-let tipo = document.getElementById("tipo").value;
-
-let hora = Date.now();
-
-let data = {
-
-casa,
-nombre,
-tipo,
-hora
-
-};
-
-await addDoc(collection(db,"visitas"), data);
-
-let texto = JSON.stringify(data);
-
-document.getElementById("qr").innerHTML="";
-
-new QRCode(document.getElementById("qr"),{
-
-text:texto,
-width:200,
-height:200
-
-});
-
-}
-js/scanner.js
-function onScanSuccess(decodedText){
-
-let data = JSON.parse(decodedText);
-
-let ahora = Date.now();
-
-let expiracion = {
-
-visita:86400000,
-proveedor:43200000,
-uber:7200000,
-paqueteria:43200000
-
-};
-
-if(ahora - data.hora > expiracion[data.tipo]){
-
-alert("QR EXPIRADO");
-
-return;
-
-}
-
-alert("Acceso permitido\nCasa: " + data.casa);
-
-}
-
-const html5QrCode = new Html5QrcodeScanner(
-
-"reader",
-
-{ fps: 10, qrbox: 250 }
-
-);
-
-
-
