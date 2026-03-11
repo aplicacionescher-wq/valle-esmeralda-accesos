@@ -215,7 +215,7 @@ height:200
 });
 
 }
-🔟 js/scanner.js
+js/scanner.js
 function onScanSuccess(decodedText){
 
 let data = JSON.parse(decodedText);
@@ -251,112 +251,5 @@ const html5QrCode = new Html5QrcodeScanner(
 
 );
 
-html5QrCode.render(onScanSuccess);
-🚀 Después de crear los archivos
 
-1️⃣ Subir todo a GitHub
-2️⃣ Activar GitHub Pages
-3️⃣ En Firebase → Firestore crear colección:
 
-visitas
-
-4️⃣ Reglas temporales:
-
-allow read, write: if true;
-
-💡 Si quieres, en el siguiente mensaje puedo darte también:
-
-script para generar automáticamente los 500 domicilios
-
-login real con Firebase
-
-panel administrador
-
-QR que solo funciona una vez
-
-envío automático del QR por WhatsApp
-
-interfaz profesional tipo app de fraccionamiento
-
-y dejar tu sistema mucho más profesional (nivel fraccionamiento real).
-
-por ultimo la visibilidad debe ser publica o provada
-
-Para tu caso hay dos cosas diferentes en GitHub que debes considerar:
-
-1️⃣ Visibilidad del repositorio
-
-Puedes elegir:
-
-Public (público)
-
-Private (privado)
-
-✔ Recomendado para tu proyecto: PUBLIC
-
-Porque GitHub Pages gratis funciona más fácil con repositorios públicos.
-
-Si es público:
-
-tu app funcionará en
-https://usuario.github.io/valle-esmeralda-accesos
-
-Firebase funcionará sin problema
-
-cualquiera puede abrir la web (como cualquier página)
-
-⚠️ Pero no podrán modificar tu código, solo verlo.
-
-2️⃣ Seguridad real del sistema
-
-Aunque el repositorio sea público:
-
-la base de datos está protegida por Firebase
-
-los usuarios necesitan login
-
-las reglas de Firebase controlan el acceso
-
-Es decir:
-
-el código puede ser público
-
-los datos siguen siendo privados
-
-Esto es muy común en apps web.
-
-📊 Recomendación final
-
-Para que todo funcione fácil:
-
-Repositorio GitHub:
-
-PUBLIC
-
-GitHub Pages:
-
-ON
-
-Firebase:
-
-Firestore activado
-🔐 Luego (muy recomendable)
-
-Más adelante debes cambiar las reglas de Firebase a algo como:
-
-allow read, write: if request.auth != null;
-
-para que solo usuarios autenticados puedan usar el sistema.
-
-💡 Si quieres, en el siguiente paso puedo 
-enseñarte algo MUY útil para tu fraccionamiento:
-
-Cómo crear automáticamente los 500 domicilios como:
-
-Valle Turquesa Norte 1-100
-Valle Turquesa Sur 1-100
-Valle de la Perla 1-100
-Valle de Onix 1-100
-Valle de Opalo 1-100
-
-en 30 segundos dentro de Firebase, sin tener que escribirlos uno por uno.
