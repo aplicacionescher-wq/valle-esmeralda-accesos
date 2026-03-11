@@ -1,34 +1,14 @@
 const CACHE = "accesos-v1";
 
-const archivos = [
+self.addEventListener("install", event => {
 
-"/",
-"/index.html",
-"/dashboard.html",
-"/generar.html",
-"/escaner.html",
-"/admin.html",
-"/css/estilos.css"
+event.waitUntil(
 
-];
+caches.open(CACHE).then(cache => {
 
-self.addEventListener("install", e => {
+return cache.addAll(["/"]);
 
-e.waitUntil(
-
-caches.open(CACHE)
-.then(cache => cache.addAll(archivos))
-
-);
-
-});
-
-self.addEventListener("fetch", e => {
-
-e.respondWith(
-
-caches.match(e.request)
-.then(res => res || fetch(e.request))
+})
 
 );
 
