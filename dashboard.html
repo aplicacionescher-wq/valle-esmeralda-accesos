@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link rel="stylesheet" href="css/estilos.css">
+
+<title>Panel Residente</title>
+
+</head>
+
+<body>
+
+<h2>Panel Residente</h2>
+
+<button onclick="irQR()">Registrar Visita</button>
+
+<button onclick="irEscaner()">Escaner Vigilancia</button>
+
+<script>
+
+function irQR(){
+window.location="generar.html"
+}
+
+function irEscaner(){
+window.location="escaner.html"
+}
+
+</script>
+
+</body>
+</html>
+3️⃣ generar.html (Generador QR)
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link rel="stylesheet" href="css/estilos.css">
+
+<title>Generar QR</title>
+
+</head>
+
+<body>
+
+<h2>Registrar visita</h2>
+
+<input id="nombre" placeholder="Nombre visitante">
+
+<select id="tipo">
+
+<option value="visita">Visita</option>
+<option value="proveedor">Proveedor</option>
+<option value="uber">Uber / Taxi</option>
+<option value="paqueteria">Paquetería</option>
+
+</select>
+
+<button onclick="crearQR()">Generar QR</button>
+
+<div id="qr"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+
+<script type="module" src="js/qr.js"></script>
+
+</body>
+</html>
+4️⃣ escaner.html
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link rel="stylesheet" href="css/estilos.css">
+
+<title>Escáner QR</title>
+
+</head>
+
+<body>
+
+<h2>Escáner Vigilancia</h2>
+
+<div id="reader" style="width:300px"></div>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<script src="js/scanner.js"></script>
+
+</body>
+</html>
+5️⃣ manifest.json
+{
+"name": "Accesos Valle Esmeralda",
+"short_name": "Accesos",
+"start_url": "/index.html",
+"display": "standalone",
+"background_color": "#0f172a",
+"theme_color": "#0f172a",
+"icons": []
+}
+6️⃣ css/estilos.css
+body{
+font-family: Arial;
+padding:20px;
+background:#f2f2f2;
+}
+
+input,select,button{
+
+display:block;
+margin:10px 0;
+padding:10px;
+font-size:16px;
+
+}
+
+button{
+background:#0f172a;
+color:white;
+border:none;
+}
+7️⃣ js/login.js
+function login(){
+
+let casa = document.getElementById("domicilio").value
+
+let pass = document.getElementById("password").value
+
+if(pass === "1234"){
+
+localStorage.setItem("casa", casa)
+
+window.location = "dashboard.html"
+
+}else{
+
+alert("Contraseña incorrecta")
+
+}
+
+}
+8️⃣ js/firebase.js
+
+Este usa tu configuración real de Firebase.
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
+
+const firebaseConfig = {
+apiKey: "AIzaSyCgK2hbNsL7kgUEQFFbuweiStbfbijKtX8",
+authDomain: "valle-esmeralda-accesos.firebaseapp.com",
+projectId: "valle-esmeralda-accesos",
+storageBucket: "valle-esmeralda-accesos.firebasestorage.app",
+messagingSenderId: "1075927284762",
+appId: "1:1075927284762:web:635b74230f88d8740e65a3",
+measurementId: "G-WCC09W0Y5W"
+};
+
+const app = initializeApp(firebaseConfig);
+
+const db = getFirestore(app);
+
+const analytics = getAnalytics(app);
+
+export { db };
+9️⃣ js/qr.js
+import { db } from "./firebase.js";
+
+import {
+addDoc,
+collection
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+window.crearQR = async function(){
+
+let casa = localStorage.getItem("casa");
+
+let nombre = document.getElementById("nombre").value;
+
+let tipo = document.getElementById("tipo").value;
+
+let hora = Date.now();
+
+let data = {
+
+casa,
+nombre,
+tipo,
+hora
+
+};
+
+await addDoc(collection(db,"visitas"), data);
+
+let texto = JSON.stringify(data);
+
+document.getElementById("qr").innerHTML="";
+
+new QRCode(document.getElementById("qr"),{
+
+text:texto,
+width:200,
+height:200
+
+});
+
+}
+🔟 js/scanner.js
+function onScanSuccess(decodedText){
+
+let data = JSON.parse(decodedText);
+
+let ahora = Date.now();
+
+let expiracion = {
+
+visita:86400000,
+proveedor:43200000,
+uber:7200000,
+paqueteria:43200000
+
+};
+
+if(ahora - data.hora > expiracion[data.tipo]){
+
+alert("QR EXPIRADO");
+
+return;
+
+}
+
+alert("Acceso permitido\nCasa: " + data.casa);
+
+}
+
+const html5QrCode = new Html5QrcodeScanner(
+
+"reader",
+
+{ fps: 10, qrbox: 250 }
+
+);
+
+html5QrCode.render(onScanSuccess);
+🚀 Después de crear los archivos
+
+1️⃣ Subir todo a GitHub
+2️⃣ Activar GitHub Pages
+3️⃣ En Firebase → Firestore crear colección:
+
+visitas
+
+4️⃣ Reglas temporales:
+
+allow read, write: if true;
+
+💡 Si quieres, en el siguiente mensaje puedo darte también:
+
+script para generar automáticamente los 500 domicilios
+
+login real con Firebase
+
+panel administrador
+
+QR que solo funciona una vez
+
+envío automático del QR por WhatsApp
+
+interfaz profesional tipo app de fraccionamiento
+
+y dejar tu sistema mucho más profesional (nivel fraccionamiento real).
+
+por ultimo la visibilidad debe ser publica o provada
+
+Para tu caso hay dos cosas diferentes en GitHub que debes considerar:
+
+1️⃣ Visibilidad del repositorio
+
+Puedes elegir:
+
+Public (público)
+
+Private (privado)
+
+✔ Recomendado para tu proyecto: PUBLIC
+
+Porque GitHub Pages gratis funciona más fácil con repositorios públicos.
+
+Si es público:
+
+tu app funcionará en
+https://usuario.github.io/valle-esmeralda-accesos
+
+Firebase funcionará sin problema
+
+cualquiera puede abrir la web (como cualquier página)
+
+⚠️ Pero no podrán modificar tu código, solo verlo.
+
+2️⃣ Seguridad real del sistema
+
+Aunque el repositorio sea público:
+
+la base de datos está protegida por Firebase
+
+los usuarios necesitan login
+
+las reglas de Firebase controlan el acceso
+
+Es decir:
+
+el código puede ser público
+
+los datos siguen siendo privados
+
+Esto es muy común en apps web.
+
+📊 Recomendación final
+
+Para que todo funcione fácil:
+
+Repositorio GitHub:
+
+PUBLIC
+
+GitHub Pages:
+
+ON
+
+Firebase:
+
+Firestore activado
+🔐 Luego (muy recomendable)
+
+Más adelante debes cambiar las reglas de Firebase a algo como:
+
+allow read, write: if request.auth != null;
+
+para que solo usuarios autenticados puedan usar el sistema.
+
+💡 Si quieres, en el siguiente paso puedo 
+enseñarte algo MUY útil para tu fraccionamiento:
+
+Cómo crear automáticamente los 500 domicilios como:
+
+Valle Turquesa Norte 1-100
+Valle Turquesa Sur 1-100
+Valle de la Perla 1-100
+Valle de Onix 1-100
+Valle de Opalo 1-100
+
+en 30 segundos dentro de Firebase, sin tener que escribirlos uno por uno.
