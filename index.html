@@ -19,8 +19,8 @@
 
 <input id="password" type="password" placeholder="Contraseña">
 
-<button onclick="login()">Entrar</button>
-
+<button id="btnLogin">Entrar</button>
+  
 <script>
 
 if('serviceWorker' in navigator){
@@ -32,6 +32,14 @@ navigator.serviceWorker.register('sw.js');
 </script>
 
 <script type="module" src="login.js"></script>
+
+<script type="module">
+
+import { login } from "./login.js";
+
+document.getElementById("btnLogin").addEventListener("click", login);
+
+</script>  
 
 </body>
 
