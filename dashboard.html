@@ -1,23 +1,11 @@
 <!DOCTYPE html>
 <html>
 
-<head>
-
-<meta name="viewport" content="width=device-width,initial-scale=1">
-
-<link rel="stylesheet" href="css/estilos.css">
-
-<title>Residente</title>
-
-</head>
-
 <body>
 
 <script>
 
-let rol = localStorage.getItem("rol");
-
-if(rol !== "residente"){
+if(localStorage.getItem("rol")!=="residente"){
 window.location="index.html";
 }
 
@@ -26,7 +14,9 @@ window.location="index.html";
 <h2>Panel Residente</h2>
 
 <button onclick="window.location='generar.html'">
-Generar QR
+
+Generar QR visita
+
 </button>
 
 </body>
