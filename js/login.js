@@ -1,42 +1,54 @@
-<!DOCTYPE html>
-<html>
-<head>
+import { db } from "./firebase.js";
 
-<meta name="viewport" content="width=device-width,initial-scale=1">
+import {
 
-<link rel="manifest" href="manifest.json">
+collection,
+query,
+where,
+getDocs
 
-<title>Accesos Valle Esmeralda</title>
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-</head>
+export async function login(){
 
-<body>
+let usuario=document.getElementById("domicilio").value;
 
-<h2>Accesos Valle Esmeralda</h2>
+let pass=document.getElementById("password").value;
 
-<input id="domicilio" placeholder="Usuario">
+const q=query(
 
-<input id="password" type="password" placeholder="Contraseña">
+collection(db,"usuarios"),
 
-<button id="btnLogin">Entrar</button>
+where("domicilio","==",usuario),
 
-<script type="module">
+where("password","==",pass)
 
-import { login } from "./login.js";
+);
 
-document.getElementById("btnLogin").addEventListener("click", login);
+const querySnapshot=await getDocs(q);
 
-</script>
+if(querySnapshot.empty){
 
-<script>
+alert("Usuario incorrecto");
 
-if('serviceWorker' in navigator){
-
-navigator.serviceWorker.register('./sw.js');
+return;
 
 }
 
-</script>
+querySnapshot.forEach((doc)=>{
 
-</body>
-</html>
+let data=doc.data();
+
+localStorage.setItem("rol",data.rol);
+
+localStorage.setItem("casa",data.domicilio);
+
+if(data.rol==="admin") window.location="admin.html";
+
+if(data.rol==="residente") window.location="dashboard.html";
+
+if(data.rol==="caseta") window.location="escaner.html";
+
+});
+
+}
