@@ -1,51 +1,131 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 
 <head>
+
 <meta charset="UTF-8">
-<title>Registrar visita</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Valle Esmeralda - Registrar visita</title>
+
+<style>
+
+body{
+
+font-family:Arial;
+
+background:#f2f2f2;
+
+text-align:center;
+
+padding:20px;
+
+}
+
+.logo{
+
+width:120px;
+
+margin-bottom:10px;
+
+}
+
+.card{
+
+background:white;
+
+padding:20px;
+
+border-radius:10px;
+
+max-width:400px;
+
+margin:auto;
+
+box-shadow:0 0 10px rgba(0,0,0,.1);
+
+}
+
+input,select{
+
+width:90%;
+
+padding:10px;
+
+margin:5px;
+
+border-radius:6px;
+
+border:1px solid #ccc;
+
+}
+
+button{
+
+padding:10px 20px;
+
+border:none;
+
+border-radius:6px;
+
+background:#2e7d32;
+
+color:white;
+
+cursor:pointer;
+
+margin:5px;
+
+}
+
+button:hover{
+
+background:#1b5e20;
+
+}
+
+</style>
+
 </head>
 
 <body>
+
+<img src="logo.png" class="logo">
+
+<div class="card">
 
 <h2>Registrar visita</h2>
 
 <input id="nombre" placeholder="Nombre visitante">
 
-<br><br>
-
 <input id="telefono" placeholder="Teléfono WhatsApp">
-
-<br><br>
 
 <select id="tipo">
 
 <option value="visita">Visita</option>
+
 <option value="proveedor">Proveedor</option>
+
 <option value="uber">Uber / Taxi</option>
+
 <option value="paqueteria">Paquetería</option>
 
 </select>
 
-<br><br>
-
 <label>Identificación visitante</label>
-
-<br>
 
 <input type="file" id="foto">
 
-<br><br>
+<br>
 
 <button onclick="crearQR()">Generar QR</button>
 
-<br><br>
-
 <div id="qr"></div>
 
-<br>
-
 <button onclick="enviarWhats()">Enviar por WhatsApp</button>
+
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
 
