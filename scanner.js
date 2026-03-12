@@ -1,14 +1,21 @@
 import { db,storage } from "./firebase.js"
 
 import {
+
 collection,
+
 addDoc
+
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"
 
 import {
+
 ref,
+
 uploadBytes,
+
 getDownloadURL
+
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js"
 
 let datosVisita=null
@@ -24,8 +31,11 @@ let ahora=Date.now()
 let expiracion={
 
 visita:86400000,
+
 proveedor:43200000,
+
 uber:7200000,
+
 paqueteria:43200000
 
 }
@@ -35,11 +45,24 @@ let resultado=document.getElementById("resultado")
 if(ahora-data.timestamp>expiracion[data.tipo]){
 
 resultado.innerHTML="QR EXPIRADO"
+
 return
 
 }
 
-resultado.innerHTML="ACCESO PERMITIDO<br>"+data.nombre
+resultado.innerHTML=`
+
+ACCESO PERMITIDO
+
+Visitante: ${data.nombre}
+
+Casa: ${data.casa}
+
+Autoriza: ${data.autoriza}
+
+Tipo: ${data.tipo}
+
+`
 
 if(data.fotoURL){
 
@@ -67,7 +90,11 @@ await addDoc(collection(db,"registroAccesos"),{
 
 nombre:datosVisita.nombre,
 
+autoriza:datosVisita.autoriza,
+
 casa:datosVisita.casa,
+
+tipo:datosVisita.tipo,
 
 foto:url,
 
@@ -80,8 +107,11 @@ alert("Registro guardado")
 }
 
 const html5QrCode=new Html5QrcodeScanner(
+
 "reader",
+
 {fps:10,qrbox:250}
+
 )
 
 html5QrCode.render(onScanSuccess)
