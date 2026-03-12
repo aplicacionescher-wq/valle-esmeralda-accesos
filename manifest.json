@@ -1,6 +1,8 @@
 {
-"name": "Accesos Valle Esmeralda",
-"short_name": "Accesos",
-"start_url": "index.html",
-"display": "standalone"
+"name":"Accesos Valle Esmeralda",
+"short_name":"Accesos",
+"start_url":"./index.html",
+"display":"standalone",
+"background_color":"#ffffff",
+"theme_color":"#065f46"
 }
