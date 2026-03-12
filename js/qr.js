@@ -1,68 +1,81 @@
-import { db } from "./firebase.js";
+import { db,storage } from "./firebase.js"
 
 import {
-addDoc,
-collection
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+collection,
+addDoc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"
 
-let qrData="";
+import {
+ref,
+uploadBytes,
+getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js"
 
-window.crearQR = async function(){
+let qrData=""
 
-let casa=localStorage.getItem("casa");
+window.crearQR=async function(){
 
-let nombre=document.getElementById("nombre").value;
+let casa=localStorage.getItem("casa")
 
-let tipo=document.getElementById("tipo").value;
+let nombre=document.getElementById("nombre").value
 
-let file=document.getElementById("identificacion").files[0];
+let telefono=document.getElementById("telefono").value
 
-let identificacion="";
+let tipo=document.getElementById("tipo").value
 
-if(file){
+let archivo=document.getElementById("foto").files[0]
 
-identificacion=URL.createObjectURL(file);
+let fotoURL=""
+
+if(archivo){
+
+let referencia=ref(storage,"ids/"+Date.now())
+
+await uploadBytes(referencia,archivo)
+
+fotoURL=await getDownloadURL(referencia)
 
 }
 
-let timestamp=Date.now();
-
-let token=Math.random().toString(36).substring(2);
+let timestamp=Date.now()
 
 let data={
 
-token,
 casa,
 nombre,
+telefono,
 tipo,
-timestamp,
-identificacion,
-usado:false
+fotoURL,
+timestamp
 
-};
+}
 
-await addDoc(collection(db,"visitas"),data);
+await addDoc(collection(db,"visitas"),data)
 
-qrData=JSON.stringify(data);
+qrData=JSON.stringify(data)
+
+document.getElementById("qr").innerHTML=""
 
 new QRCode(document.getElementById("qr"),{
 
 text:qrData,
-width:200,
-height:200
+width:220,
+height:220
 
-});
+})
 
 }
 
-window.enviarWhatsApp=function(){
+window.enviarWhats=function(){
 
-let telefono=document.getElementById("telefono").value;
+let telefono=document.getElementById("telefono").value
 
-let mensaje="QR acceso Valle Esmeralda "+qrData;
+let mensaje="Acceso Valle Esmeralda\n\n"
 
-let url="https://wa.me/"+telefono+"?text="+encodeURIComponent(mensaje);
+mensaje+=qrData
 
-window.open(url);
+let url="https://wa.me/52"+telefono+"?text="+encodeURIComponent(mensaje)
+
+window.open(url)
 
 }
