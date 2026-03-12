@@ -1,25 +1,28 @@
 <!DOCTYPE html>
 <html>
 
+<head>
+<meta charset="UTF-8">
+<title>Residente</title>
+</head>
+
 <body>
-
-<script>
-
-if(localStorage.getItem("rol")!=="residente"){
-
-window.location="index.html";
-
-}
-
-</script>
 
 <h2>Panel Residente</h2>
 
+<p id="casa"></p>
+
 <button onclick="window.location='generar.html'">
 
-Generar QR
+Registrar visita
 
 </button>
+
+<script>
+
+document.getElementById("casa").innerHTML=localStorage.getItem("casa")
+
+</script>
 
 </body>
 
