@@ -1,15 +1,30 @@
 <!DOCTYPE html>
 <html>
 
+<head>
+<meta charset="UTF-8">
+<title>Caseta</title>
+</head>
+
 <body>
 
-<h2>Escáner vigilancia</h2>
+<h2>Escáner caseta</h2>
 
 <div id="reader" style="width:300px"></div>
 
+<br>
+
 <div id="resultado"></div>
 
-<input type="file" id="fotoCaseta" accept="image/*" capture="environment">
+<br>
+
+<div id="foto"></div>
+
+<br>
+
+<input type="file" id="fotoCaseta">
+
+<button onclick="guardarFoto()">Guardar identificación</button>
 
 <script src="https://unpkg.com/html5-qrcode"></script>
 
