@@ -1,22 +1,65 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 
 <head>
+
 <meta charset="UTF-8">
-<title>Caseta</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Escáner Valle Esmeralda</title>
+
+<style>
+
+body{
+
+font-family:Arial;
+
+text-align:center;
+
+background:#f2f2f2;
+
+padding:20px;
+
+}
+
+.logo{
+
+width:120px;
+
+}
+
+.card{
+
+background:white;
+
+padding:20px;
+
+border-radius:10px;
+
+max-width:500px;
+
+margin:auto;
+
+box-shadow:0 0 10px rgba(0,0,0,.1);
+
+}
+
+</style>
+
 </head>
 
 <body>
 
-<h2>Escáner caseta</h2>
+<img src="logo.png" class="logo">
 
-<div id="reader" style="width:300px"></div>
+<div class="card">
 
-<br>
+<h2>Escanear acceso</h2>
 
-<div id="resultado"></div>
+<div id="reader"></div>
 
-<br>
+<h3 id="resultado"></h3>
 
 <div id="foto"></div>
 
@@ -24,7 +67,11 @@
 
 <input type="file" id="fotoCaseta">
 
-<button onclick="guardarFoto()">Guardar identificación</button>
+<br><br>
+
+<button onclick="guardarFoto()">Registrar entrada</button>
+
+</div>
 
 <script src="https://unpkg.com/html5-qrcode"></script>
 
@@ -33,3 +80,349 @@
 </body>
 
 </html>
+5️⃣ scanner.js
+import { db,storage } from "./firebase.js"
+
+import {
+
+collection,
+
+addDoc
+
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"
+
+import {
+
+ref,
+
+uploadBytes,
+
+getDownloadURL
+
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js"
+
+let datosVisita=null
+
+function onScanSuccess(decodedText){
+
+let data=JSON.parse(decodedText)
+
+datosVisita=data
+
+let ahora=Date.now()
+
+let expiracion={
+
+visita:86400000,
+
+proveedor:43200000,
+
+uber:7200000,
+
+paqueteria:43200000
+
+}
+
+let resultado=document.getElementById("resultado")
+
+if(ahora-data.timestamp>expiracion[data.tipo]){
+
+resultado.innerHTML="QR EXPIRADO"
+
+return
+
+}
+
+resultado.innerHTML=`
+
+ACCESO PERMITIDO
+
+Visitante: ${data.nombre}
+
+Casa: ${data.casa}
+
+Autoriza: ${data.autoriza}
+
+Tipo: ${data.tipo}
+
+`
+
+if(data.fotoURL){
+
+document.getElementById("foto").innerHTML=
+
+"<img src='"+data.fotoURL+"' width='200'>"
+
+}
+
+}
+
+window.guardarFoto=async function(){
+
+let archivo=document.getElementById("fotoCaseta").files[0]
+
+if(!archivo)return
+
+let referencia=ref(storage,"idsCaseta/"+Date.now())
+
+await uploadBytes(referencia,archivo)
+
+let url=await getDownloadURL(referencia)
+
+await addDoc(collection(db,"registroAccesos"),{
+
+nombre:datosVisita.nombre,
+
+autoriza:datosVisita.autoriza,
+
+casa:datosVisita.casa,
+
+tipo:datosVisita.tipo,
+
+foto:url,
+
+fecha:Date.now()
+
+})
+
+alert("Registro guardado")
+
+}
+
+const html5QrCode=new Html5QrcodeScanner(
+
+"reader",
+
+{fps:10,qrbox:250}
+
+)
+
+html5QrCode.render(onScanSuccess)
+📱 Cómo funcionará ahora
+Residente
+
+1️⃣ Abre generar.html
+2️⃣ Registra visitante
+3️⃣ Genera QR
+4️⃣ Lo envía por WhatsApp
+
+Visitante
+
+Muestra QR en caseta.
+
+Vigilancia
+
+Escanea QR en scanner.html.
+
+Verá:
+
+ACCESO PERMITIDO
+
+Visitante
+Casa
+Autoriza
+Tipo
+⭐ Si quieres, puedo darte la versión avanzada del sistema con:
+
+🔐 QR de un solo uso
+
+📊 panel administrador
+
+👥 base de residentes
+
+📈 dashboard de accesos
+
+📱 app instalable (PWA)
+
+🚨 alerta cuando entra visitante
+
+que convierte esto en sistema profesional de control de accesos para fraccionamientos.
+
+yo tenia este firebase : import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"
+
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"
+
+import { getStorage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js"
+
+const firebaseConfig = {
+
+apiKey: "AIzaSyCgK2hbNsL7kgUEQFFbuweiStbfbijKtX8",
+
+authDomain: "valle-esmeralda-accesos.firebaseapp.com",
+
+projectId: "valle-esmeralda-accesos",
+
+storageBucket: "valle-esmeralda-accesos.firebasestorage.app",
+
+messagingSenderId: "1075927284762",
+
+appId: "1:1075927284762:web:635b74230f88d8740e65a3",
+
+measurementId: "G-WCC09W0Y5W"
+
+}
+
+const app = initializeApp(firebaseConfig)
+
+export const db = getFirestore(app)
+
+export const storage = getStorage(app)
+
+Perfecto 👍. Tu firebase.js está correcto, solo necesita un pequeño ajuste para que funcione bien con Storage y Firestore en el sistema que te pasé.
+
+Te dejo EL ARCHIVO COMPLETO EXACTO para reemplazar tu firebase.js.
+
+📄 firebase.js (VERSIÓN FINAL PARA TU PROYECTO)
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"
+
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"
+
+import { getStorage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js"
+
+const firebaseConfig = {
+
+apiKey: "AIzaSyCgK2hbNsL7kgUEQFFbuweiStbfbijKtX8",
+
+authDomain: "valle-esmeralda-accesos.firebaseapp.com",
+
+projectId: "valle-esmeralda-accesos",
+
+storageBucket: "valle-esmeralda-accesos.appspot.com",
+
+messagingSenderId: "1075927284762",
+
+appId: "1:1075927284762:web:635b74230f88d8740e65a3",
+
+measurementId: "G-WCC09W0Y5W"
+
+}
+
+const app = initializeApp(firebaseConfig)
+
+export const db = getFirestore(app)
+
+export const storage = getStorage(app)
+⚠️ CAMBIO IMPORTANTE
+
+Cambié esto:
+
+storageBucket: "valle-esmeralda-accesos.firebasestorage.app"
+
+por
+
+storageBucket: "valle-esmeralda-accesos.appspot.com"
+
+Porque Firebase Storage funciona correctamente con .appspot.com.
+
+📊 Tus colecciones en Firestore quedarán así
+Colección: visitas
+
+Ejemplo de documento:
+
+{
+ "nombre": "Juan Perez",
+ "telefono": "8331234567",
+ "casa": "24",
+ "autoriza": "Carlos Lopez",
+ "tipo": "visita",
+ "fotoURL": "link",
+ "timestamp": 1710000000000
+}
+Colección: registroAccesos
+{
+ "nombre": "Juan Perez",
+ "autoriza": "Carlos Lopez",
+ "casa": "24",
+ "tipo": "visita",
+ "foto": "link",
+ "fecha": 1710000000000
+}
+🔐 REGLAS DE SEGURIDAD RECOMENDADAS (IMPORTANTE)
+
+En Firestore Rules pon:
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /visitas/{doc} {
+      allow read, write: if true;
+    }
+
+    match /registroAccesos/{doc} {
+      allow read, write: if true;
+    }
+
+  }
+}
+🔐 Reglas para Storage
+
+En Firebase Storage Rules:
+
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    match /ids/{allPaths=**} {
+      allow read, write: if true;
+    }
+
+    match /idsCaseta/{allPaths=**} {
+      allow read, write: if true;
+    }
+
+  }
+}
+🚀 Cómo probar tu sistema
+
+1️⃣ Sube todos los archivos a GitHub
+
+generar.html
+scanner.html
+qr.js
+scanner.js
+firebase.js
+logo.png
+
+2️⃣ Abre:
+
+generar.html
+
+3️⃣ Genera QR
+
+4️⃣ Envía WhatsApp
+
+5️⃣ En la caseta abre:
+
+scanner.html
+
+6️⃣ Escanea QR
+
+⭐ Si quieres, puedo hacer 3 mejoras muy potentes a tu sistema (te conviene mucho):
+🔐 1. QR de un solo uso
+
+Evita que el visitante lo reutilice.
+
+📊 2. Panel de vigilancia
+
+Ver:
+
+visitas activas
+
+accesos del día
+
+historial
+
+📱 3. Convertirlo en APP instalable
+
+Como aplicación en celular.
+
+Si quieres, también puedo mejorar tu repositorio de GitHub completo:
+
+Repositorio que tienes:
+
+valle-esmeralda-accesos
+
+y dejarlo como sistema profesional de control de accesos para fraccionamientos.
