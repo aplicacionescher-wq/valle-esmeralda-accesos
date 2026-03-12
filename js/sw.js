@@ -1,16 +1,12 @@
-const CACHE = "accesos-v1"
-
-self.addEventListener("install", e => {
+self.addEventListener("install",function(e){
 
 e.waitUntil(
 
-caches.open(CACHE).then(cache => {
+caches.open("accesos").then(function(cache){
 
 return cache.addAll([
-
 "./",
 "./index.html"
-
 ])
 
 })
@@ -19,11 +15,15 @@ return cache.addAll([
 
 })
 
-self.addEventListener("fetch", e => {
+self.addEventListener("fetch",function(e){
 
 e.respondWith(
 
-caches.match(e.request).then(res => res || fetch(e.request))
+caches.match(e.request).then(function(res){
+
+return res || fetch(e.request)
+
+})
 
 )
 
