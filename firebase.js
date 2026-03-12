@@ -12,7 +12,7 @@ authDomain: "valle-esmeralda-accesos.firebaseapp.com",
 
 projectId: "valle-esmeralda-accesos",
 
-storageBucket: "valle-esmeralda-accesos.firebasestorage.app",
+storageBucket: "valle-esmeralda-accesos.appspot.com",
 
 messagingSenderId: "1075927284762",
 
