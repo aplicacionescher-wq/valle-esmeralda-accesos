@@ -1,33 +1,24 @@
-const CACHE = "accesos-v1";
+const CACHE="accesos-cache";
 
-const archivos = [
-
-"/",
-"/index.html",
-"/dashboard.html",
-"/generar.html",
-"/escaner.html",
-"/admin.html"
-
-];
-
-self.addEventListener("install", e=>{
+self.addEventListener("install",e=>{
 
 e.waitUntil(
 
-caches.open(CACHE)
-.then(cache=>cache.addAll(archivos))
+caches.open(CACHE).then(cache=>{
+
+return cache.addAll(["./"]);
+
+})
 
 );
 
 });
 
-self.addEventListener("fetch", e=>{
+self.addEventListener("fetch",e=>{
 
 e.respondWith(
 
-caches.match(e.request)
-.then(res=>res || fetch(e.request))
+caches.match(e.request).then(res=>res||fetch(e.request))
 
 );
 
