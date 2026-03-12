@@ -1,45 +1,87 @@
+import { db,storage } from "./firebase.js"
+
+import {
+collection,
+addDoc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"
+
+import {
+ref,
+uploadBytes,
+getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js"
+
+let datosVisita=null
+
 function onScanSuccess(decodedText){
 
-let data=JSON.parse(decodedText);
+let data=JSON.parse(decodedText)
 
-let ahora=Date.now();
+datosVisita=data
+
+let ahora=Date.now()
 
 let expiracion={
 
-visita:24*60*60*1000,
-proveedor:12*60*60*1000,
-uber:2*60*60*1000,
-paqueteria:12*60*60*1000
+visita:86400000,
+proveedor:43200000,
+uber:7200000,
+paqueteria:43200000
 
-};
+}
 
-let resultado=document.getElementById("resultado");
+let resultado=document.getElementById("resultado")
 
 if(ahora-data.timestamp>expiracion[data.tipo]){
 
-resultado.innerHTML="QR EXPIRADO";
-return;
+resultado.innerHTML="QR EXPIRADO"
+return
 
 }
 
-resultado.innerHTML=
+resultado.innerHTML="ACCESO PERMITIDO<br>"+data.nombre
 
-"ACCESO PERMITIDO<br>"+
-"Casa:"+data.casa+"<br>"+
-"Visitante:"+data.nombre;
+if(data.fotoURL){
 
-if(data.identificacion){
+document.getElementById("foto").innerHTML=
 
-resultado.innerHTML+=
-"<br><img src='"+data.identificacion+"' width='200'>";
+"<img src='"+data.fotoURL+"' width='200'>"
 
 }
+
+}
+
+window.guardarFoto=async function(){
+
+let archivo=document.getElementById("fotoCaseta").files[0]
+
+if(!archivo)return
+
+let referencia=ref(storage,"idsCaseta/"+Date.now())
+
+await uploadBytes(referencia,archivo)
+
+let url=await getDownloadURL(referencia)
+
+await addDoc(collection(db,"registroAccesos"),{
+
+nombre:datosVisita.nombre,
+
+casa:datosVisita.casa,
+
+foto:url,
+
+fecha:Date.now()
+
+})
+
+alert("Registro guardado")
 
 }
 
 const html5QrCode=new Html5QrcodeScanner(
 "reader",
 {fps:10,qrbox:250}
-);
+)
 
-html5QrCode.render(onScanSuccess);
+html5QrCode.render(onScanSuccess)
