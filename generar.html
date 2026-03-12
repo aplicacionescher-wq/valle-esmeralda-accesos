@@ -1,13 +1,22 @@
 <!DOCTYPE html>
 <html>
 
+<head>
+<meta charset="UTF-8">
+<title>Registrar visita</title>
+</head>
+
 <body>
 
 <h2>Registrar visita</h2>
 
 <input id="nombre" placeholder="Nombre visitante">
 
-<input id="telefono" placeholder="WhatsApp visitante">
+<br><br>
+
+<input id="telefono" placeholder="Teléfono WhatsApp">
+
+<br><br>
 
 <select id="tipo">
 
@@ -18,15 +27,25 @@
 
 </select>
 
-<h3>Identificación visitante</h3>
+<br><br>
 
-<input type="file" id="identificacion" accept="image/*">
+<label>Identificación visitante</label>
+
+<br>
+
+<input type="file" id="foto">
+
+<br><br>
 
 <button onclick="crearQR()">Generar QR</button>
 
+<br><br>
+
 <div id="qr"></div>
 
-<button onclick="enviarWhatsApp()">Enviar QR por WhatsApp</button>
+<br>
+
+<button onclick="enviarWhats()">Enviar por WhatsApp</button>
 
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
 
