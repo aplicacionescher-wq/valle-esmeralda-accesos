@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Historial de accesos</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#f4f4f4;
+text-align:center;
+padding:20px;
+}
+
+.logo{
+width:100px;
+}
+
+.card{
+background:white;
+padding:15px;
+border-radius:10px;
+max-width:900px;
+margin:auto;
+box-shadow:0 2px 5px rgba(0,0,0,0.2);
+}
+
+input,button{
+padding:10px;
+margin:5px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:10px;
+}
+
+th,td{
+border:1px solid #ddd;
+padding:8px;
+font-size:14px;
+}
+
+th{
+background:#2e7d32;
+color:white;
+}
+
+button{
+background:#2e7d32;
+color:white;
+border:none;
+border-radius:5px;
+cursor:pointer;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<img src="logo.png" class="logo">
+
+<div class="card">
+
+<h2>Historial de Accesos</h2>
+
+<label>Desde:</label>
+<input type="date" id="desde">
+
+<label>Hasta:</label>
+<input type="date" id="hasta">
+
+<br>
+
+<button onclick="filtrar()">Filtrar</button>
+<button onclick="exportarExcel()">Exportar a Excel</button>
+
+<table id="tabla">
+
+<thead>
+<tr>
+<th>Fecha</th>
+<th>Nombre</th>
+<th>Casa</th>
+<th>Autoriza</th>
+</tr>
+</thead>
+
+<tbody></tbody>
+
+</table>
+
+</div>
+
+<script type="module" src="historial.js"></script>
+
+</body>
+
+</html>
