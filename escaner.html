@@ -16,6 +16,10 @@ color:white;
 padding:20px;
 }
 
+h2{
+color:#22c55e;
+}
+
 #reader{
 margin:auto;
 max-width:300px;
@@ -29,6 +33,19 @@ font-size:18px;
 img{
 margin-top:10px;
 border-radius:10px;
+}
+
+button{
+background:#22c55e;
+color:white;
+border:none;
+padding:10px 20px;
+border-radius:10px;
+cursor:pointer;
+}
+
+input{
+margin-top:10px;
 }
 </style>
 
@@ -52,8 +69,10 @@ border-radius:10px;
 
 <button onclick="guardarFoto()">Guardar acceso</button>
 
+<!-- LIBRERÍA QR -->
 <script src="https://unpkg.com/html5-qrcode"></script>
 
+<!-- TU JS -->
 <script type="module" src="scanner.js"></script>
 
 </body>
