@@ -12,7 +12,9 @@ getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js"
 
 let datosVisita = null
+let html5QrCode = null
 
+// 🔍 CUANDO ESCANEA
 function onScanSuccess(decodedText) {
 
 try {
@@ -29,20 +31,19 @@ uber: 7200000,
 paqueteria: 43200000
 }
 
-let resultado = document.getElementById("resultado")
-
 if (ahora - data.timestamp > expiracion[data.tipo]) {
-resultado.innerHTML = "❌ QR EXPIRADO"
+document.getElementById("resultado").innerHTML = "❌ QR EXPIRADO"
 return
 }
 
-resultado.innerHTML = `
+document.getElementById("resultado").innerHTML = `
 ✅ ACCESO PERMITIDO <br><br>
 👤 ${data.nombre} <br>
 🏠 Casa: ${data.casa} <br>
 🧑 Autoriza: ${data.autoriza}
 `
 
+// FOTO
 if (data.fotoURL) {
 document.getElementById("foto").innerHTML =
 "<img src='" + data.fotoURL + "' width='200'>"
@@ -54,54 +55,22 @@ document.getElementById("resultado").innerHTML = "⚠️ QR inválido"
 
 }
 
-// GUARDAR REGISTRO
-window.guardarFoto = async function () {
-
-if (!datosVisita) {
-alert("Primero escanea un QR")
-return
-}
-
-let archivo = document.getElementById("fotoCaseta").files[0]
-
-if (!archivo) {
-alert("Selecciona una foto")
-return
-}
-
-let referencia = ref(storage, "idsCaseta/" + Date.now())
-
-await uploadBytes(referencia, archivo)
-
-let url = await getDownloadURL(referencia)
-
-await addDoc(collection(db, "registroAccesos"), {
-nombre: datosVisita.nombre,
-autoriza: datosVisita.autoriza,
-casa: datosVisita.casa,
-tipo: datosVisita.tipo,
-foto: url,
-fecha: Date.now()
-})
-
-alert("✅ Guardado")
-
-}
-
-// 🔥 INICIAR CÁMARA (OPTIMIZADO PARA CELULAR)
-async function iniciarScanner(){
+// 📷 BOTÓN ACTIVAR CÁMARA
+window.activarCamara = async function(){
 
 let reader = document.getElementById("reader")
+let mensaje = document.getElementById("mensaje")
+
+mensaje.innerHTML = "🔄 Activando cámara..."
 
 try{
 
-const html5QrCode = new Html5Qrcode("reader")
+html5QrCode = new Html5Qrcode("reader")
 
 const devices = await Html5Qrcode.getCameras()
 
 if(devices && devices.length){
 
-// 📱 Usa cámara trasera
 let camara = devices[devices.length - 1].id
 
 await html5QrCode.start(
@@ -113,25 +82,63 @@ qrbox:250
 onScanSuccess
 )
 
+mensaje.innerHTML = "✅ Cámara activa"
+
 }else{
-reader.innerHTML="❌ No hay cámara disponible"
+
+mensaje.innerHTML = "❌ No hay cámara disponible"
+
 }
 
 }catch(error){
 
 console.error(error)
 
-reader.innerHTML=`
-❌ No se pudo abrir la cámara <br><br>
+mensaje.innerHTML = `
+❌ No se pudo activar cámara <br><br>
 
-👉 SOLUCIÓN: <br>
+👉 Solución: <br>
+- Permitir cámara <br>
 - Abrir en Chrome <br>
-- No usar WhatsApp <br>
-- Permitir cámara
+- No usar WhatsApp
 `
 
 }
 
 }
 
-iniciarScanner()
+// 💾 GUARDAR REGISTRO
+window.guardarFoto = async function(){
+
+if(!datosVisita){
+alert("Primero escanea un QR")
+return
+}
+
+let archivo = document.getElementById("fotoCaseta").files[0]
+
+if(!archivo){
+alert("Selecciona una foto")
+return
+}
+
+let referencia = ref(storage,"idsCaseta/"+Date.now())
+
+await uploadBytes(referencia,archivo)
+
+let url = await getDownloadURL(referencia)
+
+await addDoc(collection(db,"registroAccesos"),{
+
+nombre: datosVisita.nombre,
+autoriza: datosVisita.autoriza,
+casa: datosVisita.casa,
+tipo: datosVisita.tipo,
+foto: url,
+fecha: Date.now()
+
+})
+
+alert("✅ Registro guardado")
+
+}
