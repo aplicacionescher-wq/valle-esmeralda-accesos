@@ -13,7 +13,6 @@ getDownloadURL
 
 let datosVisita = null
 
-// 🔍 CUANDO ESCANEA
 function onScanSuccess(decodedText) {
 
 try {
@@ -39,25 +38,23 @@ return
 
 resultado.innerHTML = `
 ✅ ACCESO PERMITIDO <br><br>
-👤 Visitante: ${data.nombre} <br>
+👤 ${data.nombre} <br>
 🏠 Casa: ${data.casa} <br>
-🧑 Autoriza: ${data.autoriza} <br>
-🚗 Tipo: ${data.tipo}
+🧑 Autoriza: ${data.autoriza}
 `
 
-// FOTO VISITANTE
 if (data.fotoURL) {
 document.getElementById("foto").innerHTML =
 "<img src='" + data.fotoURL + "' width='200'>"
 }
 
-} catch (error) {
+} catch (e) {
 document.getElementById("resultado").innerHTML = "⚠️ QR inválido"
 }
 
 }
 
-// 📷 GUARDAR REGISTRO
+// GUARDAR REGISTRO
 window.guardarFoto = async function () {
 
 if (!datosVisita) {
@@ -87,40 +84,54 @@ foto: url,
 fecha: Date.now()
 })
 
-alert("✅ Registro guardado")
+alert("✅ Guardado")
 
 }
 
-// 🚀 INICIAR ESCÁNER
-function iniciarScanner() {
+// 🔥 INICIAR CÁMARA (OPTIMIZADO PARA CELULAR)
+async function iniciarScanner(){
 
-if (!navigator.mediaDevices) {
-document.getElementById("reader").innerHTML =
-"❌ Tu dispositivo no soporta cámara"
-return
-}
+let reader = document.getElementById("reader")
 
-try {
+try{
 
-const html5QrCode = new Html5QrcodeScanner(
-"reader",
-{ fps: 10, qrbox: 250 }
+const html5QrCode = new Html5Qrcode("reader")
+
+const devices = await Html5Qrcode.getCameras()
+
+if(devices && devices.length){
+
+// 📱 Usa cámara trasera
+let camara = devices[devices.length - 1].id
+
+await html5QrCode.start(
+camara,
+{
+fps:10,
+qrbox:250
+},
+onScanSuccess
 )
 
-html5QrCode.render(onScanSuccess)
+}else{
+reader.innerHTML="❌ No hay cámara disponible"
+}
 
-} catch (error) {
+}catch(error){
 
 console.error(error)
 
-document.getElementById("reader").innerHTML = `
-❌ Error al acceder a la cámara <br><br>
-👉 Permite permisos o usa celular
+reader.innerHTML=`
+❌ No se pudo abrir la cámara <br><br>
+
+👉 SOLUCIÓN: <br>
+- Abrir en Chrome <br>
+- No usar WhatsApp <br>
+- Permitir cámara
 `
 
 }
 
 }
 
-// ▶️ INICIAR
 iniciarScanner()
