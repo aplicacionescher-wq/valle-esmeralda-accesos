@@ -2,10 +2,7 @@ import { db,storage } from "./firebase.js"
 
 import {
 collection,
-addDoc,
-doc,
-getDoc,
-updateDoc
+addDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"
 
 import {
@@ -16,31 +13,14 @@ getDownloadURL
 
 let datosVisita=null
 
-async function onScanSuccess(decodedText){
-
-let data=JSON.parse(decodedText)
-
-let resultado=document.getElementById("resultado")
+// 🔍 CUANDO ESCANEA
+function onScanSuccess(decodedText){
 
 try{
 
-// 🔍 VALIDAR CONTRA FIREBASE
-let refDoc=doc(db,"visitas",data.id)
+let data=JSON.parse(decodedText)
+datosVisita=data
 
-let snap=await getDoc(refDoc)
-
-if(!snap.exists()){
-
-resultado.innerHTML="QR NO VÁLIDO"
-return
-
-}
-
-let visita=snap.data()
-
-datosVisita=visita
-
-// ⏱️ VALIDAR EXPIRACIÓN
 let ahora=Date.now()
 
 let expiracion={
@@ -50,53 +30,34 @@ uber:7200000,
 paqueteria:43200000
 }
 
-if(ahora-visita.timestamp>expiracion[visita.tipo]){
+let resultado=document.getElementById("resultado")
 
-resultado.innerHTML="QR EXPIRADO"
+if(ahora-data.timestamp>expiracion[data.tipo]){
+resultado.innerHTML="❌ QR EXPIRADO"
 return
-
 }
 
-// 🔐 VALIDAR SI YA SE USÓ
-if(visita.usado){
-
-resultado.innerHTML="⚠️ QR YA UTILIZADO"
-return
-
-}
-
-// ✅ MARCAR COMO USADO
-await updateDoc(refDoc,{usado:true})
-
-// ✅ MOSTRAR INFO
 resultado.innerHTML=`
-
-ACCESO PERMITIDO
-
-Visitante: ${visita.nombre}
-Casa: ${visita.casa}
-Autoriza: ${visita.autoriza}
-Tipo: ${visita.tipo}
-
+✅ ACCESO PERMITIDO <br><br>
+👤 Visitante: ${data.nombre} <br>
+🏠 Casa: ${data.casa} <br>
+🧑 Autoriza: ${data.autoriza} <br>
+🚗 Tipo: ${data.tipo}
 `
 
 // 📷 FOTO VISITANTE
-if(visita.fotoURL){
-
+if(data.fotoURL){
 document.getElementById("foto").innerHTML=
-"<img src='"+visita.fotoURL+"' width='200'>"
-
+"<img src='"+data.fotoURL+"' width='200'>"
 }
 
-}catch(error){
-
-console.error(error)
-resultado.innerHTML="ERROR AL ESCANEAR"
-
+}catch(e){
+document.getElementById("resultado").innerHTML="⚠️ QR inválido"
 }
 
 }
 
+// 📷 GUARDAR FOTO CASETA
 window.guardarFoto=async function(){
 
 if(!datosVisita){
@@ -106,7 +67,10 @@ return
 
 let archivo=document.getElementById("fotoCaseta").files[0]
 
-if(!archivo)return
+if(!archivo){
+alert("Selecciona una foto")
+return
+}
 
 let referencia=ref(storage,"idsCaseta/"+Date.now())
 
@@ -114,7 +78,6 @@ await uploadBytes(referencia,archivo)
 
 let url=await getDownloadURL(referencia)
 
-// 💾 GUARDAR REGISTRO COMPLETO
 await addDoc(collection(db,"registroAccesos"),{
 
 nombre:datosVisita.nombre,
@@ -126,9 +89,26 @@ fecha:Date.now()
 
 })
 
-alert("Registro guardado correctamente")
+alert("✅ Registro guardado")
 
 }
+
+// 🚀 INICIAR ESCÁNER (CON CONTROL DE ERRORES)
+async function iniciarScanner(){
+
+let contenedor=document.getElementById("reader")
+
+// 🔎 VERIFICAR CÁMARA
+if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+
+contenedor.innerHTML=`
+❌ Tu dispositivo no soporta cámara <br><br>
+👉 Usa un celular o navegador moderno
+`
+return
+}
+
+try{
 
 const html5QrCode=new Html5QrcodeScanner(
 "reader",
@@ -136,3 +116,26 @@ const html5QrCode=new Html5QrcodeScanner(
 )
 
 html5QrCode.render(onScanSuccess)
+
+}catch(error){
+
+console.error(error)
+
+contenedor.innerHTML=`
+❌ No se pudo acceder a la cámara <br><br>
+
+Posibles causas: <br>
+- Permiso denegado <br>
+- No hay cámara <br>
+- Ya está en uso <br><br>
+
+👉 Solución: <br>
+Usa un celular o permite la cámara
+`
+
+}
+
+}
+
+// ▶️ EJECUTAR
+iniciarScanner()
