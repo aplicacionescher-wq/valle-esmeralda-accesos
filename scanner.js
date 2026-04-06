@@ -13,27 +13,22 @@ getDownloadURL
 
 let datosVisita = null
 
-// 🔥 PROCESAR QR (ACEPTA URL Y JSON)
+// 🔥 PROCESAR QR
 function procesarQR(decodedText){
 
 try{
 
-// 👉 SI ES URL
+// 👉 SI ES URL (TU CASO)
 if(decodedText.includes("data=")){
-
 let url = new URL(decodedText)
 let encoded = url.searchParams.get("data")
-
-if(!encoded) throw "QR inválido"
-
-let json = atob(encoded)
-datosVisita = JSON.parse(json)
-
+datosVisita = JSON.parse(atob(encoded))
 }else{
-// 👉 SI ES JSON DIRECTO
+// 👉 SI ES JSON
 datosVisita = JSON.parse(decodedText)
 }
 
+// VALIDAR EXPIRACIÓN
 let ahora = Date.now()
 
 let expiracion = {
@@ -43,15 +38,14 @@ uber:7200000,
 paqueteria:43200000
 }
 
-let resultado = document.getElementById("resultado")
-
 if(ahora - datosVisita.timestamp > expiracion[datosVisita.tipo]){
-resultado.innerHTML = "❌ QR EXPIRADO"
+document.getElementById("resultado").innerHTML = "❌ QR EXPIRADO"
 return
 }
 
-resultado.innerHTML = `
-✅ ACCESO PERMITIDO <br>
+// MOSTRAR INFO
+document.getElementById("resultado").innerHTML = `
+✅ ACCESO PERMITIDO <br><br>
 👤 ${datosVisita.nombre} <br>
 🏠 Casa: ${datosVisita.casa} <br>
 🛂 Autoriza: ${datosVisita.autoriza} <br>
@@ -67,25 +61,23 @@ document.getElementById("resultado").innerHTML = "❌ QR INVÁLIDO"
 // 📷 ACTIVAR CÁMARA
 window.iniciarCamara = () => {
 
-const html5QrCode = new Html5Qrcode("reader")
+const qr = new Html5Qrcode("reader")
 
 Html5Qrcode.getCameras().then(devices => {
 
-if(devices && devices.length){
+if(devices.length){
 
-let camara = devices[0].id
-
-html5QrCode.start(
-camara,
+qr.start(
+devices[0].id,
 { fps: 10, qrbox: 250 },
-(decodedText) => {
-procesarQR(decodedText)
+(text) => {
+procesarQR(text)
 },
-(errorMessage) => {}
+(err) => {}
 )
 
 }else{
-alert("No hay cámara disponible")
+alert("No hay cámara")
 }
 
 }).catch(err => {
@@ -94,22 +86,24 @@ alert("Error al acceder a la cámara")
 
 }
 
-// 💾 GUARDAR EN FIREBASE
-window.guardarFoto = async function(){
+// 💾 REGISTRAR EN FIREBASE
+window.guardarAcceso = async () => {
 
 let archivo = document.getElementById("fotoCaseta").files[0]
 
-if(!archivo){
-alert("Toma o selecciona una foto")
-return
-}
-
 if(!datosVisita){
-alert("Escanea un QR primero")
+alert("Primero escanea el QR")
 return
 }
 
-let referencia = ref(storage,"idsCaseta/"+Date.now())
+if(!archivo){
+alert("Toma una foto")
+return
+}
+
+try{
+
+let referencia = ref(storage,"accesos/"+Date.now())
 
 await uploadBytes(referencia,archivo)
 
@@ -117,13 +111,18 @@ let url = await getDownloadURL(referencia)
 
 await addDoc(collection(db,"registroAccesos"),{
 nombre:datosVisita.nombre,
-autoriza:datosVisita.autoriza,
 casa:datosVisita.casa,
+autoriza:datosVisita.autoriza,
 tipo:datosVisita.tipo,
 foto:url,
 fecha:Date.now()
 })
 
-alert("✅ Acceso guardado")
+alert("✅ Entrada registrada")
+
+}catch(error){
+alert("Error al guardar")
+console.error(error)
+}
 
 }
