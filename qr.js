@@ -1,112 +1,43 @@
-import { db,storage } from "./firebase.js"
+let datosGlobal = null
 
-import {
-collection,
-addDoc
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"
+window.crearQR = () => {
 
-import {
-ref,
-uploadBytes,
-getDownloadURL
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js"
-
-let qrID=""
-
-window.crearQR=async function(){
-
-let casa=localStorage.getItem("casa") || "N/A"
-let autoriza=localStorage.getItem("usuario") || "Residente"
-
-let nombre=document.getElementById("nombre").value
-let telefono=document.getElementById("telefono").value
-let tipo=document.getElementById("tipo").value
-
-if(!nombre || !telefono){
-alert("Completa todos los datos")
-return
+let data = {
+nombre: document.getElementById("nombre").value,
+casa: document.getElementById("casa").value,
+autoriza: document.getElementById("autoriza").value,
+tipo: document.getElementById("tipo").value,
+timestamp: Date.now()
 }
 
-let archivo=document.getElementById("foto").files[0]
+datosGlobal = data
 
-let fotoURL=""
+let encoded = btoa(JSON.stringify(data))
 
-// 📷 SUBIR FOTO
-if(archivo){
+let url = location.origin + "/verqr.html?data=" + encoded
 
-let referencia=ref(storage,"ids/"+Date.now())
+document.getElementById("qr").innerHTML = ""
 
-await uploadBytes(referencia,archivo)
-
-fotoURL=await getDownloadURL(referencia)
-
-}
-
-// ⏱️ FECHA
-let timestamp=Date.now()
-
-// 💾 GUARDAR EN FIREBASE
-let docRef=await addDoc(collection(db,"visitas"),{
-
-casa,
-autoriza,
-nombre,
-telefono,
-tipo,
-fotoURL,
-timestamp,
-usado:false
-
-})
-
-// 🆔 ID DEL QR
-qrID=docRef.id
-
-// 🔗 LINK DEL QR (IMPORTANTE)
-let qrLink="https://valle-esmeralda-accesos.web.app/verqr.html?id="+qrID
-
-// 📲 GENERAR QR
-document.getElementById("qr").innerHTML=""
-
-new QRCode(document.getElementById("qr"),{
-text:qrLink,
-width:220,
-height:220
-})
+new QRCode(document.getElementById("qr"), url)
 
 }
 
 // 📲 ENVIAR WHATSAPP
-window.enviarWhats=function(){
+window.enviarWhats = () => {
 
-let telefono=document.getElementById("telefono").value
-let nombre=document.getElementById("nombre").value
-
-let casa=localStorage.getItem("casa") || "N/A"
-let autoriza=localStorage.getItem("usuario") || "Residente"
-
-if(!qrID){
+if (!datosGlobal) {
 alert("Primero genera el QR")
 return
 }
 
-// 🔗 MISMO LINK DEL QR
-let qrLink="https://valle-esmeralda-accesos.web.app/verqr.html?id="+qrID
+let encoded = btoa(JSON.stringify(datosGlobal)
 
-let mensaje=`ACCESO AUTORIZADO
+)
 
-Fraccionamiento Valle Esmeralda
+let url = location.origin + "/verqr.html?data=" + encoded
 
-Visitante: ${nombre}
-Casa: ${casa}
-Autoriza: ${autoriza}
+let mensaje = "Acceso QR: " + url
 
-Mostrar QR en caseta:
-
-${qrLink}`
-
-let url="https://wa.me/52"+telefono+"?text="+encodeURIComponent(mensaje)
-
-window.open(url)
+window.open("https://wa.me/?text=" + encodeURIComponent(mensaje))
 
 }
