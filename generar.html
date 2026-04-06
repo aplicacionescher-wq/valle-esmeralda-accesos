@@ -1,31 +1,29 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>Generar QR</title>
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
-</head>
+<h2>Generar Acceso</h2>
 
-<body>
+<input id="nombre" placeholder="Nombre visitante">
 
-<h2>Generar QR</h2>
+<input id="casa" placeholder="Número de casa">
 
-<input id="nombre" placeholder="Nombre"><br><br>
-<input id="casa" placeholder="Casa"><br><br>
-<input id="autoriza" placeholder="Autoriza"><br><br>
+<input id="autoriza" placeholder="Quién autoriza">
 
 <select id="tipo">
 <option value="visita">Visita</option>
 <option value="proveedor">Proveedor</option>
 <option value="uber">Uber</option>
 <option value="paqueteria">Paquetería</option>
-</select><br><br>
+</select>
 
 <button onclick="crearQR()">Generar QR</button>
 
 <div id="qr"></div>
 
+<button class="whatsapp" onclick="enviarWhats()">Enviar WhatsApp</button>
+
+</div>
+
 <script>
+
+let datosQR = null
 
 function crearQR(){
 
@@ -34,12 +32,14 @@ let casa = document.getElementById("casa").value
 let autoriza = document.getElementById("autoriza").value
 let tipo = document.getElementById("tipo").value
 
+// VALIDACIÓN
 if(!nombre || !casa || !autoriza){
-alert("Completa todo")
+alert("Completa todos los campos")
 return
 }
 
-let data = {
+// CREAR DATA
+datosQR = {
 nombre,
 casa,
 autoriza,
@@ -47,14 +47,39 @@ tipo,
 timestamp: Date.now()
 }
 
-let encoded = btoa(JSON.stringify(data))
+// CODIFICAR
+let encoded = btoa(JSON.stringify(datosQR))
 
-// 🔥 AJUSTA SI USAS GITHUB
+// 🔥 IMPORTANTE PARA TU REPO
 let url = location.origin + "/valle-esmeralda-accesos/verqr.html?data=" + encoded
 
+// LIMPIAR QR
 document.getElementById("qr").innerHTML = ""
 
-new QRCode(document.getElementById("qr"), url)
+// GENERAR QR
+new QRCode(document.getElementById("qr"), {
+text: url,
+width: 200,
+height: 200
+})
+
+}
+
+// WHATSAPP
+function enviarWhats(){
+
+if(!datosQR){
+alert("Genera el QR primero")
+return
+}
+
+let encoded = btoa(JSON.stringify(datosQR))
+
+let url = location.origin + "/valle-esmeralda-accesos/verqr.html?data=" + encoded
+
+let mensaje = "Acceso:\n" + url
+
+window.open("https://wa.me/?text=" + encodeURIComponent(mensaje))
 
 }
 
