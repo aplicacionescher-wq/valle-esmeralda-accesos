@@ -6,9 +6,11 @@ addDoc
 
 window.crearQR = async function(){
 
-let nombre = document.getElementById("nombre").value
-let casa = document.getElementById("casa").value
-let autoriza = document.getElementById("autoriza").value
+try{
+
+let nombre = document.getElementById("nombre").value.trim()
+let casa = document.getElementById("casa").value.trim()
+let autoriza = document.getElementById("autoriza").value.trim()
 let tipo = document.getElementById("tipo").value
 
 if(!nombre || !casa || !autoriza){
@@ -16,7 +18,7 @@ alert("Completa todos los campos")
 return
 }
 
-// guardar en firebase
+// 🔥 Guardar en Firebase
 let docRef = await addDoc(collection(db,"visitas"),{
 nombre,
 casa,
@@ -25,9 +27,17 @@ tipo,
 timestamp: Date.now()
 })
 
-// usar solo ID
+// 🔥 VALIDAR ID
+if(!docRef.id){
+alert("Error generando ID")
+return
+}
+
 let id = docRef.id
 
+console.log("ID generado:", id)
+
+// 🔥 GENERAR QR CON TEXTO REAL
 let qrDiv = document.getElementById("qr")
 qrDiv.innerHTML = ""
 
@@ -36,5 +46,15 @@ text: id,
 width:220,
 height:220
 })
+
+// 🔥 MOSTRAR ID EN PANTALLA (DEBUG)
+qrDiv.innerHTML += `<p>ID: ${id}</p>`
+
+}catch(e){
+
+console.error(e)
+alert("Error al generar QR")
+
+}
 
 }
