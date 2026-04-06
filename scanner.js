@@ -13,25 +13,24 @@ getDownloadURL
 
 let datosVisita = null
 
+// 🔥 PROCESAR QR (ACEPTA URL Y JSON)
 function procesarQR(decodedText){
 
 try{
 
-// 🔥 SI ES URL
+// 👉 SI ES URL
 if(decodedText.includes("data=")){
 
 let url = new URL(decodedText)
 let encoded = url.searchParams.get("data")
 
-if(!encoded){
-throw "QR inválido"
-}
+if(!encoded) throw "QR inválido"
 
 let json = atob(encoded)
 datosVisita = JSON.parse(json)
 
 }else{
-// 🔥 SI ES JSON DIRECTO
+// 👉 SI ES JSON DIRECTO
 datosVisita = JSON.parse(decodedText)
 }
 
@@ -53,10 +52,10 @@ return
 
 resultado.innerHTML = `
 ✅ ACCESO PERMITIDO <br>
-Visitante: ${datosVisita.nombre} <br>
-Casa: ${datosVisita.casa} <br>
-Autoriza: ${datosVisita.autoriza} <br>
-Tipo: ${datosVisita.tipo}
+👤 ${datosVisita.nombre} <br>
+🏠 Casa: ${datosVisita.casa} <br>
+🛂 Autoriza: ${datosVisita.autoriza} <br>
+📦 Tipo: ${datosVisita.tipo}
 `
 
 }catch(e){
@@ -65,6 +64,7 @@ document.getElementById("resultado").innerHTML = "❌ QR INVÁLIDO"
 
 }
 
+// 📷 ACTIVAR CÁMARA
 window.iniciarCamara = () => {
 
 const html5QrCode = new Html5Qrcode("reader")
@@ -89,15 +89,25 @@ alert("No hay cámara disponible")
 }
 
 }).catch(err => {
-alert("Error al acceder a cámara")
+alert("Error al acceder a la cámara")
 })
 
 }
 
+// 💾 GUARDAR EN FIREBASE
 window.guardarFoto = async function(){
 
 let archivo = document.getElementById("fotoCaseta").files[0]
-if(!archivo || !datosVisita)return
+
+if(!archivo){
+alert("Toma o selecciona una foto")
+return
+}
+
+if(!datosVisita){
+alert("Escanea un QR primero")
+return
+}
 
 let referencia = ref(storage,"idsCaseta/"+Date.now())
 
@@ -114,6 +124,6 @@ foto:url,
 fecha:Date.now()
 })
 
-alert("Registro guardado")
+alert("✅ Acceso guardado")
 
 }
