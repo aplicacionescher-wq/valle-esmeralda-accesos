@@ -1,6 +1,8 @@
 import { db, storage } from "./firebase.js"
 
 import {
+doc,
+getDoc,
 collection,
 addDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"
@@ -12,51 +14,28 @@ getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js"
 
 let datosVisita = null
-let scanner = null
 
 window.iniciarCamara = async function(){
 
 const html5QrCode = new Html5Qrcode("reader")
 
-try{
-
-// 🔥 Obtener cámaras disponibles
-const devices = await Html5Qrcode.getCameras()
-
-if(devices && devices.length){
-
-// 🔥 Buscar cámara trasera
-let camaraTrasera = devices.find(d =>
-d.label.toLowerCase().includes("back") ||
-d.label.toLowerCase().includes("rear")
-)
-
-// Si no encuentra, usa la última (normalmente trasera)
-let cameraId = camaraTrasera ? camaraTrasera.id : devices[devices.length - 1].id
-
-scanner = html5QrCode
-
-await scanner.start(
-cameraId,
+await html5QrCode.start(
+{ facingMode: "environment" },
 { fps: 10, qrbox: 250 },
-onScanSuccess
-)
-
-}else{
-alert("No hay cámaras disponibles")
-}
-
-}catch(e){
-alert("Error cámara: " + e)
-}
-
-}
-
-function onScanSuccess(decodedText){
+async (qrID) => {
 
 try{
 
-let data = JSON.parse(decodedText)
+// 🔥 Buscar en Firebase
+let docRef = doc(db,"visitas",qrID)
+let snap = await getDoc(docRef)
+
+if(!snap.exists()){
+document.getElementById("resultado").innerHTML="QR INVÁLIDO"
+return
+}
+
+let data = snap.data()
 datosVisita = data
 
 let ahora = Date.now()
@@ -66,11 +45,6 @@ visita:86400000,
 proveedor:43200000,
 uber:7200000,
 paqueteria:43200000
-}
-
-if(!expiracion[data.tipo]){
-document.getElementById("resultado").innerHTML="QR INVÁLIDO"
-return
 }
 
 if(ahora - data.timestamp > expiracion[data.tipo]){
@@ -84,40 +58,12 @@ ${data.nombre}<br>
 Casa: ${data.casa}
 `
 
-scanner.stop()
+html5QrCode.stop()
 
 }catch(e){
-document.getElementById("resultado").innerHTML="QR INVÁLIDO"
+document.getElementById("resultado").innerHTML="ERROR"
 }
 
-}
-
-window.guardarFoto = async function(){
-
-if(!datosVisita){
-alert("Escanea primero")
-return
-}
-
-let archivo = document.getElementById("fotoCaseta").files[0]
-
-if(!archivo){
-alert("Selecciona foto")
-return
-}
-
-let referencia = ref(storage,"registros/"+Date.now())
-
-await uploadBytes(referencia,archivo)
-
-let url = await getDownloadURL(referencia)
-
-await addDoc(collection(db,"registroAccesos"),{
-...datosVisita,
-foto:url,
-fecha:Date.now()
 })
-
-alert("Registro guardado")
 
 }
