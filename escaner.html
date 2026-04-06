@@ -1,10 +1,12 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 
 <head>
 <meta charset="UTF-8">
-<title>Escáner QR</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Escáner QR</title>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
 
 <style>
 body{
@@ -15,52 +17,28 @@ text-align:center;
 padding:20px;
 }
 
-h2{
-margin-bottom:10px;
+#reader{
+width:300px;
+margin:auto;
 }
 
 button{
-width:90%;
-max-width:300px;
-padding:15px;
-margin:10px;
-font-size:18px;
+padding:12px;
+background:#0ea5e9;
 border:none;
 border-radius:10px;
-background:#22c55e;
 color:white;
+margin-top:10px;
 cursor:pointer;
 }
 
 button:hover{
-background:#16a34a;
-}
-
-#reader{
-margin:auto;
-width:300px;
-margin-top:20px;
+background:#0284c7;
 }
 
 #resultado{
 margin-top:20px;
 font-size:18px;
-}
-
-img{
-margin-top:10px;
-border-radius:10px;
-}
-
-input{
-margin-top:10px;
-}
-
-.card{
-background:#1e293b;
-padding:15px;
-border-radius:15px;
-margin-top:20px;
 }
 
 </style>
@@ -69,33 +47,23 @@ margin-top:20px;
 
 <body>
 
-<h2>📷 Escanear QR</h2>
+<h2>Escáner de Accesos</h2>
 
-<button onclick="activarCamara()">Activar cámara</button>
-
-<p id="mensaje"></p>
+<button onclick="iniciarCamara()">📷 Activar cámara</button>
 
 <div id="reader"></div>
 
-<div class="card">
-
 <div id="resultado"></div>
-
-<div id="foto"></div>
-
-<input type="file" id="fotoCaseta">
 
 <br>
 
+<input type="file" id="fotoCaseta">
+
+<br><br>
+
 <button onclick="guardarFoto()">Guardar acceso</button>
 
-</div>
-
-<!-- Librería QR -->
-<script src="https://unpkg.com/html5-qrcode"></script>
-
-<!-- Tu lógica -->
-<script type="module" src="scanner.js"></script>
+<script type="module" src="./scanner.js"></script>
 
 </body>
 
