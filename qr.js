@@ -1,4 +1,10 @@
-window.crearQR = function(){
+import { db } from "./firebase.js"
+import {
+collection,
+addDoc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"
+
+window.crearQR = async function(){
 
 let nombre = document.getElementById("nombre").value
 let casa = document.getElementById("casa").value
@@ -10,35 +16,39 @@ alert("Completa todos los campos")
 return
 }
 
-let datos = {
+// 🔥 Guardar en Firebase
+let docRef = await addDoc(collection(db,"visitas"),{
 nombre,
 casa,
 autoriza,
 tipo,
 timestamp: Date.now()
-}
+})
+
+// 🔥 SOLO ID en QR (mucho más fácil de leer)
+let id = docRef.id
 
 let qrDiv = document.getElementById("qr")
 qrDiv.innerHTML = ""
 
 new QRCode(qrDiv,{
-text: JSON.stringify(datos),
+text: id,
 width:200,
 height:200
 })
 
-window.qrData = datos
+window.qrID = id
 
 }
 
 window.enviarWhats = function(){
 
-if(!window.qrData){
+if(!window.qrID){
 alert("Primero genera el QR")
 return
 }
 
-let mensaje = "Acceso QR:\n" + JSON.stringify(window.qrData)
+let mensaje = "Acceso QR:\nID: " + window.qrID
 
 let url = "https://wa.me/?text=" + encodeURIComponent(mensaje)
 
