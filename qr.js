@@ -2,11 +2,27 @@ let datosGlobal = null
 
 window.crearQR = () => {
 
+let nombre = document.getElementById("nombre")
+let casa = document.getElementById("casa")
+let autoriza = document.getElementById("autoriza")
+let tipo = document.getElementById("tipo")
+
+// VALIDACIÓN
+if(!nombre || !casa || !autoriza || !tipo){
+alert("Error: faltan campos en el formulario")
+return
+}
+
+if(!nombre.value || !casa.value || !autoriza.value){
+alert("Completa todos los campos")
+return
+}
+
 let data = {
-nombre: document.getElementById("nombre").value,
-casa: document.getElementById("casa").value,
-autoriza: document.getElementById("autoriza").value,
-tipo: document.getElementById("tipo").value,
+nombre: nombre.value,
+casa: casa.value,
+autoriza: autoriza.value,
+tipo: tipo.value,
 timestamp: Date.now()
 }
 
@@ -22,22 +38,17 @@ new QRCode(document.getElementById("qr"), url)
 
 }
 
-// 📲 ENVIAR WHATSAPP
 window.enviarWhats = () => {
 
-if (!datosGlobal) {
+if(!datosGlobal){
 alert("Primero genera el QR")
 return
 }
 
-let encoded = btoa(JSON.stringify(datosGlobal)
-
-)
+let encoded = btoa(JSON.stringify(datosGlobal))
 
 let url = location.origin + "/verqr.html?data=" + encoded
 
-let mensaje = "Acceso QR: " + url
-
-window.open("https://wa.me/?text=" + encodeURIComponent(mensaje))
+window.open("https://wa.me/?text=" + encodeURIComponent("Acceso QR: " + url))
 
 }
