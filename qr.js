@@ -1,78 +1,40 @@
-import { db, storage } from "./firebase.js"
-
+import { db } from "./firebase.js"
 import {
 collection,
 addDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"
 
-import {
-ref,
-uploadBytes,
-getDownloadURL
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js"
+window.crearQR = async function(){
 
-let datosVisita = null
+let nombre = document.getElementById("nombre").value
+let casa = document.getElementById("casa").value
+let autoriza = document.getElementById("autoriza").value
+let tipo = document.getElementById("tipo").value
 
-window.iniciarCamara = async function(){
-
-const html5QrCode = new Html5Qrcode("reader")
-
-await html5QrCode.start(
-{ facingMode: "environment" },
-{
-fps: 15,
-qrbox: { width: 250, height: 250 },
-aspectRatio: 1.0
-},
-onScanSuccess,
-(error) => {
-// ignorar errores de lectura
-}
-)
-
-}
-
-function onScanSuccess(decodedText){
-
-try{
-
-console.log("QR detectado:", decodedText)
-
-// 🔥 IMPORTANTE: volver a leer JSON
-let data = JSON.parse(decodedText)
-
-datosVisita = data
-
-let ahora = Date.now()
-
-let expiracion = {
-visita:86400000,
-proveedor:43200000,
-uber:7200000,
-paqueteria:43200000
-}
-
-if(!expiracion[data.tipo]){
-document.getElementById("resultado").innerHTML="QR INVÁLIDO"
+if(!nombre || !casa || !autoriza){
+alert("Completa todos los campos")
 return
 }
 
-if(ahora - data.timestamp > expiracion[data.tipo]){
-document.getElementById("resultado").innerHTML="QR EXPIRADO"
-return
-}
+// guardar en firebase
+let docRef = await addDoc(collection(db,"visitas"),{
+nombre,
+casa,
+autoriza,
+tipo,
+timestamp: Date.now()
+})
 
-document.getElementById("resultado").innerHTML = `
-ACCESO PERMITIDO<br>
-${data.nombre}<br>
-Casa: ${data.casa}
-`
+// usar solo ID
+let id = docRef.id
 
-}catch(e){
+let qrDiv = document.getElementById("qr")
+qrDiv.innerHTML = ""
 
-console.log("Error leyendo QR:", e)
-document.getElementById("resultado").innerHTML="QR NO VÁLIDO"
-
-}
+new QRCode(qrDiv,{
+text: id,
+width:220,
+height:220
+})
 
 }
