@@ -14,19 +14,39 @@ getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js"
 
 let datosVisita = null
+let scanner = null
 
 window.iniciarCamara = async function(){
 
 const html5QrCode = new Html5Qrcode("reader")
 
-await html5QrCode.start(
-{ facingMode: "environment" },
-{ fps: 10, qrbox: 250 },
-async (qrID) => {
+try{
+
+const devices = await Html5Qrcode.getCameras()
+
+let cameraId = devices.length > 1 ? devices[1].id : devices[0].id
+
+scanner = html5QrCode
+
+await scanner.start(
+cameraId,
+{
+fps: 15,
+qrbox: { width: 250, height: 250 }
+},
+onScanSuccess
+)
+
+}catch(e){
+alert("Error cámara: " + e)
+}
+
+}
+
+async function onScanSuccess(qrID){
 
 try{
 
-// 🔥 Buscar en Firebase
 let docRef = doc(db,"visitas",qrID)
 let snap = await getDoc(docRef)
 
@@ -58,12 +78,40 @@ ${data.nombre}<br>
 Casa: ${data.casa}
 `
 
-html5QrCode.stop()
+await scanner.stop()
 
 }catch(e){
 document.getElementById("resultado").innerHTML="ERROR"
 }
 
+}
+
+window.guardarFoto = async function(){
+
+if(!datosVisita){
+alert("Escanea primero")
+return
+}
+
+let archivo = document.getElementById("fotoCaseta").files[0]
+
+if(!archivo){
+alert("Selecciona foto")
+return
+}
+
+let referencia = ref(storage,"registros/"+Date.now())
+
+await uploadBytes(referencia,archivo)
+
+let url = await getDownloadURL(referencia)
+
+await addDoc(collection(db,"registroAccesos"),{
+...datosVisita,
+foto:url,
+fecha: Date.now()
 })
+
+alert("Registro guardado")
 
 }
