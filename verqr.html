@@ -3,8 +3,7 @@
 
 <head>
 <meta charset="UTF-8">
-<title>QR de Acceso</title>
-
+<title>Acceso QR</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -15,27 +14,12 @@ background:#0f172a;
 color:white;
 padding:20px;
 }
-
-h2{
-color:#22c55e;
-}
-
 .card{
 background:#1e293b;
 padding:20px;
 border-radius:15px;
-max-width:400px;
+max-width:300px;
 margin:auto;
-box-shadow:0 0 15px rgba(0,0,0,0.5);
-}
-
-img{
-border-radius:10px;
-margin-top:10px;
-}
-
-#qr{
-margin-top:20px;
 }
 </style>
 
@@ -44,87 +28,50 @@ margin-top:20px;
 <body>
 
 <div class="card">
-
-<h2>Acceso Autorizado</h2>
-
-<p id="info"></p>
-
-<div id="foto"></div>
-
-<div id="qr"></div>
-
-<p style="margin-top:20px;color:#facc15;">
-Muestra este código en caseta
-</p>
-
+<h2>Acceso autorizado</h2>
+<div id="info"></div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+<script>
 
-<script type="module">
+try{
 
-import { db } from "./firebase.js"
+let params = new URLSearchParams(location.search)
 
-import {
-doc,
-getDoc
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"
+let encoded = params.get("data")
 
-// 🔍 OBTENER ID DEL LINK
-let params=new URLSearchParams(window.location.search)
-let id=params.get("id")
+let data = JSON.parse(atob(encoded))
 
-if(!id){
-document.getElementById("info").innerHTML="QR inválido"
-throw new Error("Sin ID")
+let ahora = Date.now()
+
+let expiracion = {
+visita: 86400000,
+proveedor: 43200000,
+uber: 7200000,
+paqueteria: 43200000
 }
 
-// 🔥 CONSULTAR FIREBASE
-let docRef=doc(db,"visitas",id)
-let docSnap=await getDoc(docRef)
+// ⏱️ VALIDAR
+if (ahora - data.timestamp > expiracion[data.tipo]) {
 
-if(!docSnap.exists()){
-document.getElementById("info").innerHTML="QR no encontrado"
-throw new Error("No existe")
-}
+document.body.innerHTML = "<h2>❌ QR EXPIRADO</h2>"
 
-let data=docSnap.data()
+} else {
 
-// ⏱️ VALIDAR EXPIRACIÓN
-let ahora=Date.now()
-
-let expiracion={
-visita:86400000,
-proveedor:43200000,
-uber:7200000,
-paqueteria:43200000
-}
-
-if(ahora - data.timestamp > expiracion[data.tipo]){
-document.getElementById("info").innerHTML="QR EXPIRADO"
-throw new Error("Expirado")
-}
-
-// 📄 MOSTRAR INFO
-document.getElementById("info").innerHTML=`
-<b>Visitante:</b> ${data.nombre}<br>
-<b>Casa:</b> ${data.casa}<br>
-<b>Autoriza:</b> ${data.autoriza}<br>
-<b>Tipo:</b> ${data.tipo}
+document.getElementById("info").innerHTML = `
+<p><b>👤 Nombre:</b> ${data.nombre}</p>
+<p><b>🏠 Casa:</b> ${data.casa}</p>
+<p><b>🧑 Autoriza:</b> ${data.autoriza}</p>
+<p><b>🚗 Tipo:</b> ${data.tipo}</p>
 `
 
-// 📷 FOTO
-if(data.fotoURL){
-document.getElementById("foto").innerHTML=
-"<img src='"+data.fotoURL+"' width='200'>"
 }
 
-// 🔲 GENERAR QR (para escanear en caseta)
-new QRCode(document.getElementById("qr"),{
-text:JSON.stringify(data),
-width:220,
-height:220
-})
+}catch(e){
+
+document.body.innerHTML = "<h2>⚠️ QR inválido</h2>"
+
+}
 
 </script>
 
