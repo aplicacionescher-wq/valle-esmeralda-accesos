@@ -7,9 +7,8 @@ let casa = document.getElementById("casa")
 let autoriza = document.getElementById("autoriza")
 let tipo = document.getElementById("tipo")
 
-// VALIDACIÓN
 if(!nombre || !casa || !autoriza || !tipo){
-alert("Error: faltan campos en el formulario")
+alert("Error en IDs del HTML")
 return
 }
 
@@ -41,11 +40,13 @@ new QRCode(document.getElementById("qr"), url)
 window.enviarWhats = () => {
 
 if(!datosGlobal){
-alert("Primero genera el QR")
+alert("Genera el QR primero")
 return
 }
 
-let encoded = btoa(JSON.stringify(datosGlobal))
+let encoded = btoa(JSON.stringify(datosGlobal)
+
+)
 
 let url = location.origin + "/verqr.html?data=" + encoded
 
