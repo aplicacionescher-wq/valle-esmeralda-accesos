@@ -1,71 +1,24 @@
 <!DOCTYPE html>
 <html>
 <head>
-
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<title>Accesos Valle Esmeralda</title>
-
-<link rel="manifest" href="manifest.json">
-
-<style>
-
-body{
-font-family:Arial;
-text-align:center;
-margin-top:100px;
-}
-
-input{
-padding:10px;
-margin:5px;
-width:250px;
-}
-
-button{
-padding:10px 20px;
-background:#065f46;
-color:white;
-border:none;
-cursor:pointer;
-}
-
-</style>
-
+<title>Accesos</title>
+<link rel="stylesheet" href="estilos.css">
 </head>
 
 <body>
 
-<h2>Accesos Valle Esmeralda</h2>
+<div class="container">
 
-<input id="domicilio" placeholder="Usuario">
+<img src="logo.png" class="logo">
 
-<br>
+<h2>Control de Accesos</h2>
 
-<input id="password" type="password" placeholder="Contraseña">
+<a href="generar.html"><button>Generar QR</button></a>
+<a href="scanner.html"><button>Escanear QR</button></a>
+<a href="historial.html"><button>Historial</button></a>
 
-<br><br>
-
-<button id="loginBtn">Entrar</button>
-
-<script type="module">
-
-import { login } from "./login.js"
-
-document.getElementById("loginBtn").addEventListener("click",login)
-
-</script>
-
-<script>
-
-if("serviceWorker" in navigator){
-
-navigator.serviceWorker.register("./sw.js")
-
-}
-
-</script>
+</div>
 
 </body>
 </html>
