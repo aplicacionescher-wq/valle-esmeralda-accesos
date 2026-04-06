@@ -1,66 +1,31 @@
 <!DOCTYPE html>
 <html>
-
 <head>
 <meta charset="UTF-8">
 <title>Generar QR</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<style>
-body{
-font-family: Arial;
-background:#0f172a;
-color:white;
-text-align:center;
-padding:20px;
-}
-input,select{
-width:90%;
-max-width:300px;
-padding:10px;
-margin:5px;
-border-radius:8px;
-border:none;
-}
-button{
-padding:15px;
-margin:10px;
-background:#22c55e;
-border:none;
-color:white;
-border-radius:10px;
-width:90%;
-max-width:300px;
-}
-</style>
-
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
 </head>
 
 <body>
 
-<h2>Registrar visita</h2>
+<h2>Generar QR</h2>
 
-<input id="nombre" placeholder="Nombre visitante">
-<input id="casa" placeholder="Casa">
-<input id="autoriza" placeholder="Autoriza">
+<input id="nombre" placeholder="Nombre"><br><br>
+<input id="casa" placeholder="Casa"><br><br>
+<input id="autoriza" placeholder="Autoriza"><br><br>
 
 <select id="tipo">
 <option value="visita">Visita</option>
 <option value="proveedor">Proveedor</option>
 <option value="uber">Uber</option>
 <option value="paqueteria">Paquetería</option>
-</select>
-
-<br>
+</select><br><br>
 
 <button onclick="crearQR()">Generar QR</button>
 
 <div id="qr"></div>
 
-<button onclick="enviarWhats()">Enviar por WhatsApp</button>
-
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
-<script type="module" src="qr.js"></script>
+<script type="module" src="./qr.js"></script>
 
 </body>
 </html>
