@@ -1,34 +1,47 @@
-window.crearQR = () => {
+window.crearQR = function(){
 
-let nombre = document.getElementById("nombre")
-let casa = document.getElementById("casa")
-let autoriza = document.getElementById("autoriza")
-let tipo = document.getElementById("tipo")
+let nombre = document.getElementById("nombre").value
+let casa = document.getElementById("casa").value
+let autoriza = document.getElementById("autoriza").value
+let tipo = document.getElementById("tipo").value
 
-if(!nombre || !casa || !autoriza || !tipo){
-alert("Error: IDs no encontrados")
-return
-}
-
-if(!nombre.value || !casa.value || !autoriza.value){
+if(!nombre || !casa || !autoriza){
 alert("Completa todos los campos")
 return
 }
 
-let data = {
-nombre: nombre.value,
-casa: casa.value,
-autoriza: autoriza.value,
-tipo: tipo.value,
+let datos = {
+nombre,
+casa,
+autoriza,
+tipo,
 timestamp: Date.now()
 }
 
-let encoded = btoa(JSON.stringify(data))
+let qrDiv = document.getElementById("qr")
+qrDiv.innerHTML = ""
 
-let url = location.origin + "/valle-esmeralda-accesos/verqr.html?data=" + encoded
+new QRCode(qrDiv,{
+text: JSON.stringify(datos),
+width:200,
+height:200
+})
 
-document.getElementById("qr").innerHTML = ""
+window.qrData = datos
 
-new QRCode(document.getElementById("qr"), url)
+}
+
+window.enviarWhats = function(){
+
+if(!window.qrData){
+alert("Primero genera el QR")
+return
+}
+
+let mensaje = "Acceso QR:\n" + JSON.stringify(window.qrData)
+
+let url = "https://wa.me/?text=" + encodeURIComponent(mensaje)
+
+window.open(url)
 
 }
