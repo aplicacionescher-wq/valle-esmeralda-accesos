@@ -1,10 +1,22 @@
-<h2>Generar Acceso</h2>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Generar QR</title>
+<link rel="stylesheet" href="estilos.css">
+</head>
+
+<body>
+
+<div class="container">
+
+<img src="logo.png" class="logo">
+
+<h2>Registrar Visita</h2>
 
 <input id="nombre" placeholder="Nombre visitante">
-
 <input id="casa" placeholder="Número de casa">
-
-<input id="autoriza" placeholder="Quién autoriza">
+<input id="autoriza" placeholder="Autoriza">
 
 <select id="tipo">
 <option value="visita">Visita</option>
@@ -17,73 +29,12 @@
 
 <div id="qr"></div>
 
-<button class="whatsapp" onclick="enviarWhats()">Enviar WhatsApp</button>
+<button onclick="enviarWhats()">Enviar por WhatsApp</button>
 
 </div>
 
-<script>
-
-let datosQR = null
-
-function crearQR(){
-
-let nombre = document.getElementById("nombre").value
-let casa = document.getElementById("casa").value
-let autoriza = document.getElementById("autoriza").value
-let tipo = document.getElementById("tipo").value
-
-// VALIDACIÓN
-if(!nombre || !casa || !autoriza){
-alert("Completa todos los campos")
-return
-}
-
-// CREAR DATA
-datosQR = {
-nombre,
-casa,
-autoriza,
-tipo,
-timestamp: Date.now()
-}
-
-// CODIFICAR
-let encoded = btoa(JSON.stringify(datosQR))
-
-// 🔥 IMPORTANTE PARA TU REPO
-let url = location.origin + "/valle-esmeralda-accesos/verqr.html?data=" + encoded
-
-// LIMPIAR QR
-document.getElementById("qr").innerHTML = ""
-
-// GENERAR QR
-new QRCode(document.getElementById("qr"), {
-text: url,
-width: 200,
-height: 200
-})
-
-}
-
-// WHATSAPP
-function enviarWhats(){
-
-if(!datosQR){
-alert("Genera el QR primero")
-return
-}
-
-let encoded = btoa(JSON.stringify(datosQR))
-
-let url = location.origin + "/valle-esmeralda-accesos/verqr.html?data=" + encoded
-
-let mensaje = "Acceso:\n" + url
-
-window.open("https://wa.me/?text=" + encodeURIComponent(mensaje))
-
-}
-
-</script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+<script src="qr.js"></script>
 
 </body>
 </html>
