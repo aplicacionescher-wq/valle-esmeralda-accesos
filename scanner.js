@@ -14,46 +14,26 @@ getDownloadURL
 let datosVisita = null
 let html5QrCode = null
 
-// 🔍 CUANDO ESCANEA
+// 🔍 ESCANEO
 function onScanSuccess(decodedText){
 
 let resultado = document.getElementById("resultado")
 
 // 🔗 SI ES LINK (QR NUEVO)
-if(decodedText.startsWith("http")){
+if(decodedText.includes("verqr.html")){
 
-resultado.innerHTML = `
-🔗 QR detectado <br><br>
-Redirigiendo...
-`
+resultado.innerHTML = "🔗 QR detectado, abriendo..."
 
-// Redirige al visor
 window.location.href = decodedText
 return
 }
 
 try{
 
-// 📦 SI ES JSON (QR ANTIGUO)
+// 📦 SI ES JSON
 let data = JSON.parse(decodedText)
 datosVisita = data
 
-let ahora = Date.now()
-
-let expiracion = {
-visita:86400000,
-proveedor:43200000,
-uber:7200000,
-paqueteria:43200000
-}
-
-// ⏱️ VALIDAR
-if(ahora - data.timestamp > expiracion[data.tipo]){
-resultado.innerHTML = "❌ QR EXPIRADO"
-return
-}
-
-// ✅ MOSTRAR
 resultado.innerHTML = `
 ✅ ACCESO PERMITIDO <br><br>
 👤 ${data.nombre} <br>
@@ -62,13 +42,7 @@ resultado.innerHTML = `
 🚗 Tipo: ${data.tipo}
 `
 
-// 📷 FOTO
-if(data.fotoURL){
-document.getElementById("foto").innerHTML =
-"<img src='"+data.fotoURL+"' width='200'>"
-}
-
-}catch(error){
+}catch(e){
 
 resultado.innerHTML = "⚠️ QR inválido"
 
@@ -76,10 +50,9 @@ resultado.innerHTML = "⚠️ QR inválido"
 
 }
 
-// 📷 ACTIVAR CÁMARA (BOTÓN)
-window.activarCamara = async function(){
+// 📷 ACTIVAR CÁMARA
+window.activarCamara = async () => {
 
-let reader = document.getElementById("reader")
 let mensaje = document.getElementById("mensaje")
 
 mensaje.innerHTML = "🔄 Activando cámara..."
@@ -90,17 +63,13 @@ html5QrCode = new Html5Qrcode("reader")
 
 const devices = await Html5Qrcode.getCameras()
 
-if(devices && devices.length){
+if(devices.length){
 
-// 📱 Usa cámara trasera
 let camara = devices[devices.length - 1].id
 
 await html5QrCode.start(
 camara,
-{
-fps:10,
-qrbox:250
-},
+{ fps: 10, qrbox: 250 },
 onScanSuccess
 )
 
@@ -112,17 +81,15 @@ mensaje.innerHTML = "❌ No hay cámara disponible"
 
 }
 
-}catch(error){
+}catch(err){
 
-console.error(error)
+console.error(err)
 
 mensaje.innerHTML = `
-❌ No se pudo activar la cámara <br><br>
-
-👉 Soluciones: <br>
-- Permitir cámara <br>
-- Abrir en Chrome <br>
-- No usar WhatsApp
+❌ Error al activar cámara <br><br>
+👉 Permite acceso a cámara <br>
+👉 Usa Chrome <br>
+👉 No abras desde WhatsApp
 `
 
 }
@@ -144,13 +111,13 @@ alert("Selecciona una foto")
 return
 }
 
-let referencia = ref(storage,"idsCaseta/"+Date.now())
+let referencia = ref(storage, "idsCaseta/" + Date.now())
 
-await uploadBytes(referencia,archivo)
+await uploadBytes(referencia, archivo)
 
 let url = await getDownloadURL(referencia)
 
-await addDoc(collection(db,"registroAccesos"),{
+await addDoc(collection(db, "registroAccesos"), {
 
 nombre: datosVisita.nombre,
 autoriza: datosVisita.autoriza,
@@ -161,6 +128,6 @@ fecha: Date.now()
 
 })
 
-alert("✅ Acceso guardado correctamente")
+alert("✅ Acceso guardado")
 
 }
