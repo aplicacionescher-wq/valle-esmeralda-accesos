@@ -1,70 +1,33 @@
 <!DOCTYPE html>
-<html lang="es">
-
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Escáner</title>
-
-<script src="https://unpkg.com/html5-qrcode"></script>
-
-<style>
-body{
-font-family:Arial;
-background:#0f172a;
-color:white;
-text-align:center;
-padding:20px;
-}
-
-#reader{
-width:300px;
-margin:auto;
-}
-
-button{
-padding:12px;
-margin:10px;
-background:#0ea5e9;
-border:none;
-border-radius:10px;
-color:white;
-cursor:pointer;
-}
-
-#resultado{
-margin-top:20px;
-font-size:18px;
-}
-
-input{
-margin-top:10px;
-}
-
-</style>
-
+<link rel="stylesheet" href="estilos.css">
 </head>
 
 <body>
 
-<h2>Control de Acceso</h2>
+<div class="container">
 
-<button onclick="iniciarCamara()">📷 Activar cámara</button>
+<img src="logo.png" class="logo">
+
+<h2>Escanear QR</h2>
+
+<button onclick="iniciarCamara()">Activar Cámara</button>
 
 <div id="reader"></div>
 
-<div id="resultado"></div>
-
-<br>
+<h3 id="resultado"></h3>
 
 <input type="file" id="fotoCaseta">
 
-<br>
+<button onclick="guardarFoto()">Registrar Entrada</button>
 
-<button onclick="guardarAcceso()">Registrar entrada</button>
+</div>
 
-<script type="module" src="./scanner.js"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script type="module" src="scanner.js"></script>
 
 </body>
-
 </html>
