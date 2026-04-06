@@ -1,70 +1,67 @@
 <!DOCTYPE html>
-<html lang="es">
-
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Escáner QR</title>
+<title>Escáner</title>
 
 <script src="https://unpkg.com/html5-qrcode"></script>
-
-<style>
-body{
-font-family: Arial;
-background:#0f172a;
-color:white;
-text-align:center;
-padding:20px;
-}
-
-#reader{
-width:300px;
-margin:auto;
-}
-
-button{
-padding:12px;
-background:#0ea5e9;
-border:none;
-border-radius:10px;
-color:white;
-margin-top:10px;
-cursor:pointer;
-}
-
-button:hover{
-background:#0284c7;
-}
-
-#resultado{
-margin-top:20px;
-font-size:18px;
-}
-
-</style>
 
 </head>
 
 <body>
 
-<h2>Escáner de Accesos</h2>
+<h2>Escanear QR</h2>
 
-<button onclick="iniciarCamara()">📷 Activar cámara</button>
+<button onclick="iniciar()">Activar cámara</button>
 
-<div id="reader"></div>
+<div id="reader" style="width:300px;"></div>
 
 <div id="resultado"></div>
 
-<br>
+<script>
 
-<input type="file" id="fotoCaseta">
+function iniciar(){
 
-<br><br>
+const qr = new Html5Qrcode("reader")
 
-<button onclick="guardarFoto()">Guardar acceso</button>
+Html5Qrcode.getCameras().then(devices => {
 
-<script type="module" src="./scanner.js"></script>
+if(devices.length){
+
+qr.start(
+devices[0].id,
+{ fps: 10, qrbox: 250 },
+(text) => {
+
+try{
+
+let data
+
+if(text.includes("data=")){
+let url = new URL(text)
+let encoded = url.searchParams.get("data")
+data = JSON.parse(atob(encoded))
+}else{
+data = JSON.parse(text)
+}
+
+document.getElementById("resultado").innerHTML =
+"ACCESO: " + data.nombre
+
+}catch(e){
+document.getElementById("resultado").innerHTML = "QR inválido"
+}
+
+}
+)
+
+}
+
+})
+
+}
+
+</script>
 
 </body>
-
 </html>
