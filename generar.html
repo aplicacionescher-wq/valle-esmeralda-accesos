@@ -1,31 +1,166 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
+
 <head>
 <meta charset="UTF-8">
-<title>Generar QR</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Generar QR - Valle Esmeralda</title>
+
+<!-- Librería QR -->
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+
+<style>
+body{
+font-family: Arial;
+background:#0f172a;
+color:white;
+text-align:center;
+margin:0;
+padding:20px;
+}
+
+.container{
+max-width:400px;
+margin:auto;
+background:#1e293b;
+padding:20px;
+border-radius:15px;
+box-shadow:0 0 15px #0ea5e9;
+}
+
+input,select{
+width:100%;
+padding:10px;
+margin:8px 0;
+border-radius:8px;
+border:none;
+}
+
+button{
+width:100%;
+padding:12px;
+background:#0ea5e9;
+border:none;
+border-radius:10px;
+color:white;
+font-size:16px;
+cursor:pointer;
+}
+
+button:hover{
+background:#0284c7;
+}
+
+#qr{
+margin-top:20px;
+}
+
+.whatsapp{
+background:#22c55e;
+margin-top:10px;
+}
+
+</style>
 </head>
 
 <body>
 
-<h2>Generar QR</h2>
+<div class="container">
 
-<input id="nombre" placeholder="Nombre"><br><br>
-<input id="casa" placeholder="Casa"><br><br>
-<input id="autoriza" placeholder="Autoriza"><br><br>
+<h2>Generar Acceso QR</h2>
+
+<!-- LOGO (opcional) -->
+<img src="./logo.png" width="120" onerror="this.style.display='none'">
+
+<input id="nombre" placeholder="Nombre del visitante">
+<input id="casa" placeholder="Número de casa">
+<input id="autoriza" placeholder="Quién autoriza">
 
 <select id="tipo">
 <option value="visita">Visita</option>
 <option value="proveedor">Proveedor</option>
 <option value="uber">Uber</option>
 <option value="paqueteria">Paquetería</option>
-</select><br><br>
+</select>
 
 <button onclick="crearQR()">Generar QR</button>
 
 <div id="qr"></div>
 
-<script type="module" src="./qr.js"></script>
+<button class="whatsapp" onclick="enviarWhatsApp()">Enviar por WhatsApp</button>
+
+</div>
+
+<script type="module">
+
+// FUNCIÓN PRINCIPAL
+window.crearQR = () => {
+
+let nombre = document.getElementById("nombre")
+let casa = document.getElementById("casa")
+let autoriza = document.getElementById("autoriza")
+let tipo = document.getElementById("tipo")
+
+// VALIDACIÓN
+if(!nombre || !casa || !autoriza || !tipo){
+alert("Error en formulario")
+return
+}
+
+if(!nombre.value || !casa.value || !autoriza.value){
+alert("Completa todos los campos")
+return
+}
+
+// DATA QR
+let data = {
+nombre: nombre.value,
+casa: casa.value,
+autoriza: autoriza.value,
+tipo: tipo.value,
+timestamp: Date.now()
+}
+
+// CODIFICAR
+let encoded = btoa(JSON.stringify(data))
+
+// IMPORTANTE PARA GITHUB PAGES
+let url = location.origin + "/valle-esmeralda-accesos/verqr.html?data=" + encoded
+
+// LIMPIAR QR ANTERIOR
+document.getElementById("qr").innerHTML = ""
+
+// GENERAR QR
+new QRCode(document.getElementById("qr"), {
+text: url,
+width: 220,
+height: 220
+})
+
+// GUARDAR LINK PARA WHATSAPP
+window.linkQR = url
+
+}
+
+// WHATSAPP
+window.enviarWhatsApp = () => {
+
+if(!window.linkQR){
+alert("Primero genera el QR")
+return
+}
+
+// MENSAJE
+let mensaje = "Acceso al fraccionamiento:\n" + window.linkQR
+
+// ABRIR WHATSAPP
+let wa = "https://wa.me/?text=" + encodeURIComponent(mensaje)
+
+window.open(wa, "_blank")
+
+}
+
+</script>
 
 </body>
 </html>
