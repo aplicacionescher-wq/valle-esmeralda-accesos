@@ -1,54 +1,88 @@
-window.enviarWhats = async function() {
-    const qrDiv = document.getElementById("qr");
-    const btnWhats = document.getElementById("btnWhats");
+import { db } from "./firebase.js";
+import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // 1. Validar que el QR exista
-    if (!qrDiv.querySelector("img") && !qrDiv.querySelector("canvas")) {
-        alert("Primero genera el código QR");
-        return;
-    }
+window.crearQR = async function() {
+    const nombre = document.getElementById("nombre").value.trim();
+    const tipo = document.getElementById("tipo").value;
+    const qrDiv = document.getElementById("qr");
+    const btnGen = document.getElementById("btnGen");
+
+    if (!nombre) return alert("Por favor, ingresa el nombre del invitado.");
 
     try {
-        btnWhats.innerText = "⏳ Preparando imagen...";
+        btnGen.disabled = true;
+        btnGen.innerText = "⏳ Guardando...";
+
+        // 1. Guardar en Firebase
+        const docRef = await addDoc(collection(db, "visitas"), {
+            nombre: nombre,
+            tipo: tipo,
+            casa: localStorage.getItem("casa") || "S/N",
+            autoriza: localStorage.getItem("usuario") || "Residente",
+            timestamp: Date.now()
+        });
+
+        // Guardamos el ID para enviarlo por WhatsApp después
+        window.currentQrID = docRef.id;
+
+        // 2. Crear el LINK COMPLETO que el invitado abrirá
+        // IMPORTANTE: Asegúrate de que esta URL coincida con tu dominio de Firebase
+        const urlBase = window.location.origin; // Detecta automáticamente si es localhost o tu dominio real
+        const linkPase = `${urlBase}/verqr.html?id=${docRef.id}`;
+
+        // 3. Generar el QR visual
+        qrDiv.innerHTML = ""; 
+        new QRCode(qrDiv, {
+            text: linkPase,
+            width: 250,
+            height: 250,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+
+        document.getElementById("qr-container").style.display = "block";
+        document.getElementById("btnWhats").style.display = "block";
+        btnGen.disabled = false;
+        btnGen.innerText = "✨ Generar Nuevo";
+
+        console.log("Pase generado con ID:", docRef.id);
+
+    } catch (e) {
+        console.error("Error Firebase:", e);
+        alert("Error de conexión. Revisa tu internet.");
+        btnGen.disabled = false;
+    }
+};
+
+window.enviarWhats = async function() {
+    const qrDiv = document.getElementById("qr");
+    const btn = document.getElementById("btnWhats");
+
+    try {
+        btn.innerText = "⏳ Procesando Imagen...";
         
-        // 2. Convertir el DIV del QR en una imagen (Blob)
-        const canvas = await html2canvas(qrDiv, {
-            backgroundColor: "#ffffff", // Fondo blanco para que el QR sea legible
-            scale: 2
+        // Capturamos el QR (que ya tiene el link embebido) como imagen
+        const canvas = await html2canvas(qrDiv, { 
+            backgroundColor: "#ffffff",
+            scale: 3 
         });
-
+        
         canvas.toBlob(async (blob) => {
-            const file = new File([blob], "Pase_Acceso.png", { type: "image/png" });
+            const file = new File([blob], "Pase_Valle.png", { type: "image/png" });
 
-            // 3. Verificar si el dispositivo soporta compartir archivos (Web Share API)
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                try {
-                    await navigator.share({
-                        files: [file],
-                        title: 'Pase de Acceso Valle Esmeralda',
-                        text: 'Hola, este es tu pase de acceso. Muéstralo en la entrada.'
-                    });
-                    btnWhats.innerText = "📱 Enviar por WhatsApp";
-                } catch (shareError) {
-                    // Si el usuario cancela el envío
-                    console.log("Envío cancelado");
-                    btnWhats.innerText = "📱 Enviar por WhatsApp";
-                }
+                await navigator.share({ files: [file] });
             } else {
-                // FALLBACK: Si el navegador no soporta enviar archivos, enviamos el LINK
-                const link = `https://valle-esmeralda-accesos.web.app/verqr.html?id=${window.currentQrID}`;
-                const msg = encodeURIComponent(`Tu navegador no permite enviar imágenes. Usa este link: ${link}`);
-                window.open(`https://wa.me/?text=${msg}`);
-                btnWhats.innerText = "📱 Enviar por WhatsApp";
+                // Si no puede compartir imagen, envía el LINK como texto (Respaldo)
+                const link = `${window.location.origin}/verqr.html?id=${window.currentQrID}`;
+                window.open(`https://wa.me/?text=${encodeURIComponent("Usa este link para tu acceso: " + link)}`);
             }
-        });
+            btn.innerText = "📱 Enviar por WhatsApp";
+        }, "image/png");
 
     } catch (err) {
-        console.error("Error al procesar imagen:", err);
-        alert("No se pudo generar la imagen. Se enviará el link por defecto.");
-        // Fallback al link
-        const link = `https://valle-esmeralda-accesos.web.app/verqr.html?id=${window.currentQrID}`;
-        window.open(`https://wa.me/?text=${encodeURIComponent(link)}`);
-        btnWhats.innerText = "📱 Enviar por WhatsApp";
+        btn.innerText = "📱 Enviar por WhatsApp";
+        alert("Error al compartir.");
     }
 };
