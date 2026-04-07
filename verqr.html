@@ -3,31 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tu Pase de Acceso</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <title>Acceso Valle Esmeralda</title>
+    <script src="qrcode.min.js"></script>
+    <script src="html2canvas.min.js"></script>
     <style>
         body { font-family: sans-serif; background: #0f172a; color: white; text-align: center; padding: 20px; }
-        .card { background: #1e293b; padding: 20px; border-radius: 20px; max-width: 350px; margin: auto; }
-        #area-descarga { background: #1e293b; padding: 15px; border-radius: 15px; }
-        #qr-code { background: white; padding: 10px; display: inline-block; border-radius: 10px; margin: 15px 0; }
+        .card { background: #1e293b; padding: 25px; border-radius: 20px; max-width: 350px; margin: auto; }
+        #area-descarga { background: #1e293b; padding: 10px; border-radius: 10px; }
+        #qr-code { background: white; padding: 15px; display: inline-block; border-radius: 10px; margin: 15px 0; }
         .info { text-align: left; border-top: 1px solid #334155; padding-top: 15px; }
-        .btn-download { background: #3b82f6; color: white; border: none; width: 100%; padding: 15px; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 20px; font-size: 16px; }
+        .btn-download { background: #22c55e; color: white; border: none; width: 100%; padding: 15px; border-radius: 10px; font-weight: bold; margin-top: 15px; cursor: pointer; }
     </style>
 </head>
 <body>
-
     <div class="card">
         <div id="area-descarga">
             <h2 style="color:#22c55e;">Pase de Acceso</h2>
             <div id="qr-code"></div>
             <div class="info">
-                <p><b>Invitado:</b> <span id="nombre">Cargando...</span></p>
+                <p><b>Invitado:</b> <span id="nombre">Buscando...</span></p>
                 <p><b>Casa:</b> <span id="casa">...</span></p>
                 <p><b>Tipo:</b> <span id="tipo">...</span></p>
             </div>
         </div>
-
         <button class="btn-download" onclick="descargarPase()">💾 Guardar en Galería</button>
     </div>
 
@@ -35,32 +33,41 @@
         import { db } from "./firebase.js";
         import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        const id = new URLSearchParams(window.location.search).get("id");
+        // 1. Obtener el ID desde la URL (?id=XXXXXXXX)
+        const params = new URLSearchParams(window.location.search);
+        const idVisita = params.get("id");
 
-        if (id) {
-            const docSnap = await getDoc(doc(db, "visitas", id));
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                document.getElementById("nombre").innerText = data.nombre;
-                document.getElementById("casa").innerText = data.casa;
-                document.getElementById("tipo").innerText = data.tipo.toUpperCase();
+        if (idVisita) {
+            try {
+                const docRef = doc(db, "visitas", idVisita);
+                const docSnap = await getDoc(docRef);
 
-                new QRCode(document.getElementById("qr-code"), {
-                    text: id, // El guardia escanea el ID directamente
-                    width: 180,
-                    height: 180
-                });
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    document.getElementById("nombre").innerText = data.nombre;
+                    document.getElementById("casa").innerText = data.casa;
+                    document.getElementById("tipo").innerText = data.tipo.toUpperCase();
+
+                    // Generar QR dentro de esta página (el que escaneará el guardia)
+                    new QRCode(document.getElementById("qr-code"), {
+                        text: idVisita, // El guardia solo necesita el ID para su escáner
+                        width: 180,
+                        height: 180
+                    });
+                } else {
+                    document.getElementById("nombre").innerText = "❌ No encontrado";
+                    alert("El pase no existe o fue eliminado.");
+                }
+            } catch (e) {
+                console.error(e);
+                document.getElementById("nombre").innerText = "⚠️ Error de red";
             }
         }
 
         window.descargarPase = function() {
-            html2canvas(document.querySelector("#area-descarga"), {
-                backgroundColor: "#1e293b",
-                scale: 2,
-                useCORS: true
-            }).then(canvas => {
+            html2canvas(document.querySelector("#area-descarga"), { backgroundColor: "#1e293b", scale: 2 }).then(canvas => {
                 const link = document.createElement('a');
-                link.download = "Pase_Valle.png";
+                link.download = "Pase_Acceso.png";
                 link.href = canvas.toDataURL("image/png");
                 link.click();
             });
