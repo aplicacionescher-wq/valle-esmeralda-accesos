@@ -2,28 +2,29 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Accesos Valle Esmeralda</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valle Esmeralda - Login</title>
     <link rel="manifest" href="manifest.json">
     <style>
-        body { font-family: Arial; text-align: center; margin-top: 80px; background: #f0f2f5; color: #1c1e21; }
-        .login-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: inline-block; width: 300px; }
-        input { padding: 12px; margin: 10px 0; width: 90%; border: 1px solid #ddd; border-radius: 6px; }
-        button { padding: 12px; width: 100%; background: #065f46; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        button:hover { background: #044e3a; }
+        body { font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f0f2f5; }
+        .login-box { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 320px; text-align: center; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #065f46; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="login-card">
+    <div class="login-box">
         <h2>Valle Esmeralda</h2>
-        <input id="domicilio" placeholder="Calle y Número">
+        <input id="domicilio" type="text" placeholder="Usuario (Calle y Número)">
         <input id="password" type="password" placeholder="Contraseña">
         <button id="loginBtn">Entrar</button>
     </div>
     <script type="module">
         import { login } from "./login.js";
         document.getElementById("loginBtn").addEventListener("click", login);
-        if ("serviceWorker" in navigator) { navigator.serviceWorker.register("./sw.js"); }
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.register("./sw.js").then(() => console.log("SW OK"));
+        }
     </script>
 </body>
 </html>
