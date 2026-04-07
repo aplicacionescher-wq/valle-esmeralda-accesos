@@ -1,54 +1,42 @@
 import { db } from "./firebase.js"
+
 import {
 collection,
 addDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"
 
+// 🔥 GENERAR QR
 window.crearQR = async function(){
 
-try{
-
-let nombre = document.getElementById("nombre").value.trim()
-let casa = document.getElementById("casa").value.trim()
-let autoriza = document.getElementById("autoriza").value.trim()
+let nombre = document.getElementById("nombre").value
+let casa = document.getElementById("casa").value
 let tipo = document.getElementById("tipo").value
 
-if(!nombre || !casa || !autoriza){
-alert("Completa todos los campos")
+if(!nombre || !casa){
+alert("Completa los campos")
 return
 }
 
-// 🔥 Guardar en Firebase
+try{
+
+// 🔥 GUARDAR EN FIREBASE
 let docRef = await addDoc(collection(db,"visitas"),{
 nombre,
 casa,
-autoriza,
 tipo,
 timestamp: Date.now()
 })
 
-// 🔥 VALIDAR ID
-if(!docRef.id){
-alert("Error generando ID")
-return
-}
+// 🔥 USAR ID COMO QR
+let qrID = docRef.id
 
-let id = docRef.id
+// 🔥 LIMPIAR CONTENEDOR
+document.getElementById("qrcode").innerHTML = ""
 
-console.log("ID generado:", id)
-
-// 🔥 GENERAR QR CON TEXTO REAL
-let qrDiv = document.getElementById("qr")
-qrDiv.innerHTML = ""
-
-new QRCode(qrDiv,{
-text: id,
-width:220,
-height:220
+// 🔥 GENERAR IMAGEN QR
+QRCode.toCanvas(document.getElementById("qrcode"), qrID, {
+width: 250
 })
-
-// 🔥 MOSTRAR ID EN PANTALLA (DEBUG)
-qrDiv.innerHTML += `<p>ID: ${id}</p>`
 
 }catch(e){
 
