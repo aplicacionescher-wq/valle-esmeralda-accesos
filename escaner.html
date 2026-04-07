@@ -2,50 +2,140 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Caseta - Control de Acceso</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Scanner Caseta - Valle Esmeralda</title>
+    
+    <script src="https://unpkg.com/html5-qrcode"></script>
+
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: white; text-align: center; margin: 0; padding: 20px; }
-        h2 { color: #22c55e; margin-bottom: 20px; }
-        #reader { width: 100%; max-width: 400px; margin: 0 auto; border-radius: 12px; overflow: hidden; border: 2px solid #334155; }
-        .card { background: #1e293b; padding: 20px; border-radius: 15px; max-width: 400px; margin: 20px auto; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        .info-result { font-size: 1.1em; margin: 15px 0; min-height: 50px; border-bottom: 1px solid #334155; padding-bottom: 10px; }
-        input[type="file"] { margin: 15px 0; width: 100%; color: #94a3b8; }
-        button { width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; font-size: 16px; }
-        .btn-scan { background: #22c55e; color: white; }
-        .btn-save { background: #3b82f6; color: white; }
-        .btn-logout { background: #ef4444; color: white; margin-top: 30px; }
-        img#foto-visitante { width: 150px; border-radius: 10px; margin-top: 10px; border: 2px solid #475569; }
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg);
+            color: white;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        header {
+            width: 100%;
+            padding: 20px;
+            text-align: center;
+            background: var(--card);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        #reader {
+            width: 100%;
+            max-width: 450px;
+            border: none !important;
+            margin-top: 20px;
+        }
+
+        #reader__dashboard {
+            padding: 10px !important;
+        }
+
+        button {
+            padding: 12px 20px;
+            border-radius: 8px;
+            border: none;
+            background: var(--success);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        #resultado {
+            width: 90%;
+            max-width: 400px;
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            display: none; /* Se activa al escanear */
+        }
+
+        /* Animación de escaneo */
+        .scan-region-highlight {
+            border-radius: 20px !important;
+            outline: 3px solid var(--success) !important;
+        }
+
+        .btn-reset {
+            background: #475569;
+            margin-top: 15px;
+            width: 100%;
+        }
+
+        .status-msg { font-size: 1.1rem; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-    <h2>Panel de Caseta</h2>
-    
-    <div id="reader"></div>
-    <p id="mensaje">Presiona el botón para escanear</p>
-    <button class="btn-scan" onclick="activarCamara()">📷 Iniciar Escáner</button>
+    <header>
+        <h2 style="margin:0; color:var(--success)">🛡️ Control de Caseta</h2>
+        <p style="margin:5px 0 0 0; color:#94a3b8; font-size:0.9rem;">Escanea el QR del visitante</p>
+    </header>
 
-    <div class="card">
-        <div id="resultado" class="info-result">Esperando código QR...</div>
-        <div id="contenedor-foto"></div>
-        
-        <p style="margin-top: 20px; font-weight: bold;">Evidencia de Entrada:</p>
-        <input type="file" id="fotoCaseta" accept="image/*" capture="camera">
-        
-        <button class="btn-save" onclick="guardarFoto()">✅ Registrar Ingreso</button>
+    <div id="reader"></div>
+
+    <div id="resultado"></div>
+
+    <div style="width: 90%; max-width: 400px;">
+        <button class="btn-reset" onclick="reiniciarEscaneo()">🔄 Limpiar Pantalla / Nuevo Escaneo</button>
+        <button class="btn-reset" style="background:transparent; color:#64748b" onclick="location.href='dashboard.html'">⬅ Volver al Menú</button>
     </div>
 
-    <button class="btn-logout" onclick="logout()">Cerrar Sesión</button>
-
-    <script src="https://unpkg.com/html5-qrcode"></script>
     <script type="module" src="scanner.js"></script>
 
     <script>
-        function logout() {
-            localStorage.clear();
-            window.location.href = "index.html";
+        let html5QrCode;
+
+        function iniciarCamara() {
+            html5QrCode = new Html5Qrcode("reader");
+            const config = { 
+                fps: 20, 
+                qrbox: { width: 250, height: 250 },
+                aspectRatio: 1.0 
+            };
+
+            html5QrCode.start(
+                { facingMode: "environment" }, 
+                config, 
+                (decodedText) => {
+                    // Pausar escaneo para procesar
+                    html5QrCode.pause();
+                    document.getElementById("resultado").style.display = "block";
+                    
+                    // Llamar a la función que está en scanner.js
+                    if (window.onScanSuccess) {
+                        window.onScanSuccess(decodedText);
+                    }
+                }
+            ).catch(err => console.error("Error cámara:", err));
         }
+
+        function reiniciarEscaneo() {
+            document.getElementById("resultado").style.display = "none";
+            document.getElementById("resultado").innerHTML = "";
+            if (html5QrCode) {
+                html5QrCode.resume();
+            }
+        }
+
+        // Iniciar al cargar
+        window.onload = iniciarCamara;
     </script>
 </body>
 </html>
