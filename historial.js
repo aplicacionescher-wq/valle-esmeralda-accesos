@@ -1,88 +1,31 @@
-import { db } from "./firebase.js"
+import { db } from "./firebase.js";
+import { collection, getDocs, orderBy, query } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-import {
-collection,
-getDocs
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"
-
-let datos=[]
-
-async function cargar(){
-
-let snap=await getDocs(collection(db,"registroAccesos"))
-
-datos=[]
-
-snap.forEach(doc=>{
-
-datos.push(doc.data())
-
-})
-
-mostrar(datos)
-
+async function cargar() {
+    const q = query(collection(db, "registroAccesos"), orderBy("fecha", "desc"));
+    const snap = await getDocs(q);
+    const body = document.querySelector("#tabla-registros tbody");
+    body.innerHTML = "";
+    snap.forEach(doc => {
+        const d = doc.data();
+        body.innerHTML += `<tr>
+            <td>${new Date(d.fecha).toLocaleString()}</td>
+            <td>${d.nombre}</td>
+            <td>${d.casa}</td>
+            <td>${d.tipo}</td>
+            <td><a href="${d.fotoEvidencia}" target="_blank">Ver</a></td>
+        </tr>`;
+    });
 }
 
-function mostrar(lista){
+window.exportarExcel = function() {
+    const table = document.getElementById("tabla-registros").outerHTML;
+    const blob = new Blob([table], { type: "application/vnd.ms-excel" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "historial_accesos.xls";
+    a.click();
+};
 
-let tbody=document.querySelector("#tabla tbody")
-
-tbody.innerHTML=""
-
-lista.forEach(d=>{
-
-let fecha=new Date(d.fecha).toLocaleString()
-
-tbody.innerHTML+=`
-<tr>
-<td>${fecha}</td>
-<td>${d.nombre}</td>
-<td>${d.casa}</td>
-<td>${d.autoriza || "-"}</td>
-</tr>
-`
-
-})
-
-}
-
-window.filtrar=function(){
-
-let desde=document.getElementById("desde").value
-let hasta=document.getElementById("hasta").value
-
-if(!desde || !hasta){
-alert("Selecciona fechas")
-return
-}
-
-let d1=new Date(desde).getTime()
-let d2=new Date(hasta).getTime()+86400000
-
-let filtrados=datos.filter(d=>{
-
-return d.fecha>=d1 && d.fecha<=d2
-
-})
-
-mostrar(filtrados)
-
-}
-
-window.exportarExcel=function(){
-
-let tabla=document.getElementById("tabla").outerHTML
-
-let blob=new Blob([tabla],{type:"application/vnd.ms-excel"})
-
-let url=URL.createObjectURL(blob)
-
-let a=document.createElement("a")
-
-a.href=url
-a.download="historial.xls"
-a.click()
-
-}
-
-cargar()
+cargar();
