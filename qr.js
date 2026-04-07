@@ -5,7 +5,6 @@ collection,
 addDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"
 
-// 🔥 GENERAR QR
 window.crearQR = async function(){
 
 let nombre = document.getElementById("nombre").value
@@ -27,21 +26,29 @@ tipo,
 timestamp: Date.now()
 })
 
-// 🔥 USAR ID COMO QR
 let qrID = docRef.id
 
-// 🔥 LIMPIAR CONTENEDOR
-document.getElementById("qrcode").innerHTML = ""
-
 // 🔥 GENERAR IMAGEN QR
-QRCode.toCanvas(document.getElementById("qrcode"), qrID, {
-width: 250
+QRCode.toDataURL(qrID, { width: 250 }, function(err, url){
+
+if(err){
+console.error(err)
+alert("Error generando QR")
+return
+}
+
+// 🔥 MOSTRAR IMAGEN
+document.getElementById("qrcode").innerHTML = `
+<p>ID: ${qrID}</p>
+<img src="${url}" />
+`
+
 })
 
 }catch(e){
 
 console.error(e)
-alert("Error al generar QR")
+alert("Error general")
 
 }
 
