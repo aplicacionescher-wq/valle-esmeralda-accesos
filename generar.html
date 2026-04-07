@@ -1,22 +1,48 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
 <meta charset="UTF-8">
 <title>Generar QR</title>
-<link rel="stylesheet" href="estilos.css">
+
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+
+<style>
+body{
+font-family:Arial;
+text-align:center;
+background:#111;
+color:white;
+}
+
+input, select{
+margin:5px;
+padding:10px;
+width:90%;
+}
+
+button{
+padding:12px;
+width:95%;
+background:#00ff99;
+border:none;
+font-size:16px;
+border-radius:8px;
+margin-top:10px;
+}
+
+#qrcode{
+margin-top:20px;
+}
+</style>
+
 </head>
 
 <body>
 
-<div class="container">
+<h2>📱 Generar Acceso QR</h2>
 
-<img src="logo.png" class="logo">
-
-<h2>Registrar Visita</h2>
-
-<input id="nombre" placeholder="Nombre visitante">
-<input id="casa" placeholder="Número de casa">
-<input id="autoriza" placeholder="Autoriza">
+<input type="text" id="nombre" placeholder="Nombre visitante">
+<input type="text" id="casa" placeholder="Casa">
 
 <select id="tipo">
 <option value="visita">Visita</option>
@@ -25,13 +51,10 @@
 <option value="paqueteria">Paquetería</option>
 </select>
 
-<button onclick="crearQR()">Generar QR</button>
+<button onclick="crearQR()">GENERAR QR</button>
 
-<div id="qr"></div>
+<div id="qrcode"></div>
 
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
 <script type="module" src="qr.js"></script>
 
 </body>
