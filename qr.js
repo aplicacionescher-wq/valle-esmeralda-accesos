@@ -1,19 +1,20 @@
 import { db } from "./firebase.js";
 import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+// 1. GENERAR EL PASE Y EL QR
 window.crearQR = async function() {
     const nombre = document.getElementById("nombre").value.trim();
     const tipo = document.getElementById("tipo").value;
     const qrDiv = document.getElementById("qr");
     const btnGen = document.getElementById("btnGen");
 
-    if (!nombre) return alert("Ingresa el nombre del invitado");
+    if (!nombre) return alert("Por favor, ingresa el nombre del invitado.");
 
     try {
         btnGen.disabled = true;
         btnGen.innerText = "⏳ Guardando...";
 
-        // 1. Guardar en Firebase
+        // Guardar en Firebase
         const docRef = await addDoc(collection(db, "visitas"), {
             nombre: nombre,
             tipo: tipo,
@@ -25,15 +26,15 @@ window.crearQR = async function() {
         window.currentQrID = docRef.id;
         const linkPase = `${window.location.origin}/verqr.html?id=${docRef.id}`;
 
-        // 2. Generar QR de ALTA RESOLUCIÓN (Para que el guardia escanee a la primera)
+        // Generar QR con alta resolución y corrección de errores
         qrDiv.innerHTML = ""; 
         new QRCode(qrDiv, {
             text: linkPase,
-            width: 400, // Aumentamos tamaño base
-            height: 400,
+            width: 350,
+            height: 350,
             colorDark: "#000000",
             colorLight: "#ffffff",
-            correctLevel: QRCode.CorrectLevel.H // Máxima corrección de errores
+            correctLevel: QRCode.CorrectLevel.H
         });
 
         document.getElementById("qr-container").style.display = "block";
@@ -42,48 +43,51 @@ window.crearQR = async function() {
         btnGen.innerText = "✨ Generar Nuevo";
 
     } catch (e) {
-        alert("Error de conexión");
+        console.error(e);
+        alert("Error al conectar con Firebase.");
         btnGen.disabled = false;
     }
 };
 
+// 2. ENVIAR LA IMAGEN POR WHATSAPP
 window.enviarWhats = async function() {
     const qrDiv = document.getElementById("qr");
     const btn = document.getElementById("btnWhats");
 
     try {
-        btn.innerText = "⏳ Procesando...";
+        btn.innerText = "⏳ Procesando Imagen...";
         
-        // CAPTURA DE ALTA CALIDAD
+        // Creamos la captura del QR
         const canvas = await html2canvas(qrDiv, { 
-            backgroundColor: "#ffffff",
-            scale: 2, // Duplica la densidad de píxeles
-            logging: false
+            backgroundColor: "#ffffff", // Obligatorio para visibilidad
+            scale: 2 
         });
         
         canvas.toBlob(async (blob) => {
             const file = new File([blob], "Pase_Valle.png", { type: "image/png" });
 
-            // Intento de envío de imagen nativa (Solo Móvil)
+            // Usamos la API de compartir del celular
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
                 try {
                     await navigator.share({
                         files: [file],
-                        title: 'Pase de Acceso'
+                        title: 'Pase de Acceso Valle Esmeralda',
+                        text: 'Presenta esta imagen en la entrada.'
                     });
                 } catch (err) {
-                    console.log("Cancelado");
+                    console.log("Envío cancelado por el usuario.");
                 }
             } else {
-                // RESPALDO: Si falla la imagen, envía el link (PC o móviles viejos)
+                // Si el navegador no permite enviar archivos (como en PC), enviamos el link
                 const link = `${window.location.origin}/verqr.html?id=${window.currentQrID}`;
-                window.open(`https://wa.me/?text=${encodeURIComponent("Usa este link para tu acceso: " + link)}`);
+                const msg = encodeURIComponent(`Hola, este es tu pase: ${link}`);
+                window.open(`https://wa.me/?text=${msg}`);
             }
             btn.innerText = "📱 Enviar por WhatsApp";
         }, "image/png");
 
     } catch (err) {
         btn.innerText = "📱 Enviar por WhatsApp";
-        alert("Error al compartir. Intenta de nuevo.");
+        alert("Hubo un error al generar la imagen.");
     }
 };
