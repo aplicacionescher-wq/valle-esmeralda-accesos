@@ -1,103 +1,40 @@
-Tienes razón, mil disculpas. Al ser archivos que mezclan HTML con lógica de Firebase, es vital tener la estructura completa para que no haya errores de "importación" o de "referencia".
-
-Aquí tienes ambos archivos listos para copiar y pegar (reemplaza todo el contenido que tengas actualmente en ellos):
-
-1. verqr.html (Corregido y Completo)
-Este archivo es el que abre el Visitante. Obtiene los datos de la base de datos usando el ID de la URL y genera un QR interno que el guardia escaneará.
-
-HTML
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Acceso Autorizado - Valle Esmeralda</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pase de Acceso</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background: #0f172a; color: white; padding: 20px; }
-        .card { background: #1e293b; padding: 25px; border-radius: 20px; max-width: 400px; margin: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid #334155; }
-        h2 { color: #22c55e; margin-bottom: 5px; }
-        .info-text { text-align: left; background: #334155; padding: 15px; border-radius: 10px; margin: 20px 0; font-size: 14px; line-height: 1.6; }
-        img { border-radius: 12px; margin-top: 10px; border: 2px solid #475569; }
-        #qr { display: flex; justify-content: center; margin-top: 20px; background: white; padding: 15px; border-radius: 10px; width: fit-content; margin: 20px auto; }
-        .status { color: #facc15; font-weight: bold; margin-top: 15px; }
+        body { font-family: Arial; text-align: center; background: #0f172a; color: white; padding: 20px; }
+        .card { background: #1e293b; padding: 25px; border-radius: 15px; max-width: 380px; margin: auto; }
+        #qr-container { background: white; padding: 15px; display: inline-block; border-radius: 10px; margin: 20px 0; }
+        img { border-radius: 10px; margin-bottom: 10px; max-width: 100%; }
+        .info { text-align: left; background: #334155; padding: 15px; border-radius: 8px; font-size: 14px; }
     </style>
 </head>
 <body>
-
-<div class="card">
-    <h2>Pase de Acceso</h2>
-    <p style="color: #94a3b8;">Valle Esmeralda Residencial</p>
-
-    <div id="foto"></div>
-
-    <div class="info-text" id="info">
-        Cargando datos del acceso...
+    <div class="card">
+        <h2>Acceso Valle Esmeralda</h2>
+        <div id="foto-div"></div>
+        <div class="info" id="datos">Cargando pase...</div>
+        <div id="qr-container"><div id="qr-code"></div></div>
+        <p style="color: #facc15; font-size: 14px;">Muestra este código al guardia</p>
     </div>
-
-    <div id="qr"></div>
-
-    <p class="status">Presenta este código en la entrada</p>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
-
-<script type="module">
-    import { db } from "./firebase.js";
-    import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-    async function cargarAcceso() {
-        const params = new URLSearchParams(window.location.search);
-        const id = params.get("id");
-
-        if (!id) {
-            document.getElementById("info").innerHTML = "❌ Error: Enlace de acceso no válido.";
-            return;
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+    <script type="module">
+        import { db } from "./firebase.js";
+        import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        
+        const id = new URLSearchParams(window.location.search).get("id");
+        if (id) {
+            const snap = await getDoc(doc(db, "visitas", id));
+            if (snap.exists()) {
+                const d = snap.data();
+                document.getElementById("datos").innerHTML = `<b>Invitado:</b> ${d.nombre}<br><b>Casa:</b> ${d.casa}<br><b>Tipo:</b> ${d.tipo}`;
+                if (d.fotoURL) document.getElementById("foto-div").innerHTML = `<img src="${d.fotoURL}">`;
+                new QRCode(document.getElementById("qr-code"), { text: JSON.stringify(d), width: 200, height: 200 });
+            } else { document.getElementById("datos").innerText = "Pase no válido"; }
         }
-
-        try {
-            const docRef = doc(db, "visitas", id);
-            const docSnap = await getDoc(docRef);
-
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-
-                // 1. Mostrar Información
-                document.getElementById("info").innerHTML = `
-                    <b>Visitante:</b> ${data.nombre}<br>
-                    <b>Destino:</b> Casa ${data.casa}<br>
-                    <b>Tipo:</b> ${data.tipo.toUpperCase()}<br>
-                    <b>Autoriza:</b> ${data.autoriza}
-                `;
-
-                // 2. Mostrar Foto si existe
-                if (data.fotoURL) {
-                    document.getElementById("foto").innerHTML = `<img src="${data.fotoURL}" width="100%">`;
-                }
-
-                // 3. Generar QR para el Guardia (JSON de respaldo)
-                new QRCode(document.getElementById("qr"), {
-                    text: JSON.stringify({
-                        id: id,
-                        nombre: data.nombre,
-                        casa: data.casa,
-                        tipo: data.tipo,
-                        timestamp: data.timestamp
-                    }),
-                    width: 200,
-                    height: 200
-                });
-
-            } else {
-                document.getElementById("info").innerHTML = "❌ El pase de acceso no existe o fue eliminado.";
-            }
-        } catch (error) {
-            console.error(error);
-            document.getElementById("info").innerHTML = "❌ Error al conectar con el sistema.";
-        }
-    }
-
-    cargarAcceso();
-</script>
-
+    </script>
 </body>
 </html>
