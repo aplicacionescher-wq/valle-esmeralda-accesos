@@ -3,31 +3,44 @@ import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/fi
 
 window.crearQR = async function() {
     const nombre = document.getElementById("nombre").value;
+    const tel = document.getElementById("telefono").value;
     const tipo = document.getElementById("tipo").value;
 
-    if (!nombre) return alert("Escribe el nombre del visitante");
+    if (!nombre || !tel) return alert("Por favor, llena nombre y teléfono");
 
     try {
-        // Guardamos en la colección "visitas" (como dice tu regla)
         const docRef = await addDoc(collection(db, "visitas"), {
             nombre: nombre,
+            telefono: tel,
             tipo: tipo,
-            casa: localStorage.getItem("casa") || "Sin Casa",
-            autoriza: localStorage.getItem("usuario") || "Residente",
+            casa: localStorage.getItem("casa"),
+            autoriza: localStorage.getItem("usuario"),
             timestamp: Date.now()
         });
 
-        // El ID que Firebase generó es docRef.id
         const qrID = docRef.id;
-        // IMPORTANTE: El link debe apuntar a verqr.html con el ID
-        const link = "https://tu-proyecto.web.app/verqr.html?id=" + qrID;
+        window.currentQrID = qrID; // Guardamos para el envío de WhatsApp
+
+        // El link que visitará el invitado
+        const link = `https://valle-esmeralda-accesos.web.app/verqr.html?id=${qrID}`;
 
         document.getElementById("qr").innerHTML = "";
-        new QRCode(document.getElementById("qr"), { text: link, width: 200, height: 200 });
-        
-        alert("Pase generado y guardado en Firebase");
+        new QRCode(document.getElementById("qr"), {
+            text: link,
+            width: 200,
+            height: 200
+        });
+
+        alert("Pase generado correctamente");
     } catch (e) {
+        alert("Error al guardar en Firebase");
         console.error(e);
-        alert("Error al guardar: " + e.message);
     }
 };
+
+window.enviarWhats = function() {
+    if (!window.currentQrID) return alert("Primero genera el código");
+    const tel = document.getElementById("telefono").value;
+    const link = `https://valle-esmeralda-accesos.web.app/verqr.html?id=${window.currentQrID}`;
+    const msg = encodeURIComponent(`Hola! Este es tu pase de acceso para Valle Esmeralda: ${link}`);
+    window.open(`https://wa.me/52${tel}?text=${msg}`);
