@@ -3,43 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pase de Acceso - Valle Esmeralda</title>
-    
+    <title>Tu Pase de Acceso</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
     <style>
         body { font-family: sans-serif; background: #0f172a; color: white; text-align: center; padding: 20px; }
-        .card { background: #1e293b; padding: 20px; border-radius: 15px; max-width: 350px; margin: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        
-        /* Contenedor que se convertirá en foto */
-        #area-descarga { background: #1e293b; padding: 10px; border-radius: 10px; }
-        
-        #qr-code { background: white; padding: 10px; display: inline-block; border-radius: 5px; margin-top: 15px; }
-        #qr-code img { display: block; }
-
-        .info { text-align: left; margin-top: 15px; border-top: 1px solid #334155; padding-top: 10px; }
-        .info p { margin: 5px 0; font-size: 14px; }
-        
-        /* ESTILO DEL BOTÓN DE DESCARGA */
-        .btn-download { 
-            background: #22c55e; color: white; border: none; width: 100%; 
-            padding: 15px; border-radius: 8px; font-weight: bold; 
-            margin-top: 20px; cursor: pointer; font-size: 16px;
-        }
-        .btn-download:active { background: #16a34a; }
+        .card { background: #1e293b; padding: 20px; border-radius: 20px; max-width: 350px; margin: auto; }
+        #area-descarga { background: #1e293b; padding: 15px; border-radius: 15px; }
+        #qr-code { background: white; padding: 10px; display: inline-block; border-radius: 10px; margin: 15px 0; }
+        .info { text-align: left; border-top: 1px solid #334155; padding-top: 15px; }
+        .btn-download { background: #3b82f6; color: white; border: none; width: 100%; padding: 15px; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 20px; font-size: 16px; }
     </style>
 </head>
 <body>
 
     <div class="card">
         <div id="area-descarga">
-            <h2 style="color: #22c55e; margin-top: 0;">Pase de Entrada</h2>
+            <h2 style="color:#22c55e;">Pase de Acceso</h2>
             <div id="qr-code"></div>
             <div class="info">
-                <p><b>Invitado:</b> <span id="lblNombre">Cargando...</span></p>
-                <p><b>Casa:</b> <span id="lblCasa">...</span></p>
-                <p><b>Tipo:</b> <span id="lblTipo">...</span></p>
+                <p><b>Invitado:</b> <span id="nombre">Cargando...</span></p>
+                <p><b>Casa:</b> <span id="casa">...</span></p>
+                <p><b>Tipo:</b> <span id="tipo">...</span></p>
             </div>
         </div>
 
@@ -50,42 +35,32 @@
         import { db } from "./firebase.js";
         import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const idVisita = urlParams.get("id");
+        const id = new URLSearchParams(window.location.search).get("id");
 
-        if (idVisita) {
-            const docRef = doc(db, "visitas", idVisita);
-            const docSnap = await getDoc(docRef);
-
+        if (id) {
+            const docSnap = await getDoc(doc(db, "visitas", id));
             if (docSnap.exists()) {
                 const data = docSnap.data();
-                document.getElementById("lblNombre").innerText = data.nombre;
-                document.getElementById("lblCasa").innerText = data.casa;
-                document.getElementById("lblTipo").innerText = data.tipo;
+                document.getElementById("nombre").innerText = data.nombre;
+                document.getElementById("casa").innerText = data.casa;
+                document.getElementById("tipo").innerText = data.tipo.toUpperCase();
 
-                // Generar el QR
                 new QRCode(document.getElementById("qr-code"), {
-                    text: idVisita, // El guardia escanea el ID
+                    text: id, // El guardia escanea el ID directamente
                     width: 180,
                     height: 180
                 });
-            } else {
-                alert("Pase no encontrado");
             }
         }
 
-        // FUNCIÓN DE DESCARGA
         window.descargarPase = function() {
-            const area = document.getElementById("area-descarga");
-            
-            html2canvas(area, {
+            html2canvas(document.querySelector("#area-descarga"), {
                 backgroundColor: "#1e293b",
                 scale: 2,
-                logging: false,
-                useCORS: true 
+                useCORS: true
             }).then(canvas => {
                 const link = document.createElement('a');
-                link.download = "Pase_Acceso.png";
+                link.download = "Pase_Valle.png";
                 link.href = canvas.toDataURL("image/png");
                 link.click();
             });
