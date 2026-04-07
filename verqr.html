@@ -3,74 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Acceso Valle Esmeralda</title>
+    <title>Pase de Acceso</title>
+    
     <script src="qrcode.min.js"></script>
     <script src="html2canvas.min.js"></script>
+
     <style>
-        body { font-family: sans-serif; background: #0f172a; color: white; text-align: center; padding: 20px; }
-        .card { background: #1e293b; padding: 25px; border-radius: 20px; max-width: 350px; margin: auto; }
-        #area-descarga { background: #1e293b; padding: 10px; border-radius: 10px; }
-        #qr-code { background: white; padding: 15px; display: inline-block; border-radius: 10px; margin: 15px 0; }
-        .info { text-align: left; border-top: 1px solid #334155; padding-top: 15px; }
-        .btn-download { background: #22c55e; color: white; border: none; width: 100%; padding: 15px; border-radius: 10px; font-weight: bold; margin-top: 15px; cursor: pointer; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: white; text-align: center; padding: 20px; }
+        .card { background: #1e293b; padding: 25px; border-radius: 20px; max-width: 350px; margin: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        #qr-inner { background: white; padding: 15px; display: inline-block; border-radius: 10px; margin: 20px 0; }
+        .data { text-align: left; border-top: 1px solid #334155; padding-top: 15px; }
+        .btn-save { background: #22c55e; color: white; border: none; width: 100%; padding: 15px; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 15px; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <div id="area-descarga">
-            <h2 style="color:#22c55e;">Pase de Acceso</h2>
-            <div id="qr-code"></div>
-            <div class="info">
-                <p><b>Invitado:</b> <span id="nombre">Buscando...</span></p>
-                <p><b>Casa:</b> <span id="casa">...</span></p>
-                <p><b>Tipo:</b> <span id="tipo">...</span></p>
-            </div>
+
+    <div class="card" id="ticket">
+        <h2 style="color:#22c55e; margin:0;">VALLE ESMERALDA</h2>
+        <p style="font-size: 0.9rem; color: #94a3b8;">Pase de Invitado</p>
+        
+        <div id="qr-inner">
+            <div id="qrcode"></div>
         </div>
-        <button class="btn-download" onclick="descargarPase()">💾 Guardar en Galería</button>
+
+        <div class="data">
+            <p><b>Invitado:</b> <span id="txtNombre">Cargando...</span></p>
+            <p><b>Casa:</b> <span id="txtCasa">...</span></p>
+            <p><b>Tipo:</b> <span id="txtTipo">...</span></p>
+        </div>
     </div>
+
+    <button class="btn-save" onclick="guardarImagen()">💾 Guardar en Galería</button>
 
     <script type="module">
         import { db } from "./firebase.js";
         import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // 1. Obtener el ID desde la URL (?id=XXXXXXXX)
         const params = new URLSearchParams(window.location.search);
-        const idVisita = params.get("id");
+        const id = params.get("id");
 
-        if (idVisita) {
-            try {
-                const docRef = doc(db, "visitas", idVisita);
-                const docSnap = await getDoc(docRef);
+        if (id) {
+            async function cargarDatos() {
+                try {
+                    const snap = await getDoc(doc(db, "visitas", id));
+                    if (snap.exists()) {
+                        const d = snap.data();
+                        document.getElementById("txtNombre").innerText = d.nombre;
+                        document.getElementById("txtCasa").innerText = d.casa;
+                        document.getElementById("txtTipo").innerText = d.tipo.toUpperCase();
 
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    document.getElementById("nombre").innerText = data.nombre;
-                    document.getElementById("casa").innerText = data.casa;
-                    document.getElementById("tipo").innerText = data.tipo.toUpperCase();
-
-                    // Generar QR dentro de esta página (el que escaneará el guardia)
-                    new QRCode(document.getElementById("qr-code"), {
-                        text: idVisita, // El guardia solo necesita el ID para su escáner
-                        width: 180,
-                        height: 180
-                    });
-                } else {
-                    document.getElementById("nombre").innerText = "❌ No encontrado";
-                    alert("El pase no existe o fue eliminado.");
+                        // Generar el QR que leerá el guardia
+                        if (typeof QRCode !== "undefined") {
+                            new QRCode(document.getElementById("qrcode"), {
+                                text: id,
+                                width: 180,
+                                height: 180
+                            });
+                        }
+                    } else {
+                        document.getElementById("txtNombre").innerText = "Pase Expirado/Inválido";
+                    }
+                } catch (e) {
+                    console.error(e);
                 }
-            } catch (e) {
-                console.error(e);
-                document.getElementById("nombre").innerText = "⚠️ Error de red";
             }
+            cargarDatos();
         }
 
-        window.descargarPase = function() {
-            html2canvas(document.querySelector("#area-descarga"), { backgroundColor: "#1e293b", scale: 2 }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = "Pase_Acceso.png";
-                link.href = canvas.toDataURL("image/png");
-                link.click();
-            });
+        window.guardarImagen = function() {
+            if (typeof html2canvas !== "undefined") {
+                html2canvas(document.querySelector("#ticket"), { backgroundColor: "#1e293b", scale: 2 }).then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = "Pase_Acceso.png";
+                    link.href = canvas.toDataURL();
+                    link.click();
+                });
+            } else {
+                alert("La librería de imagen no cargó. Intenta refrescar.");
+            }
         };
     </script>
 </body>
