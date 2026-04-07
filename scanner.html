@@ -1,92 +1,27 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>Escáner QR</title>
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<style>
-body{
-font-family: Arial;
-text-align:center;
-background:#0f172a;
-color:white;
-padding:20px;
-}
-
-h2{
-color:#22c55e;
-}
-
-#reader{
-margin:auto;
-max-width:300px;
-margin-top:20px;
-}
-
-#resultado{
-margin-top:20px;
-font-size:18px;
-}
-
-button{
-background:#22c55e;
-color:white;
-border:none;
-padding:12px 20px;
-border-radius:10px;
-cursor:pointer;
-font-size:16px;
-margin-top:10px;
-}
-
-button:hover{
-background:#16a34a;
-}
-
-img{
-margin-top:10px;
-border-radius:10px;
-}
-
-#mensaje{
-margin-top:15px;
-color:#facc15;
-}
-</style>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caseta - Escáner</title>
+    <style>
+        body { font-family: Arial; text-align: center; background: #0f172a; color: white; padding: 15px; }
+        #reader { width: 100%; max-width: 400px; margin: auto; border-radius: 10px; overflow: hidden; }
+        .card { background: #1e293b; padding: 15px; border-radius: 12px; margin-top: 15px; }
+        button { width: 100%; padding: 15px; background: #22c55e; color: white; border: none; border-radius: 8px; font-weight: bold; margin-top: 10px; }
+    </style>
 </head>
-
 <body>
-
-<h2>Escanear QR</h2>
-
-<!-- 🔥 BOTÓN NUEVO -->
-<button onclick="activarCamara()">📷 Activar cámara</button>
-
-<div id="mensaje">
-Presiona el botón para iniciar cámara
-</div>
-
-<div id="reader"></div>
-
-<div id="resultado"></div>
-
-<div id="foto"></div>
-
-<br>
-
-<input type="file" id="fotoCaseta">
-
-<br><br>
-
-<button onclick="guardarFoto()">Guardar acceso</button>
-
-<script src="https://unpkg.com/html5-qrcode"></script>
-<script type="module" src="scanner.js"></script>
-
+    <h2>Control Caseta</h2>
+    <div id="reader"></div>
+    <button onclick="activarCamara()">Iniciar Escáner</button>
+    <div class="card" id="resultado">Esperando código...</div>
+    <div class="card">
+        <p>Evidencia (Foto):</p>
+        <input type="file" id="fotoCaseta" accept="image/*" capture="camera">
+        <button style="background: #3b82f6;" onclick="guardarFoto()">Registrar Entrada</button>
+    </div>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script type="module" src="scanner.js"></script>
 </body>
-
 </html>
