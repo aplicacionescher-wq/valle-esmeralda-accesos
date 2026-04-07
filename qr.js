@@ -7,9 +7,18 @@ addDoc
 
 window.crearQR = async function(){
 
-let nombre = document.getElementById("nombre").value
-let casa = document.getElementById("casa").value
-let tipo = document.getElementById("tipo").value
+let nombreInput = document.getElementById("nombre")
+let casaInput = document.getElementById("casa")
+let tipoInput = document.getElementById("tipo")
+
+if(!nombreInput || !casaInput || !tipoInput){
+alert("Error: inputs no encontrados")
+return
+}
+
+let nombre = nombreInput.value
+let casa = casaInput.value
+let tipo = tipoInput.value
 
 if(!nombre || !casa){
 alert("Completa los campos")
@@ -18,7 +27,6 @@ return
 
 try{
 
-// 🔥 GUARDAR EN FIREBASE
 let docRef = await addDoc(collection(db,"visitas"),{
 nombre,
 casa,
@@ -28,28 +36,24 @@ timestamp: Date.now()
 
 let qrID = docRef.id
 
-// 🔥 GENERAR IMAGEN QR
-QRCode.toDataURL(qrID, { width: 250 }, function(err, url){
+let contenedor = document.getElementById("qrcode")
+contenedor.innerHTML = ""
 
-if(err){
-console.error(err)
-alert("Error generando QR")
-return
-}
-
-// 🔥 MOSTRAR IMAGEN
-document.getElementById("qrcode").innerHTML = `
-<p>ID: ${qrID}</p>
-<img src="${url}" />
-`
-
+// 🔥 GENERAR QR REAL
+new QRCode(contenedor, {
+text: qrID,
+width: 250,
+height: 250
 })
 
+// mostrar ID
+let info = document.createElement("p")
+info.innerText = "ID: " + qrID
+contenedor.appendChild(info)
+
 }catch(e){
-
 console.error(e)
-alert("Error general")
-
+alert("Error al generar QR")
 }
 
 }
