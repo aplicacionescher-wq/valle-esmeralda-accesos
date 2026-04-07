@@ -13,37 +13,53 @@ uploadBytes,
 getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js"
 
+let html5QrCode = null
 let datosVisita = null
-let scanner = null
+let escaneoActivo = true
+
+// 🔊 sonido
+const beep = new Audio("https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg")
+
+// 🚀 INICIAR CAMARA AUTOMATICO
+window.onload = () => iniciarCamara()
 
 window.iniciarCamara = async function(){
 
-const html5QrCode = new Html5Qrcode("reader")
-
 try{
 
-const devices = await Html5Qrcode.getCameras()
+html5QrCode = new Html5Qrcode("reader")
 
-let cameraId = devices.length > 1 ? devices[1].id : devices[0].id
-
-scanner = html5QrCode
-
-await scanner.start(
-cameraId,
+await html5QrCode.start(
+{ facingMode: { exact: "environment" } }, // 🔥 FORZAR TRASERA REAL
 {
 fps: 15,
-qrbox: { width: 250, height: 250 }
+qrbox: { width: 280, height: 280 }
 },
 onScanSuccess
 )
 
 }catch(e){
-alert("Error cámara: " + e)
+console.error(e)
+alert("⚠️ No se pudo abrir la cámara. Verifica permisos.")
 }
 
 }
 
+// 📲 CUANDO ESCANEA
 async function onScanSuccess(qrID){
+
+if(!escaneoActivo) return
+escaneoActivo = false
+
+navigator.vibrate(200) // 📳 vibrar
+beep.play() // 🔊 sonido
+
+await procesarQR(qrID)
+
+}
+
+// 🔍 VALIDAR QR
+async function procesarQR(qrID){
 
 try{
 
@@ -51,7 +67,8 @@ let docRef = doc(db,"visitas",qrID)
 let snap = await getDoc(docRef)
 
 if(!snap.exists()){
-document.getElementById("resultado").innerHTML="QR INVÁLIDO"
+mostrarError("❌ QR INVÁLIDO")
+reactivarScanner()
 return
 }
 
@@ -68,25 +85,51 @@ paqueteria:43200000
 }
 
 if(ahora - data.timestamp > expiracion[data.tipo]){
-document.getElementById("resultado").innerHTML="QR EXPIRADO"
+mostrarError("⛔ QR EXPIRADO")
+reactivarScanner()
 return
 }
 
+// ✅ ACCESO PERMITIDO
 document.getElementById("resultado").innerHTML = `
-ACCESO PERMITIDO<br>
-${data.nombre}<br>
-Casa: ${data.casa}
+<div style="color:#00ff00;font-size:20px;">
+✅ ACCESO PERMITIDO
+</div>
+Nombre: ${data.nombre}<br>
+Casa: ${data.casa}<br>
+Tipo: ${data.tipo}
 `
 
-await scanner.stop()
+await html5QrCode.stop()
 
 }catch(e){
-document.getElementById("resultado").innerHTML="ERROR"
+console.error(e)
+mostrarError("⚠️ ERROR")
+reactivarScanner()
 }
 
 }
 
-window.guardarFoto = async function(){
+// ❌ ERROR VISUAL
+function mostrarError(msg){
+
+document.getElementById("resultado").innerHTML = `
+<div style="color:red;font-size:20px;">
+${msg}
+</div>
+`
+
+}
+
+// 🔁 REACTIVAR SCANNER
+function reactivarScanner(){
+setTimeout(()=>{
+escaneoActivo = true
+},2000)
+}
+
+// 📸 GUARDAR ACCESO
+window.guardarAcceso = async function(){
 
 if(!datosVisita){
 alert("Escanea primero")
@@ -96,7 +139,7 @@ return
 let archivo = document.getElementById("fotoCaseta").files[0]
 
 if(!archivo){
-alert("Selecciona foto")
+alert("📸 Toma una foto")
 return
 }
 
@@ -112,6 +155,8 @@ foto:url,
 fecha: Date.now()
 })
 
-alert("Registro guardado")
+alert("✅ Acceso registrado")
+
+location.reload()
 
 }
