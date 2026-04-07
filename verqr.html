@@ -1,40 +1,29 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pase de Acceso</title>
-    <style>
-        body { font-family: Arial; text-align: center; background: #0f172a; color: white; padding: 20px; }
-        .card { background: #1e293b; padding: 25px; border-radius: 15px; max-width: 380px; margin: auto; }
-        #qr-container { background: white; padding: 15px; display: inline-block; border-radius: 10px; margin: 20px 0; }
-        img { border-radius: 10px; margin-bottom: 10px; max-width: 100%; }
-        .info { text-align: left; background: #334155; padding: 15px; border-radius: 8px; font-size: 14px; }
-    </style>
-</head>
-<body>
-    <div class="card">
-        <h2>Acceso Valle Esmeralda</h2>
-        <div id="foto-div"></div>
-        <div class="info" id="datos">Cargando pase...</div>
-        <div id="qr-container"><div id="qr-code"></div></div>
-        <p style="color: #facc15; font-size: 14px;">Muestra este código al guardia</p>
-    </div>
-    <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
-    <script type="module">
-        import { db } from "./firebase.js";
-        import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-        
-        const id = new URLSearchParams(window.location.search).get("id");
-        if (id) {
-            const snap = await getDoc(doc(db, "visitas", id));
-            if (snap.exists()) {
-                const d = snap.data();
-                document.getElementById("datos").innerHTML = `<b>Invitado:</b> ${d.nombre}<br><b>Casa:</b> ${d.casa}<br><b>Tipo:</b> ${d.tipo}`;
-                if (d.fotoURL) document.getElementById("foto-div").innerHTML = `<img src="${d.fotoURL}">`;
-                new QRCode(document.getElementById("qr-code"), { text: JSON.stringify(d), width: 200, height: 200 });
-            } else { document.getElementById("datos").innerText = "Pase no válido"; }
+<script type="module">
+    import { db } from "./firebase.js";
+    import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // Extraer ID de la URL (?id=xxxx)
+    const parametros = new URLSearchParams(window.location.search);
+    const idCapturado = parametros.get("id");
+
+    if (idCapturado) {
+        // Buscamos en la colección "visitas" usando el ID
+        const docRef = doc(db, "visitas", idCapturado);
+        const documento = await getDoc(docRef);
+
+        if (documento.exists()) {
+            const datos = documento.data();
+            document.getElementById("nombre-visitante").innerText = datos.nombre;
+            document.getElementById("detalles").innerText = "Casa: " + datos.casa;
+            
+            // Generar un segundo QR interno para que el guardia lo escanee si es necesario
+            new QRCode(document.getElementById("qr-interno"), { 
+                text: idCapturado, // Solo el ID para que el scanner lo procese fácil
+                width: 150, 
+                height: 150 
+            });
+        } else {
+            document.getElementById("nombre-visitante").innerText = "PASE NO ENCONTRADO";
         }
-    </script>
-</body>
-</html>
+    }
+</script>
