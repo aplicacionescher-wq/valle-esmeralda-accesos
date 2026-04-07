@@ -8,7 +8,8 @@ const firebaseConfig = {
   projectId: "valle-esmeralda-accesos",
   storageBucket: "valle-esmeralda-accesos.appspot.com",
   messagingSenderId: "1075927284762",
-  appId: "1:1075927284762:web:635b74230f88d8740e65a3"
+  appId: "1:1075927284762:web:635b74230f88d8740e65a3",
+  measurementId: "G-WCC09W0Y5W"
 };
 
 const app = initializeApp(firebaseConfig);
