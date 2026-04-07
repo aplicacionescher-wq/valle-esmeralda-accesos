@@ -1,55 +1,64 @@
 import { db } from "./firebase.js";
-import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-let html5QrCode = null;
-
-async function onScanSuccess(decodedText) {
+window.onScanSuccess = async function(decodedText) {
     const resDiv = document.getElementById("resultado");
-    let idBusqueda = "";
-
-    // 1. Extraer ID si es un link o si es texto directo
+    
+    // Extraer ID (limpia el link si viene completo)
+    let idDoc = decodedText;
     if (decodedText.includes("id=")) {
-        idBusqueda = new URLSearchParams(decodedText.split('?')[1]).get("id");
-    } else {
-        idBusqueda = decodedText;
+        idDoc = new URLSearchParams(decodedText.split('?')[1]).get("id");
     }
 
     try {
-        resDiv.innerHTML = "🔍 Validando...";
-        const snap = await getDoc(doc(db, "visitas", idBusqueda));
+        const docRef = doc(db, "visitas", idDoc);
+        const snap = await getDoc(docRef);
 
-        if (snap.exists()) {
-            const d = snap.data();
+        if (!snap.exists()) {
+            mostrarResultado("❌ CÓDIGO INVÁLIDO", "Este pase no existe en la base de datos.", "#ef4444");
+            return;
+        }
+
+        const data = snap.data();
+        const ahora = Date.now();
+        const limite = 24 * 60 * 60 * 1000; // 24h
+
+        // 1. Validar si ya se usó
+        if (data.estado === "usado") {
+            mostrarResultado("⚠️ ACCESO DENEGADO", `Este pase ya fue utilizado anteriormente.`, "#f59e0b");
+        } 
+        // 2. Validar si expiró
+        else if ((ahora - data.timestamp) > limite) {
+            await updateDoc(docRef, { estado: "expirado" });
+            mostrarResultado("⏰ PASE EXPIRADO", "El tiempo de validez (24h) ha terminado.", "#ef4444");
+        } 
+        // 3. ACCESO CORRECTO
+        else {
+            await updateDoc(docRef, { 
+                estado: "usado", 
+                fechaEntrada: ahora 
+            });
+            
+            resDiv.style.backgroundColor = "#064e3b";
+            resDiv.style.border = "2px solid #22c55e";
             resDiv.innerHTML = `
-                <div style="background:#064e3b; padding:15px; border:2px solid #22c55e; border-radius:10px;">
-                    <h2 style="color:#22c55e; margin:0;">✅ ACCESO VÁLIDO</h2>
-                    <p><b>Invitado:</b> ${d.nombre}</p>
-                    <p><b>Casa:</b> ${d.casa}</p>
-                    <p><b>Tipo:</b> ${d.tipo.toUpperCase()}</p>
-                </div>
+                <h2 style="color:#22c55e; margin:0;">✅ ACCESO CORRECTO</h2>
+                <p style="margin:10px 0;"><b>Invitado:</b> ${data.nombre}<br>
+                <b>Casa:</b> ${data.casa}<br>
+                <b>Tipo:</b> ${data.tipo.toUpperCase()}</p>
+                <small>Entrada registrada con éxito</small>
             `;
-            // Vibración de éxito (en Android)
-            if(navigator.vibrate) navigator.vibrate(200);
-            if(html5QrCode) html5QrCode.stop(); 
-        } else {
-            resDiv.innerHTML = "<h2 style='color:#ef4444;'>❌ PASE INVÁLIDO</h2>";
+            if(navigator.vibrate) navigator.vibrate([100, 50, 100]);
         }
     } catch (e) {
-        resDiv.innerHTML = "⚠️ Error de red";
+        mostrarResultado("⚠️ ERROR DE RED", "No se pudo conectar con Firebase.", "#334155");
     }
-}
-
-window.activarCamara = function() {
-    if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
-    
-    // CONFIGURACIÓN DE ESCANEO RÁPIDO
-    html5QrCode.start(
-        { facingMode: "environment" },
-        { 
-            fps: 20,          // Escanea el doble de rápido (antes era 10)
-            qrbox: { width: 280, height: 280 }, // Caja más grande para apuntar fácil
-            aspectRatio: 1.0 
-        },
-        onScanSuccess
-    ).catch(err => alert("Error de cámara: " + err));
 };
+
+function mostrarResultado(titulo, msg, color) {
+    const resDiv = document.getElementById("resultado");
+    resDiv.style.backgroundColor = "#1e293b";
+    resDiv.style.border = `2px solid ${color}`;
+    resDiv.innerHTML = `<h2 style="color:${color}; margin:0;">${titulo}</h2><p>${msg}</p>`;
+    if(navigator.vibrate) navigator.vibrate(500);
+}
