@@ -11,7 +11,7 @@ window.crearQR = async function() {
     try {
         qrDiv.innerHTML = "Generando...";
 
-        // 1. Guardar en la colección 'visitas'
+        // 1. Guardar en Firebase (Capa gratuita)
         const docRef = await addDoc(collection(db, "visitas"), {
             nombre: nombre,
             tipo: tipo,
@@ -20,38 +20,33 @@ window.crearQR = async function() {
             timestamp: Date.now()
         });
 
-        // 2. Guardar el ID para el botón de WhatsApp
         window.currentQrID = docRef.id;
 
-        // 3. Crear el Link
+        // 2. IMPORTANTE: El link que el guardia también sabrá leer
         const linkPase = `https://valle-esmeralda-accesos.web.app/verqr.html?id=${docRef.id}`;
 
-        // 4. Dibujar el QR en la pantalla (PC y Móvil)
-        qrDiv.innerHTML = ""; // Limpiar el "Generando..."
+        qrDiv.innerHTML = ""; 
         new QRCode(qrDiv, {
-            text: linkPase,
+            text: linkPase, // El QR físico contiene el LINK con el ID
             width: 200,
             height: 200,
-            colorDark: "#000000",
-            colorLight: "#ffffff",
             correctLevel: QRCode.CorrectLevel.H
         });
 
-        alert("✅ Pase creado con éxito");
+        alert("✅ Pase creado y asociado en Firebase");
 
     } catch (e) {
         console.error(e);
         alert("Error al conectar con Firebase");
-        qrDiv.innerHTML = "Error";
     }
 };
 
 window.enviarWhats = function() {
     if (!window.currentQrID) return alert("Primero genera el QR");
     const tel = document.getElementById("telefono").value;
-    if (!tel) return alert("Ingresa el número de WhatsApp");
-    
     const link = `https://valle-esmeralda-accesos.web.app/verqr.html?id=${window.currentQrID}`;
+    
+    // Solo enviamos el link (el invitado abre el link y el guardia escanea el QR que sale en ese link)
     const msg = encodeURIComponent(`Hola! Este es tu pase de acceso para Valle Esmeralda: ${link}`);
     window.open(`https://wa.me/52${tel}?text=${msg}`);
 };
