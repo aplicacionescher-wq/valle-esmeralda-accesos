@@ -10,28 +10,20 @@ function onScanSuccess(decodedText) {
     let resultado = document.getElementById("resultado");
     let contenedorFoto = document.getElementById("contenedor-foto");
 
-    // 1. Si el QR es un Link (QR generado por qr.js)
+    // 1. Si el QR es un Link (Redirigir a verqr.html)
     if (decodedText.startsWith("http")) {
-        resultado.innerHTML = "🔗 Link detectado. Redirigiendo para validar...";
-        window.location.href = decodedText; // Redirige a verqr.html
+        resultado.innerHTML = "🔗 Link detectado. Redirigiendo...";
+        window.location.href = decodedText;
         return;
     }
 
-    // 2. Si el QR contiene el JSON (QR directo)
+    // 2. Si el QR es JSON
     try {
         let data = JSON.parse(decodedText);
         datosVisita = data;
-
         let ahora = Date.now();
-        // Tiempos de expiración (milisegundos)
-        let expiracion = {
-            visita: 86400000,     // 24h
-            proveedor: 43200000,  // 12h
-            uber: 7200000,        // 2h
-            paqueteria: 43200000  // 12h
-        };
+        let expiracion = { visita: 86400000, proveedor: 43200000, uber: 7200000, paqueteria: 43200000 };
 
-        // VALIDACIÓN DE TIEMPO
         if (ahora - data.timestamp > (expiracion[data.tipo] || 86400000)) {
             resultado.innerHTML = "<h3 style='color:#ef4444;'>❌ PASE EXPIRADO</h3>";
             datosVisita = null;
@@ -39,89 +31,84 @@ function onScanSuccess(decodedText) {
             resultado.innerHTML = `
                 <h3 style='color:#22c55e;'>✅ ACCESO VÁLIDO</h3>
                 <b>Invitado:</b> ${data.nombre}<br>
-                <b>Casa:</b> ${data.casa}<br>
-                <b>Tipo:</b> ${data.tipo.toUpperCase()}
+                <b>Casa:</b> ${data.casa}
             `;
-            // Si hay foto del visitante en el QR, mostrarla
             if (data.fotoURL) {
-                contenedorFoto.innerHTML = `<img src="${data.fotoURL}" id="foto-visitante">`;
+                contenedorFoto.innerHTML = `<img src="${data.fotoURL}" style="width:150px; border-radius:10px; margin-top:10px;">`;
             }
         }
         
-        // Detener cámara tras éxito para ahorrar batería
         if(html5QrCode) html5QrCode.stop();
 
     } catch (error) {
-        resultado.innerHTML = "⚠️ Código QR no reconocido o dañado.";
-        console.error("Error al parsear QR:", error);
+        resultado.innerHTML = "⚠️ Código QR no reconocido.";
     }
 }
 
-// --- ACTIVAR CÁMARA ---
+// --- ACTIVAR CÁMARA TRASERA (CORREGIDO) ---
 window.activarCamara = async function() {
     const mensaje = document.getElementById("mensaje");
-    mensaje.innerHTML = "Cargando cámara...";
+    mensaje.innerHTML = "🔄 Buscando cámara trasera...";
+
+    if (html5QrCode) {
+        await html5QrCode.stop().catch(() => {});
+    }
+
+    html5QrCode = new Html5Qrcode("reader");
 
     try {
-        html5QrCode = new Html5Qrcode("reader");
-        const devices = await Html5Qrcode.getCameras();
-
-        if (devices && devices.length) {
-            // Selecciona la cámara trasera si existe
-            let camaraId = devices[devices.length - 1].id; 
-            
-            await html5QrCode.start(
-                camaraId,
-                { fps: 10, qrbox: 250 },
-                onScanSuccess
-            );
-            mensaje.innerHTML = "✅ Escáner activo";
-        } else {
-            mensaje.innerHTML = "❌ No se encontró cámara.";
-        }
+        // Forzamos el uso de la cámara trasera usando 'environment'
+        const config = { fps: 15, qrbox: { width: 250, height: 250 } };
+        
+        await html5QrCode.start(
+            { facingMode: "environment" }, // <--- ESTO FUERZA LA CÁMARA TRASERA
+            config,
+            onScanSuccess
+        );
+        
+        mensaje.innerHTML = "✅ Escáner activo (Cámara Trasera)";
     } catch (err) {
-        console.error(err);
-        mensaje.innerHTML = "❌ Error de permisos de cámara.";
-        alert("Asegúrate de dar permisos de cámara y usar HTTPS");
+        console.error("Error con facingMode, intentando selección manual:", err);
+        
+        // Si falla el modo automático, buscamos manualmente la cámara que diga "back" o la última de la lista
+        try {
+            const devices = await Html5Qrcode.getCameras();
+            if (devices && devices.length > 0) {
+                // Intentamos encontrar una que diga 'back' o simplemente tomamos la última (suele ser la principal)
+                let backCamera = devices.find(device => device.label.toLowerCase().includes('back'));
+                let camId = backCamera ? backCamera.id : devices[devices.length - 1].id;
+
+                await html5QrCode.start(camId, { fps: 15, qrbox: 250 }, onScanSuccess);
+                mensaje.innerHTML = "✅ Escáner activo (Manual)";
+            } else {
+                mensaje.innerHTML = "❌ No se detectaron cámaras.";
+            }
+        } catch (manualErr) {
+            mensaje.innerHTML = "❌ Error: Asegúrate de usar HTTPS y dar permisos.";
+            alert("Error: " + manualErr);
+        }
     }
 };
 
-// --- GUARDAR INGRESO EN FIREBASE ---
+// --- GUARDAR INGRESO ---
 window.guardarFoto = async function() {
-    if (!datosVisita) {
-        alert("Primero debes escanear un código QR válido");
-        return;
-    }
-
+    if (!datosVisita) return alert("Escanea un QR primero");
     let archivo = document.getElementById("fotoCaseta").files[0];
-    if (!archivo) {
-        alert("Debes tomar una foto de evidencia (auto/persona)");
-        return;
-    }
+    if (!archivo) return alert("Toma la foto de evidencia");
 
     try {
-        document.getElementById("resultado").innerHTML = "⏳ Guardando registro...";
-        
-        // 1. Subir foto de evidencia a Storage
-        let storageRef = ref(storage, "ingresos/" + Date.now() + "_" + datosVisita.casa);
+        document.getElementById("resultado").innerHTML = "⏳ Guardando...";
+        let storageRef = ref(storage, "ingresos/" + Date.now());
         await uploadBytes(storageRef, archivo);
-        let urlEvidencia = await getDownloadURL(storageRef);
+        let url = await getDownloadURL(storageRef);
 
-        // 2. Guardar datos en Firestore
         await addDoc(collection(db, "registroAccesos"), {
-            nombre: datosVisita.nombre,
-            casa: datosVisita.casa,
-            tipo: datosVisita.tipo,
-            autoriza: datosVisita.autoriza || "N/A",
-            fecha: Date.now(),
-            fotoEvidencia: urlEvidencia
+            ...datosVisita,
+            fotoEvidencia: url,
+            fechaIngreso: Date.now()
         });
 
-        alert("Registro completado con éxito");
-        location.reload(); // Reiniciar para el siguiente
-
-    } catch (error) {
-        console.error("Error al guardar:", error);
-        alert("Error al conectar con la base de datos");
-    }
+        alert("Acceso Registrado");
+        location.reload();
+    } catch (e) { alert("Error al guardar"); }
 };
