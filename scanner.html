@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Escanear QR</title>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<style>
+body{
+font-family: Arial;
+background:#0a0a0a;
+color:white;
+text-align:center;
+}
+
+#reader{
+width:320px;
+margin:auto;
+margin-top:20px;
+border:3px solid #00ff00;
+border-radius:10px;
+}
+
+button{
+margin-top:10px;
+padding:12px;
+width:90%;
+background:#00ff99;
+border:none;
+border-radius:8px;
+font-size:16px;
+}
+
+#resultado{
+margin-top:15px;
+font-size:18px;
+}
+
+input{
+margin-top:10px;
+}
+</style>
+
+</head>
+
+<body>
+
+<h2>🚓 Escaneo de Acceso</h2>
+
+<button onclick="iniciarCamara()">📷 Activar Cámara</button>
+
+<div id="reader"></div>
+
+<div id="resultado"></div>
+
+<input type="file" id="foto" accept="image/*" capture="environment">
+
+<button onclick="guardarAcceso()">Guardar Acceso</button>
+
+<button onclick="cerrarSesion()">Cerrar Sesión</button>
+
+<script type="module" src="scanner.js"></script>
+
+</body>
+</html>
