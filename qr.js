@@ -7,7 +7,7 @@ window.crearQR = async function() {
     const qrDiv = document.getElementById("qr");
     const btnGen = document.getElementById("btnGen");
 
-    if (!nombre) return alert("Por favor, ingresa el nombre del invitado.");
+    if (!nombre) return alert("Ingresa el nombre del invitado");
 
     try {
         btnGen.disabled = true;
@@ -22,23 +22,18 @@ window.crearQR = async function() {
             timestamp: Date.now()
         });
 
-        // Guardamos el ID para enviarlo por WhatsApp después
         window.currentQrID = docRef.id;
+        const linkPase = `${window.location.origin}/verqr.html?id=${docRef.id}`;
 
-        // 2. Crear el LINK COMPLETO que el invitado abrirá
-        // IMPORTANTE: Asegúrate de que esta URL coincida con tu dominio de Firebase
-        const urlBase = window.location.origin; // Detecta automáticamente si es localhost o tu dominio real
-        const linkPase = `${urlBase}/verqr.html?id=${docRef.id}`;
-
-        // 3. Generar el QR visual
+        // 2. Generar QR de ALTA RESOLUCIÓN (Para que el guardia escanee a la primera)
         qrDiv.innerHTML = ""; 
         new QRCode(qrDiv, {
             text: linkPase,
-            width: 250,
-            height: 250,
+            width: 400, // Aumentamos tamaño base
+            height: 400,
             colorDark: "#000000",
             colorLight: "#ffffff",
-            correctLevel: QRCode.CorrectLevel.H
+            correctLevel: QRCode.CorrectLevel.H // Máxima corrección de errores
         });
 
         document.getElementById("qr-container").style.display = "block";
@@ -46,11 +41,8 @@ window.crearQR = async function() {
         btnGen.disabled = false;
         btnGen.innerText = "✨ Generar Nuevo";
 
-        console.log("Pase generado con ID:", docRef.id);
-
     } catch (e) {
-        console.error("Error Firebase:", e);
-        alert("Error de conexión. Revisa tu internet.");
+        alert("Error de conexión");
         btnGen.disabled = false;
     }
 };
@@ -60,21 +52,30 @@ window.enviarWhats = async function() {
     const btn = document.getElementById("btnWhats");
 
     try {
-        btn.innerText = "⏳ Procesando Imagen...";
+        btn.innerText = "⏳ Procesando...";
         
-        // Capturamos el QR (que ya tiene el link embebido) como imagen
+        // CAPTURA DE ALTA CALIDAD
         const canvas = await html2canvas(qrDiv, { 
             backgroundColor: "#ffffff",
-            scale: 3 
+            scale: 2, // Duplica la densidad de píxeles
+            logging: false
         });
         
         canvas.toBlob(async (blob) => {
             const file = new File([blob], "Pase_Valle.png", { type: "image/png" });
 
+            // Intento de envío de imagen nativa (Solo Móvil)
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                await navigator.share({ files: [file] });
+                try {
+                    await navigator.share({
+                        files: [file],
+                        title: 'Pase de Acceso'
+                    });
+                } catch (err) {
+                    console.log("Cancelado");
+                }
             } else {
-                // Si no puede compartir imagen, envía el LINK como texto (Respaldo)
+                // RESPALDO: Si falla la imagen, envía el link (PC o móviles viejos)
                 const link = `${window.location.origin}/verqr.html?id=${window.currentQrID}`;
                 window.open(`https://wa.me/?text=${encodeURIComponent("Usa este link para tu acceso: " + link)}`);
             }
@@ -83,6 +84,6 @@ window.enviarWhats = async function() {
 
     } catch (err) {
         btn.innerText = "📱 Enviar por WhatsApp";
-        alert("Error al compartir.");
+        alert("Error al compartir. Intenta de nuevo.");
     }
 };
