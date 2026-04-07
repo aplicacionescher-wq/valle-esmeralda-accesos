@@ -1,136 +1,36 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
-
-<meta charset="UTF-8">
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Valle Esmeralda - Registrar visita</title>
-
-<style>
-
-body{
-
-font-family:Arial;
-
-background:#f2f2f2;
-
-text-align:center;
-
-padding:20px;
-
-}
-
-.logo{
-
-width:120px;
-
-margin-bottom:10px;
-
-}
-
-.card{
-
-background:white;
-
-padding:20px;
-
-border-radius:10px;
-
-max-width:400px;
-
-margin:auto;
-
-box-shadow:0 0 10px rgba(0,0,0,.1);
-
-}
-
-input,select{
-
-width:90%;
-
-padding:10px;
-
-margin:5px;
-
-border-radius:6px;
-
-border:1px solid #ccc;
-
-}
-
-button{
-
-padding:10px 20px;
-
-border:none;
-
-border-radius:6px;
-
-background:#2e7d32;
-
-color:white;
-
-cursor:pointer;
-
-margin:5px;
-
-}
-
-button:hover{
-
-background:#1b5e20;
-
-}
-
-</style>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Pase</title>
+    <style>
+        body { font-family: Arial; text-align: center; padding: 15px; background: #f2f2f2; }
+        .card { background: white; padding: 20px; border-radius: 12px; max-width: 400px; margin: auto; }
+        input, select, button { width: 95%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; }
+        button { background: #2e7d32; color: white; border: none; font-weight: bold; cursor: pointer; }
+        #qr { margin: 20px auto; display: flex; justify-content: center; }
+        .btn-wa { background: #25d366; }
+    </style>
 </head>
-
 <body>
-
-<img src="logo.png" class="logo">
-
-<div class="card">
-
-<h2>Registrar visita</h2>
-
-<input id="nombre" placeholder="Nombre visitante">
-
-<input id="telefono" placeholder="Teléfono WhatsApp">
-
-<select id="tipo">
-
-<option value="visita">Visita</option>
-
-<option value="proveedor">Proveedor</option>
-
-<option value="uber">Uber / Taxi</option>
-
-<option value="paqueteria">Paquetería</option>
-
-</select>
-
-<label>Identificación visitante</label>
-
-<input type="file" id="foto">
-
-<br>
-
-<button onclick="crearQR()">Generar QR</button>
-
-<div id="qr"></div>
-
-<button onclick="enviarWhats()">Enviar por WhatsApp</button>
-
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
-
-<script type="module" src="qr.js"></script>
-
+    <div class="card">
+        <h2>Nueva Visita</h2>
+        <input id="nombre" placeholder="Nombre completo">
+        <input id="telefono" type="tel" placeholder="WhatsApp (10 dígitos)">
+        <select id="tipo">
+            <option value="visita">Invitado</option>
+            <option value="uber">Uber / Taxi</option>
+            <option value="proveedor">Proveedor / Servicios</option>
+        </select>
+        <p style="font-size: 12px; color: #666;">Foto ID (Opcional):</p>
+        <input type="file" id="foto" accept="image/*">
+        <button onclick="crearQR()">Generar QR</button>
+        <div id="qr"></div>
+        <button class="btn-wa" onclick="enviarWhats()">Enviar por WhatsApp</button>
+        <button style="background: #666;" onclick="location.href='dashboard.html'">Volver</button>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+    <script type="module" src="qr.js"></script>
 </body>
-
 </html>
