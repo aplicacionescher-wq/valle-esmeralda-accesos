@@ -1,30 +1,11 @@
-self.addEventListener("install",function(e){
+self.addEventListener("install", (e) => {
+    e.waitUntil(caches.open("v1").then((cache) => cache.addAll([
+        "./", "./index.html", "./generar.html", "./escaner.html", 
+        "./verqr.html", "./firebase.js", "./qr.js", "./scanner.js",
+        "https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"
+    ])));
+});
 
-e.waitUntil(
-
-caches.open("accesos").then(function(cache){
-
-return cache.addAll([
-"./",
-"./index.html"
-])
-
-})
-
-)
-
-})
-
-self.addEventListener("fetch",function(e){
-
-e.respondWith(
-
-caches.match(e.request).then(function(res){
-
-return res || fetch(e.request)
-
-})
-
-)
-
-})
+self.addEventListener("fetch", (e) => {
+    e.respondWith(caches.match(e.request).then((res) => res || fetch(e.request)));
+});
