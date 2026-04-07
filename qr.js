@@ -2,59 +2,56 @@ import { db } from "./firebase.js";
 import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 window.crearQR = async function() {
-    // 1. Obtener elementos
-    const nombreInput = document.getElementById("nombre");
-    const tipoInput = document.getElementById("tipo");
+    const nombre = document.getElementById("nombre").value;
+    const tipo = document.getElementById("tipo").value;
     const qrDiv = document.getElementById("qr");
 
-    // 2. Validaciones básicas
-    if (!nombreInput.value) {
-        alert("Por favor, ingresa el nombre del invitado");
-        return;
-    }
-
-    // 3. Obtener datos de sesión (asegúrate de que el login funcione)
-    const casa = localStorage.getItem("casa") || "Sin Casa";
-    const autoriza = localStorage.getItem("usuario") || "Residente";
+    if (!nombre) return alert("Ingresa el nombre del invitado");
 
     try {
-        console.log("Intentando guardar en Firebase...");
-        
-        // 4. Guardar en la colección 'visitas' (Capa gratuita)
+        qrDiv.innerHTML = "Generando...";
+
+        // 1. Guardar en la colección 'visitas'
         const docRef = await addDoc(collection(db, "visitas"), {
-            nombre: nombreInput.value,
-            tipo: tipoInput.value,
-            casa: casa,
-            autoriza: autoriza,
+            nombre: nombre,
+            tipo: tipo,
+            casa: localStorage.getItem("casa") || "Sin Casa",
+            autoriza: localStorage.getItem("usuario") || "Residente",
             timestamp: Date.now()
         });
 
-        const qrID = docRef.id;
-        window.currentQrID = qrID; // Para usar en WhatsApp después
+        // 2. Guardar el ID para el botón de WhatsApp
+        window.currentQrID = docRef.id;
 
-        // 5. Limpiar el contenedor del QR
-        qrDiv.innerHTML = "";
+        // 3. Crear el Link
+        const linkPase = `https://valle-esmeralda-accesos.web.app/verqr.html?id=${docRef.id}`;
 
-        // 6. Generar el QR (Link para el invitado)
-        const linkPase = `https://valle-esmeralda-accesos.web.app/verqr.html?id=${qrID}`;
-        
-        // Esta es la parte que suele fallar en PC si la librería no carga
-        if (typeof QRCode !== "undefined") {
-            new QRCode(qrDiv, {
-                text: linkPase,
-                width: 200,
-                height: 200,
-                colorDark : "#000000",
-                colorLight : "#ffffff"
-            });
-            alert("✅ ¡Pase generado con éxito!");
-        } else {
-            console.error("La librería QRCode no está cargada");
-            alert("Error: No se pudo cargar el generador de imágenes. Recarga la página.");
-        }
+        // 4. Dibujar el QR en la pantalla (PC y Móvil)
+        qrDiv.innerHTML = ""; // Limpiar el "Generando..."
+        new QRCode(qrDiv, {
+            text: linkPase,
+            width: 200,
+            height: 200,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+
+        alert("✅ Pase creado con éxito");
 
     } catch (e) {
-        console.error("Error completo:", e);
-        alert("Error al conectar con Firebase: " + e.message);
+        console.error(e);
+        alert("Error al conectar con Firebase");
+        qrDiv.innerHTML = "Error";
     }
+};
+
+window.enviarWhats = function() {
+    if (!window.currentQrID) return alert("Primero genera el QR");
+    const tel = document.getElementById("telefono").value;
+    if (!tel) return alert("Ingresa el número de WhatsApp");
+    
+    const link = `https://valle-esmeralda-accesos.web.app/verqr.html?id=${window.currentQrID}`;
+    const msg = encodeURIComponent(`Hola! Este es tu pase de acceso para Valle Esmeralda: ${link}`);
+    window.open(`https://wa.me/52${tel}?text=${msg}`);
 };
