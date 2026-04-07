@@ -1,29 +1,111 @@
-<script type="module">
-    import { db } from "./firebase.js";
-    import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pase de Acceso - Valle Esmeralda</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: white; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .card { background: #1e293b; padding: 25px; border-radius: 20px; max-width: 400px; width: 100%; box-shadow: 0 10px 25px rgba(0,0,0,0.5); text-align: center; }
+        .header { border-bottom: 1px solid #334155; margin-bottom: 20px; padding-bottom: 10px; }
+        .header h2 { color: #22c55e; margin: 0; font-size: 1.4rem; }
+        
+        #area-descarga { background: #1e293b; padding: 15px; border-radius: 15px; }
+        #foto-perfil { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid #22c55e; margin-bottom: 15px; display: none; }
+        
+        .info-box { background: #334155; padding: 15px; border-radius: 12px; text-align: left; margin-bottom: 20px; }
+        .info-box p { margin: 5px 0; font-size: 0.9rem; color: #cbd5e1; }
+        .info-box b { color: white; }
 
-    // Extraer ID de la URL (?id=xxxx)
-    const parametros = new URLSearchParams(window.location.search);
-    const idCapturado = parametros.get("id");
+        #qr-code { background: white; padding: 15px; display: inline-block; border-radius: 10px; margin: 10px 0; }
+        
+        .btn-download { background: #3b82f6; color: white; border: none; padding: 12px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; transition: 0.3s; }
+        .btn-download:hover { background: #2563eb; }
+        .footer-msg { font-size: 0.8rem; color: #94a3b8; margin-top: 15px; }
+    </style>
+</head>
+<body>
 
-    if (idCapturado) {
-        // Buscamos en la colección "visitas" usando el ID
-        const docRef = doc(db, "visitas", idCapturado);
-        const documento = await getDoc(docRef);
+    <div class="card">
+        <div class="header">
+            <h2>Acceso Valle Esmeralda</h2>
+        </div>
 
-        if (documento.exists()) {
-            const datos = documento.data();
-            document.getElementById("nombre-visitante").innerText = datos.nombre;
-            document.getElementById("detalles").innerText = "Casa: " + datos.casa;
-            
-            // Generar un segundo QR interno para que el guardia lo escanee si es necesario
-            new QRCode(document.getElementById("qr-interno"), { 
-                text: idCapturado, // Solo el ID para que el scanner lo procese fácil
-                width: 150, 
-                height: 150 
-            });
-        } else {
-            document.getElementById("nombre-visitante").innerText = "PASE NO ENCONTRADO";
+        <div id="area-descarga">
+            <img id="foto-perfil" src="" alt="Foto Visitante">
+            <div class="info-box">
+                <p>Invitado: <b id="nombre">Cargando...</b></p>
+                <p>Casa: <b id="casa">...</b></p>
+                <p>Tipo: <b id="tipo">...</b></p>
+            </div>
+            <div id="qr-code"></div>
+        </div>
+
+        <button class="btn-download" onclick="descargarPase()">💾 Descargar Pase (Sin Internet)</button>
+        
+        <p class="footer-msg">Si no tienes datos al llegar, muestra la imagen descargada en tu galería.</p>
+    </div>
+
+    <script type="module">
+        import { db } from "./firebase.js";
+        import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const params = new URLSearchParams(window.location.search);
+        const id = params.get("id");
+
+        if (id) {
+            try {
+                const docRef = doc(db, "visitas", id);
+                const snap = await getDoc(docRef);
+
+                if (snap.exists()) {
+                    const data = snap.data();
+                    document.getElementById("nombre").innerText = data.nombre;
+                    document.getElementById("casa").innerText = data.casa;
+                    document.getElementById("tipo").innerText = data.tipo.toUpperCase();
+                    
+                    if (data.fotoURL) {
+                        const img = document.getElementById("foto-perfil");
+                        img.src = data.fotoURL;
+                        img.style.display = "inline-block";
+                    }
+
+                    // Generamos el QR con el ID para que el guardia lo escanee
+                    new QRCode(document.getElementById("qr-code"), {
+                        text: id, // El guardia escanea el ID directamente
+                        width: 180,
+                        height: 180,
+                        colorDark : "#000000",
+                        colorLight : "#ffffff",
+                        correctLevel : QRCode.CorrectLevel.H
+                    });
+                } else {
+                    document.body.innerHTML = "<h1>Pase no válido o expirado</h1>";
+                }
+            } catch (e) {
+                console.error(e);
+            }
         }
-    }
-</script>
+
+        // FUNCIÓN PARA DESCARGAR
+        window.descargarPase = function() {
+            const btn = document.querySelector(".btn-download");
+            btn.innerText = "⏳ Generando imagen...";
+            
+            html2canvas(document.querySelector("#area-descarga"), {
+                backgroundColor: "#1e293b", // Mismo color que la tarjeta
+                useCORS: true, // Importante para cargar la foto de Firebase
+                scale: 2 // Mejor calidad
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `Pase_ValleEsmeralda_${document.getElementById("nombre").innerText}.png`;
+                link.href = canvas.toDataURL("image/png");
+                link.click();
+                btn.innerText = "💾 Descargar Pase (Sin Internet)";
+            });
+        };
+    </script>
+</body>
+</html>
