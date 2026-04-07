@@ -3,34 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crear Pase</title>
+    <title>Generar Acceso - Valle Esmeralda</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        body { font-family: Arial; text-align: center; padding: 15px; background: #f2f2f2; }
-        .card { background: white; padding: 20px; border-radius: 12px; max-width: 400px; margin: auto; }
-        input, select, button { width: 95%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; }
-        button { background: #2e7d32; color: white; border: none; font-weight: bold; cursor: pointer; }
-        #qr { margin: 20px auto; display: flex; justify-content: center; }
-        .btn-wa { background: #25d366; }
+        body { font-family: sans-serif; background: #0f172a; color: white; text-align: center; padding: 20px; }
+        .container { background: #1e293b; padding: 20px; border-radius: 15px; max-width: 400px; margin: auto; }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: none; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-gen { background: #22c55e; color: white; }
+        .btn-wa { background: #25d366; color: white; margin-top: 20px; }
+        /* Contenedor del QR */
+        #qr { background: white; padding: 15px; display: inline-block; border-radius: 10px; margin-top: 20px; min-height: 200px; min-width: 200px; color: black; }
+        #qr img { margin: 0 auto; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h2>Nueva Visita</h2>
-        <input id="nombre" placeholder="Nombre completo">
-        <input id="telefono" type="tel" placeholder="WhatsApp (10 dígitos)">
+
+    <div class="container">
+        <h2>Generar Invitación</h2>
+        <input type="text" id="nombre" placeholder="Nombre del invitado">
+        <input type="tel" id="telefono" placeholder="WhatsApp (10 dígitos)">
         <select id="tipo">
-            <option value="visita">Invitado</option>
-            <option value="uber">Uber / Taxi</option>
+            <option value="visita">Visita Familiar</option>
+            <option value="uber">Uber / Didi</option>
             <option value="proveedor">Proveedor / Servicios</option>
+            <option value="paqueteria">Paquetería</option>
         </select>
-        <p style="font-size: 12px; color: #666;">Foto ID (Opcional):</p>
-        <input type="file" id="foto" accept="image/*">
-        <button onclick="crearQR()">Generar QR</button>
-        <div id="qr"></div>
-        <button class="btn-wa" onclick="enviarWhats()">Enviar por WhatsApp</button>
-        <button style="background: #666;" onclick="location.href='dashboard.html'">Volver</button>
+
+        <button class="btn-gen" onclick="crearQR()">✨ Generar Código QR</button>
+        
+        <div id="qr">Esperando datos...</div>
+
+        <button class="btn-wa" onclick="enviarWhats()">📱 Enviar por WhatsApp</button>
+        <button style="background:#64748b; color:white;" onclick="location.href='dashboard.html'">Volver</button>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+
     <script type="module" src="qr.js"></script>
 </body>
 </html>
