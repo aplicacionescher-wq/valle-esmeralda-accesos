@@ -4,40 +4,244 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Generar Acceso - Valle Esmeralda</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    
+    <link rel="icon" href="data:,">
+
+    <script src="qrcode.min.js"></script>
+
     <style>
-        body { font-family: sans-serif; background: #0f172a; color: white; text-align: center; padding: 20px; }
-        .container { background: #1e293b; padding: 20px; border-radius: 15px; max-width: 400px; margin: auto; }
-        input, select { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: none; box-sizing: border-box; }
-        button { width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        .btn-gen { background: #22c55e; color: white; }
-        .btn-wa { background: #25d366; color: white; margin-top: 20px; }
+        :root {
+            --primary: #22c55e;
+            --bg: #0f172a;
+            --card: #1e293b;
+            --text: #f8fafc;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: var(--card);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            margin: 20px;
+        }
+
+        h2 {
+            margin-top: 0;
+            color: var(--primary);
+            font-size: 1.5rem;
+        }
+
+        .form-group {
+            text-align: left;
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+            color: #94a3b8;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid #334155;
+            background-color: #0f172a;
+            color: white;
+            font-size: 1rem;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-generate {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-whatsapp {
+            background-color: #25d366;
+            color: white;
+            display: none; /* Se muestra solo después de generar el QR */
+        }
+
+        .btn-back {
+            background-color: transparent;
+            color: #94a3b8;
+            text-decoration: underline;
+            font-size: 0.9rem;
+        }
+
         /* Contenedor del QR */
-        #qr { background: white; padding: 15px; display: inline-block; border-radius: 10px; margin-top: 20px; min-height: 200px; min-width: 200px; color: black; }
-        #qr img { margin: 0 auto; }
+        #qr-container {
+            margin: 25px auto;
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            display: none; /* Oculto hasta que se genera */
+            width: fit-content;
+        }
+
+        #qr-container img {
+            display: block;
+            margin: 0 auto;
+        }
+
+        #loading {
+            display: none;
+            color: var(--primary);
+            margin: 10px 0;
+        }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h2>Generar Invitación</h2>
-        <input type="text" id="nombre" placeholder="Nombre del invitado">
-        <input type="tel" id="telefono" placeholder="WhatsApp (10 dígitos)">
-        <select id="tipo">
-            <option value="visita">Visita Familiar</option>
-            <option value="uber">Uber / Didi</option>
-            <option value="proveedor">Proveedor / Servicios</option>
-            <option value="paqueteria">Paquetería</option>
-        </select>
-
-        <button class="btn-gen" onclick="crearQR()">✨ Generar Código QR</button>
+        <h2>Nueva Invitación</h2>
         
-        <div id="qr">Esperando datos...</div>
+        <div class="form-group">
+            <label>Nombre del Invitado</label>
+            <input type="text" id="nombre" placeholder="Ej. Juan Pérez" required>
+        </div>
 
-        <button class="btn-wa" onclick="enviarWhats()">📱 Enviar por WhatsApp</button>
-        <button style="background:#64748b; color:white;" onclick="location.href='dashboard.html'">Volver</button>
+        <div class="form-group">
+            <label>Teléfono (WhatsApp)</label>
+            <input type="tel" id="telefono" placeholder="10 dígitos" maxlength="10">
+        </div>
+
+        <div class="form-group">
+            <label>Tipo de Acceso</label>
+            <select id="tipo">
+                <option value="visita">Visita Familiar</option>
+                <option value="uber">Transporte (Uber/Didi)</option>
+                <option value="proveedor">Proveedor / Servicios</option>
+                <option value="paqueteria">Paquetería</option>
+            </select>
+        </div>
+
+        <div id="loading">Generando pase...</div>
+
+        <button class="btn btn-generate" id="btnGen" onclick="crearQR()">✨ Generar Código QR</button>
+
+        <div id="qr-container">
+            <div id="qr"></div>
+        </div>
+
+        <button class="btn btn-whatsapp" id="btnWhats" onclick="enviarWhats()">📱 Enviar por WhatsApp</button>
+        
+        <button class="btn btn-back" onclick="location.href='dashboard.html'">Volver al Inicio</button>
     </div>
 
-    <script type="module" src="qr.js"></script>
+    <script type="module">
+        import { db } from "./firebase.js";
+        import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        window.crearQR = async function() {
+            const nombre = document.getElementById("nombre").value;
+            const tipo = document.getElementById("tipo").value;
+            const qrContainer = document.getElementById("qr-container");
+            const loading = document.getElementById("loading");
+            const btnWhats = document.getElementById("btnWhats");
+
+            if (!nombre) {
+                alert("Por favor, ingresa el nombre del invitado.");
+                return;
+            }
+
+            try {
+                loading.style.display = "block";
+                document.getElementById("btnGen").disabled = true;
+
+                // 1. Guardar en Firestore
+                const docRef = await addDoc(collection(db, "visitas"), {
+                    nombre: nombre,
+                    tipo: tipo,
+                    casa: localStorage.getItem("casa") || "S/N",
+                    autoriza: localStorage.getItem("usuario") || "Residente",
+                    timestamp: Date.now()
+                });
+
+                // Guardamos el ID para usarlo en WhatsApp
+                window.currentQrID = docRef.id;
+
+                // 2. Generar el Link del pase
+                const linkPase = `https://valle-esmeralda-accesos.web.app/verqr.html?id=${docRef.id}`;
+
+                // 3. Dibujar el QR
+                document.getElementById("qr").innerHTML = ""; // Limpiar previo
+                new QRCode(document.getElementById("qr"), {
+                    text: linkPase,
+                    width: 200,
+                    height: 200,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+
+                // 4. Mostrar elementos
+                loading.style.display = "none";
+                qrContainer.style.display = "block";
+                btnWhats.style.display = "block";
+                document.getElementById("btnGen").disabled = false;
+                document.getElementById("btnGen").innerText = "🔄 Regenerar Pase";
+
+                alert("✅ Pase guardado y código generado.");
+
+            } catch (e) {
+                console.error("Error:", e);
+                alert("Error al conectar con Firebase. Intenta de nuevo.");
+                loading.style.display = "none";
+                document.getElementById("btnGen").disabled = false;
+            }
+        };
+
+        window.enviarWhats = function() {
+            if (!window.currentQrID) return;
+            const tel = document.getElementById("telefono").value;
+            if (!tel || tel.length < 10) {
+                alert("Ingresa un número de WhatsApp válido (10 dígitos).");
+                return;
+            }
+            
+            const link = `https://valle-esmeralda-accesos.web.app/verqr.html?id=${window.currentQrID}`;
+            const msg = encodeURIComponent(`¡Hola! Este es tu pase de acceso para Valle Esmeralda. Presiona el link para mostrarlo en caseta: ${link}`);
+            window.open(`https://wa.me/52${tel}?text=${msg}`);
+        };
+    </script>
 </body>
 </html>
