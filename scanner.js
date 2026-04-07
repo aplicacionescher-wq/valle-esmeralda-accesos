@@ -1,96 +1,55 @@
-import { db, storage } from "./firebase.js";
-import { doc, getDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+import { db } from "./firebase.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-let datosVisitaActual = null;
 let html5QrCode = null;
 
-// --- FUNCIÓN QUE SE EJECUTA AL LEER EL QR ---
 async function onScanSuccess(decodedText) {
-    const resultadoDiv = document.getElementById("resultado");
-    let idParaBuscar = "";
+    const resDiv = document.getElementById("resultado");
+    let idBusqueda = "";
+
+    // 1. Extraer ID si es un link o si es texto directo
+    if (decodedText.includes("id=")) {
+        idBusqueda = new URLSearchParams(decodedText.split('?')[1]).get("id");
+    } else {
+        idBusqueda = decodedText;
+    }
 
     try {
-        // 1. EXTRAER EL ID (Ya sea que lea el link o el ID directo)
-        if (decodedText.includes("id=")) {
-            const urlParams = new URLSearchParams(decodedText.split('?')[1]);
-            idParaBuscar = urlParams.get("id");
-        } else {
-            idParaBuscar = decodedText; // Por si el QR solo tiene el ID
-        }
+        resDiv.innerHTML = "🔍 Validando...";
+        const snap = await getDoc(doc(db, "visitas", idBusqueda));
 
-        if (!idParaBuscar) throw new Error("ID no encontrado en el QR");
-
-        resultadoDiv.innerHTML = "🔍 Buscando en Firebase...";
-
-        // 2. BUSCAR EN FIREBASE ASOCIADO AL ID
-        const docRef = doc(db, "visitas", idParaBuscar);
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-            datosVisitaActual = { id: idParaBuscar, ...docSnap.data() };
-            
-            // 3. MOSTRAR INFORMACIÓN AL GUARDIA
-            resultadoDiv.innerHTML = `
-                <div style="background: #14532d; padding: 10px; border-radius: 8px; border: 2px solid #22c55e;">
-                    <h3 style="margin:0; color:#22c55e;">✅ ACCESO VÁLIDO</h3>
-                    <p><b>Invitado:</b> ${datosVisitaActual.nombre}</p>
-                    <p><b>Casa:</b> ${datosVisitaActual.casa}</p>
-                    <p><b>Tipo:</b> ${datosVisitaActual.tipo.toUpperCase()}</p>
+        if (snap.exists()) {
+            const d = snap.data();
+            resDiv.innerHTML = `
+                <div style="background:#064e3b; padding:15px; border:2px solid #22c55e; border-radius:10px;">
+                    <h2 style="color:#22c55e; margin:0;">✅ ACCESO VÁLIDO</h2>
+                    <p><b>Invitado:</b> ${d.nombre}</p>
+                    <p><b>Casa:</b> ${d.casa}</p>
+                    <p><b>Tipo:</b> ${d.tipo.toUpperCase()}</p>
                 </div>
             `;
-            
-            if(html5QrCode) html5QrCode.stop(); // Detener cámara tras éxito
+            // Vibración de éxito (en Android)
+            if(navigator.vibrate) navigator.vibrate(200);
+            if(html5QrCode) html5QrCode.stop(); 
         } else {
-            resultadoDiv.innerHTML = `<h3 style="color:#ef4444;">❌ NO ENCONTRADO</h3>
-                                      <p>El código no existe en la base de datos.</p>`;
+            resDiv.innerHTML = "<h2 style='color:#ef4444;'>❌ PASE INVÁLIDO</h2>";
         }
-    } catch (err) {
-        resultadoDiv.innerHTML = "⚠️ Error al procesar QR.";
-        console.error(err);
+    } catch (e) {
+        resDiv.innerHTML = "⚠️ Error de red";
     }
 }
 
-// --- ACTIVAR CÁMARA ---
-window.activarCamara = async function() {
+window.activarCamara = function() {
     if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
     
+    // CONFIGURACIÓN DE ESCANEO RÁPIDO
     html5QrCode.start(
         { facingMode: "environment" },
-        { fps: 10, qrbox: 250 },
+        { 
+            fps: 20,          // Escanea el doble de rápido (antes era 10)
+            qrbox: { width: 280, height: 280 }, // Caja más grande para apuntar fácil
+            aspectRatio: 1.0 
+        },
         onScanSuccess
     ).catch(err => alert("Error de cámara: " + err));
-};
-
-// --- GUARDAR EVIDENCIA (BOTÓN REGISTRAR) ---
-window.guardarFoto = async function() {
-    if (!datosVisitaActual) return alert("Escanea un QR válido primero");
-    
-    const file = document.getElementById("fotoCaseta").files[0];
-    if (!file) return alert("Toma la foto de evidencia");
-
-    try {
-        document.getElementById("resultado").innerHTML = "⏳ Guardando registro...";
-        
-        // Subir a Storage
-        const storageRef = ref(storage, `evidencias/${Date.now()}_${datosVisitaActual.casa}`);
-        await uploadBytes(storageRef, file);
-        const urlFoto = await getDownloadURL(storageRef);
-
-        // Guardar en colección 'accesos'
-        await addDoc(collection(db, "accesos"), {
-            visitaId: datosVisitaActual.id,
-            nombre: datosVisitaActual.nombre,
-            casa: datosVisitaActual.casa,
-            fotoEvidencia: urlFoto,
-            fechaIngreso: new Date().toLocaleString(),
-            guardia: localStorage.getItem("usuario") || "Caseta"
-        });
-
-        alert("✅ Ingreso registrado correctamente");
-        location.reload();
-    } catch (e) {
-        alert("Error al guardar");
-        console.error(e);
-    }
 };
