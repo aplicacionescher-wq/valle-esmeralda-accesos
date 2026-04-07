@@ -4,20 +4,23 @@
 <meta charset="UTF-8">
 <title>Generar QR</title>
 
+<!-- ✅ LIBRERÍA QR BUENA -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <style>
 body{
-font-family:Arial;
-text-align:center;
+font-family: Arial;
 background:#111;
 color:white;
+text-align:center;
 }
 
 input, select{
-margin:5px;
+margin:8px;
 padding:10px;
 width:90%;
+border-radius:5px;
+border:none;
 }
 
 button{
@@ -25,9 +28,8 @@ padding:12px;
 width:95%;
 background:#00ff99;
 border:none;
-font-size:16px;
 border-radius:8px;
-margin-top:10px;
+font-size:16px;
 }
 
 #qrcode{
@@ -39,8 +41,9 @@ margin-top:20px;
 
 <body>
 
-<h2>📱 Generar Acceso QR</h2>
+<h2>📱 Generar Acceso</h2>
 
+<!-- 🔥 IDs CORRECTOS -->
 <input type="text" id="nombre" placeholder="Nombre visitante">
 <input type="text" id="casa" placeholder="Casa">
 
@@ -51,7 +54,7 @@ margin-top:20px;
 <option value="paqueteria">Paquetería</option>
 </select>
 
-<button onclick="crearQR()">GENERAR QR</button>
+<button onclick="crearQR()">Generar QR</button>
 
 <div id="qrcode"></div>
 
