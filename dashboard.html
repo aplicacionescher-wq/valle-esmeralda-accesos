@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta charset="UTF-8">
+<title>Panel Residente</title>
+</head>
+
+<body>
+
+<script>
+
+if(localStorage.getItem("rol")!=="residente"){
+window.location="index.html"
+}
+
+</script>
+
+<h2>Panel Residente</h2>
+
+<p id="casa"></p>
+
+<br>
+
+<button onclick="window.location='generar.html'">
+
+Registrar visita
+
+</button>
+
+<br><br>
+
+<button onclick="logout()">
+
+Cerrar sesión
+
+</button>
+
+<script>
+
+document.getElementById("casa").innerHTML=localStorage.getItem("casa")
+
+function logout(){
+
+localStorage.clear()
+
+window.location="index.html"
+
+}
+
+</script>
+
+</body>
+
+</html>
