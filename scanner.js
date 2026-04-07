@@ -1,6 +1,8 @@
 import { db, storage } from "./firebase.js"
 
 import {
+doc,
+getDoc,
 collection,
 addDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"
@@ -11,156 +13,111 @@ uploadBytes,
 getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js"
 
-let datosVisita = null
-let html5QrCode = null
+let html5QrCode
+let datosQR = null
 
-// 🔍 CUANDO ESCANEA
-function onScanSuccess(decodedText){
-
-let resultado = document.getElementById("resultado")
-
-// 🔗 SI ES LINK (QR NUEVO)
-if(decodedText.startsWith("http")){
-
-resultado.innerHTML = `
-🔗 QR detectado <br><br>
-Redirigiendo...
-`
-
-// Redirige al visor
-window.location.href = decodedText
-return
-}
-
-try{
-
-// 📦 SI ES JSON (QR ANTIGUO)
-let data = JSON.parse(decodedText)
-datosVisita = data
-
-let ahora = Date.now()
-
-let expiracion = {
-visita:86400000,
-proveedor:43200000,
-uber:7200000,
-paqueteria:43200000
-}
-
-// ⏱️ VALIDAR
-if(ahora - data.timestamp > expiracion[data.tipo]){
-resultado.innerHTML = "❌ QR EXPIRADO"
-return
-}
-
-// ✅ MOSTRAR
-resultado.innerHTML = `
-✅ ACCESO PERMITIDO <br><br>
-👤 ${data.nombre} <br>
-🏠 Casa: ${data.casa} <br>
-🧑 Autoriza: ${data.autoriza} <br>
-🚗 Tipo: ${data.tipo}
-`
-
-// 📷 FOTO
-if(data.fotoURL){
-document.getElementById("foto").innerHTML =
-"<img src='"+data.fotoURL+"' width='200'>"
-}
-
-}catch(error){
-
-resultado.innerHTML = "⚠️ QR inválido"
-
-}
-
-}
-
-// 📷 ACTIVAR CÁMARA (BOTÓN)
-window.activarCamara = async function(){
-
-let reader = document.getElementById("reader")
-let mensaje = document.getElementById("mensaje")
-
-mensaje.innerHTML = "🔄 Activando cámara..."
+// 🔥 ACTIVAR CÁMARA
+window.iniciarCamara = async function(){
 
 try{
 
 html5QrCode = new Html5Qrcode("reader")
 
-const devices = await Html5Qrcode.getCameras()
-
-if(devices && devices.length){
-
-// 📱 Usa cámara trasera
-let camara = devices[devices.length - 1].id
-
 await html5QrCode.start(
-camara,
+{ facingMode: "environment" }, // 🔥 cámara trasera
 {
-fps:10,
-qrbox:250
+fps: 10,
+qrbox: 250
 },
 onScanSuccess
 )
 
-mensaje.innerHTML = "✅ Cámara activa"
-
-}else{
-
-mensaje.innerHTML = "❌ No hay cámara disponible"
+}catch(e){
+alert("No se pudo activar la cámara")
+console.error(e)
+}
 
 }
 
-}catch(error){
+// 📲 CUANDO ESCANEA
+async function onScanSuccess(qrID){
 
-console.error(error)
+await validarQR(qrID)
 
-mensaje.innerHTML = `
-❌ No se pudo activar la cámara <br><br>
+}
 
-👉 Soluciones: <br>
-- Permitir cámara <br>
-- Abrir en Chrome <br>
-- No usar WhatsApp
+// 🔍 VALIDAR QR
+async function validarQR(qrID){
+
+try{
+
+let refDoc = doc(db,"visitas",qrID)
+let snap = await getDoc(refDoc)
+
+if(!snap.exists()){
+document.getElementById("resultado").innerHTML =
+"<span style='color:red'>QR INVÁLIDO</span>"
+return
+}
+
+datosQR = snap.data()
+
+document.getElementById("resultado").innerHTML = `
+<span style="color:lightgreen">ACCESO PERMITIDO</span><br>
+Nombre: ${datosQR.nombre}<br>
+Casa: ${datosQR.casa}
 `
 
+await html5QrCode.stop()
+
+}catch(e){
+console.error(e)
+document.getElementById("resultado").innerHTML =
+"<span style='color:red'>ERROR</span>"
 }
 
 }
 
 // 💾 GUARDAR ACCESO
-window.guardarFoto = async function(){
+window.guardarAcceso = async function(){
 
-if(!datosVisita){
-alert("Primero escanea un QR válido")
+if(!datosQR){
+alert("Primero escanea un QR")
 return
 }
 
-let archivo = document.getElementById("fotoCaseta").files[0]
+let archivo = document.getElementById("foto").files[0]
 
 if(!archivo){
-alert("Selecciona una foto")
+alert("Sube foto de identificación")
 return
 }
 
-let referencia = ref(storage,"idsCaseta/"+Date.now())
+// 🔥 subir imagen
+let referencia = ref(storage,"identificaciones/"+Date.now())
 
 await uploadBytes(referencia,archivo)
 
 let url = await getDownloadURL(referencia)
 
-await addDoc(collection(db,"registroAccesos"),{
-
-nombre: datosVisita.nombre,
-autoriza: datosVisita.autoriza,
-casa: datosVisita.casa,
-tipo: datosVisita.tipo,
-foto: url,
+// 🔥 guardar registro
+await addDoc(collection(db,"registros"),{
+...datosQR,
+foto:url,
 fecha: Date.now()
-
 })
 
-alert("✅ Acceso guardado correctamente")
+alert("Acceso guardado")
+
+// 🔁 reiniciar pantalla
+location.reload()
+
+}
+
+// 🔐 CERRAR SESIÓN
+window.cerrarSesion = function(){
+
+// si usas Firebase Auth:
+location.href = "index.html"
 
 }
