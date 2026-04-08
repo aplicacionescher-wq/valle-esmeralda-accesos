@@ -4,50 +4,52 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Scanner Acceso</title>
+<title>Escáner</title>
 
 <style>
 body {
     margin: 0;
     font-family: Arial;
-    background: black;
-    color: white;
+    background: #f5f5f5;
     text-align: center;
 }
 
+/* HEADER */
+header {
+    background: #1e3a8a;
+    color: white;
+    padding: 15px;
+    font-size: 18px;
+}
+
+/* BOTONES */
+.topbar {
+    display: flex;
+    justify-content: space-around;
+    padding: 10px;
+}
+
+.btn {
+    background: #1e3a8a;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+/* SCANNER */
 #reader {
     width: 100%;
+    max-width: 400px;
+    margin: auto;
 }
 
-#estado {
-    position: fixed;
-    bottom: 0;
-    width: 100%;
-    padding: 25px;
-    font-size: 22px;
+/* RESULTADO */
+#resultado {
+    margin-top: 15px;
+    padding: 15px;
     font-weight: bold;
-    background: #111;
-}
-
-.ok {
-    background: #16a34a !important;
-}
-
-.error {
-    background: #dc2626 !important;
-}
-
-.neutral {
-    background: #111 !important;
-}
-
-.mensaje {
-    font-size: 26px;
-}
-
-.sub {
-    font-size: 16px;
-    opacity: 0.8;
 }
 </style>
 
@@ -58,16 +60,18 @@ body {
 
 <body>
 
-<div id="reader"></div>
+<header>
+    📷 Escáner de Acceso
+</header>
 
-<div id="estado" class="neutral">
-    <div class="mensaje">📷 Escanea un código</div>
-    <div class="sub">Esperando...</div>
+<div class="topbar">
+    <a class="btn" href="index.html">⬅ Volver</a>
+    <a class="btn" href="pendientes.html">📋 Ver Pendientes</a>
 </div>
 
-<!-- SONIDOS -->
-<audio id="okSound" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
-<audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
+<div id="reader"></div>
+
+<div id="resultado">Esperando escaneo...</div>
 
 <script type="module">
 import { db } from "./firebase.js";
@@ -78,10 +82,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 let activo = true;
-
-const estadoDiv = document.getElementById("estado");
-const okSound = document.getElementById("okSound");
-const errorSound = document.getElementById("errorSound");
+const resultado = document.getElementById("resultado");
 
 // 🔥 EXTRAER ID
 function obtenerID(qrTexto) {
@@ -94,35 +95,6 @@ function obtenerID(qrTexto) {
     } catch {
         return null;
     }
-}
-
-// 🔥 UI
-function mostrarOK(nombre, casa) {
-    estadoDiv.className = "ok";
-    estadoDiv.innerHTML = `
-        <div class="mensaje">✅ ACCESO PERMITIDO</div>
-        <div class="sub">${nombre} - Casa ${casa}</div>
-    `;
-    okSound.play();
-    navigator.vibrate(200);
-}
-
-function mostrarError(msg) {
-    estadoDiv.className = "error";
-    estadoDiv.innerHTML = `
-        <div class="mensaje">❌ ${msg}</div>
-        <div class="sub">Intenta nuevamente</div>
-    `;
-    errorSound.play();
-    navigator.vibrate([100, 100, 100]);
-}
-
-function resetUI() {
-    estadoDiv.className = "neutral";
-    estadoDiv.innerHTML = `
-        <div class="mensaje">📷 Escanea un código</div>
-        <div class="sub">Esperando...</div>
-    `;
 }
 
 // 🔥 ESCÁNER
@@ -149,7 +121,7 @@ Html5Qrcode.getCameras().then(cameras => {
             const id = obtenerID(decodedText);
 
             if (!id) {
-                mostrarError("QR inválido");
+                resultado.innerHTML = "❌ QR inválido";
                 return reset();
             }
 
@@ -159,19 +131,19 @@ Html5Qrcode.getCameras().then(cameras => {
                 const snap = await getDoc(ref);
 
                 if (!snap.exists()) {
-                    mostrarError("No existe registro");
+                    resultado.innerHTML = "❌ No existe registro";
                     return reset();
                 }
 
                 const data = snap.data();
 
                 if (data.estado === "usado") {
-                    mostrarError("YA UTILIZADO");
+                    resultado.innerHTML = "⚠️ YA UTILIZADO";
                     return reset();
                 }
 
                 if (data.estado === "expirado") {
-                    mostrarError("EXPIRADO");
+                    resultado.innerHTML = "❌ EXPIRADO";
                     return reset();
                 }
 
@@ -180,10 +152,14 @@ Html5Qrcode.getCameras().then(cameras => {
                     escaneadoEn: new Date().toLocaleString()
                 });
 
-                mostrarOK(data.nombre, data.casa);
+                resultado.innerHTML = `
+                    ✅ ACCESO PERMITIDO <br>
+                    👤 ${data.nombre} <br>
+                    🏠 Casa ${data.casa}
+                `;
 
             } catch (e) {
-                mostrarError("Error conexión");
+                resultado.innerHTML = "❌ Error de conexión";
             }
 
             reset();
@@ -193,10 +169,11 @@ Html5Qrcode.getCameras().then(cameras => {
 
 });
 
+// 🔥 RESET
 function reset() {
     setTimeout(() => {
         activo = true;
-        resetUI();
+        resultado.innerHTML = "Esperando escaneo...";
     }, 3000);
 }
 </script>
