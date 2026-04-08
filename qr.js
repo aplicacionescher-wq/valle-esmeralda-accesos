@@ -9,25 +9,28 @@ window.crearQR = async function() {
     if (!nombre) return alert("Escribe el nombre del invitado");
 
     if (typeof QRCode === "undefined") {
-        return alert("❌ ERROR: La librería qrcode.min.js no se cargó.");
+        return alert("❌ ERROR: Falta qrcode.min.js");
     }
 
     try {
         btnGen.disabled = true;
         btnGen.innerText = "⏳ Guardando...";
 
-        // 🔥 AQUÍ ESTÁ LA CORRECCIÓN CLAVE
+        console.log("Intentando guardar en Firebase...");
+
         const docRef = await addDoc(collection(db, "visitas"), {
             nombre: nombre,
             tipo: document.getElementById("tipo").value,
             casa: localStorage.getItem("casa") || "S/N",
             autoriza: localStorage.getItem("usuario") || "Residente",
 
-            // 🔥 CAMPOS QUE FALTABAN
+            // 🔥 CLAVE PARA PENDIENTES
             estado: "pendiente",
             fecha: new Date().toLocaleString(),
             timestamp: Date.now()
         });
+
+        console.log("Guardado con ID:", docRef.id);
 
         window.currentQrID = docRef.id;
 
@@ -49,12 +52,14 @@ window.crearQR = async function() {
         btnGen.innerText = "✨ Generar Nuevo";
 
     } catch (e) {
+        console.error(e);
         alert("Error Firebase: " + e.message);
         btnGen.disabled = false;
+        btnGen.innerText = "✨ Generar Código QR";
     }
 };
 
-// 🔥 WHATSAPP (LO DEJO IGUAL PORQUE YA TE FUNCIONA)
+// WHATSAPP (sin cambios)
 window.enviarWhats = async function() {
     const qrDiv = document.getElementById("qr");
     const btn = document.getElementById("btnWhats");
@@ -78,20 +83,17 @@ window.enviarWhats = async function() {
             const file = new File([blob], "Pase_Valle.png", { type: "image/png" });
 
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                try {
-                    await navigator.share({
-                        files: [file],
-                        title: 'Pase de Acceso'
-                    });
-                } catch (err) {}
+                await navigator.share({
+                    files: [file],
+                    title: 'Pase de Acceso'
+                });
             } else {
                 const link = `${window.location.origin}/verqr.html?id=${window.currentQrID}`;
                 window.open(`https://wa.me/?text=${encodeURIComponent("Usa este acceso: " + link)}`);
             }
 
             btn.innerText = "📱 Enviar por WhatsApp";
-
-        }, "image/png");
+        });
 
     } catch (err) {
         btn.innerText = "📱 Enviar por WhatsApp";
