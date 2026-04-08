@@ -1,164 +1,122 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visitas Pendientes - Caseta</title>
-    <style>
-        :root {
-            --bg: #0f172a;
-            --card: #1e293b;
-            --accent: #22c55e;
-            --text-main: #f8fafc;
-            --text-dim: #94a3b8;
-        }
+  <meta charset="UTF-8">
+  <title>Visitas Pendientes</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            background-color: var(--bg);
-            color: var(--text-main);
-            margin: 0;
-            padding: 20px;
-        }
+  <!-- Estilos -->
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: white;
+      padding: 20px;
+    }
 
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            max-width: 600px;
-            margin: 0 auto 20px auto;
-        }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
 
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-        }
+    .card {
+      background: #1e293b;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 10px;
+      border-left: 5px solid #38bdf8;
+    }
 
-        .card-pendiente {
-            background: var(--card);
-            padding: 18px;
-            border-radius: 15px;
-            margin-bottom: 12px;
-            border-left: 6px solid var(--accent);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            animation: fadeIn 0.3s ease;
-        }
+    .card span {
+      display: block;
+      margin-top: 5px;
+    }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .info strong {
-            display: block;
-            font-size: 1.1rem;
-            color: var(--accent);
-        }
-
-        .info span {
-            font-size: 0.9rem;
-            color: var(--text-dim);
-        }
-
-        .tipo-badge {
-            background: #064e3b;
-            color: #4ade80;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-
-        .btn-refresh {
-            background: transparent;
-            border: 1px solid var(--text-dim);
-            color: var(--text-dim);
-            padding: 8px 15px;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-
-        .no-data {
-            text-align: center;
-            margin-top: 50px;
-            color: var(--text-dim);
-        }
-    </style>
+    .vacio {
+      text-align: center;
+      margin-top: 50px;
+      color: #94a3b8;
+    }
+  </style>
 </head>
+
 <body>
 
-    <div class="header">
-        <div>
-            <h2 style="margin:0;">🕟 Por Llegar</h2>
-            <p style="margin:0; font-size: 0.8rem; color: var(--text-dim);">Solo pases válidos (últimas 24h)</p>
-        </div>
-        <button class="btn-refresh" onclick="location.href='dashboard.html'">Volver</button>
-    </div>
+  <h1>📋 Visitas Pendientes</h1>
 
-    <div class="container" id="lista-pendientes">
-        <p style="text-align:center;">Conectando con caseta...</p>
-    </div>
+  <div id="contenedor"></div>
 
-    <script type="module">
-        import { db } from "./firebase.js";
-        import { collection, query, where, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  <div id="mensaje" class="vacio" style="display:none;">
+    No hay visitas pendientes
+  </div>
 
-        const contenedor = document.getElementById("lista-pendientes");
+  <!-- Firebase -->
+  <script type="module">
 
-        // Definimos el tiempo límite (hace 24 horas)
-        const hace24Horas = Date.now() - (24 * 60 * 60 * 1000);
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      query,
+      where,
+      orderBy,
+      onSnapshot
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        try {
-            // CONSULTA MAESTRA:
-            // 1. Solo estado "pendiente"
-            // 2. Solo los creados en las últimas 24 horas
-            // 3. Ordenados por los más recientes primero
-            const q = query(
-                collection(db, "visitas"),
-                where("estado", "==", "pendiente"),
-                where("timestamp", ">", hace24Horas),
-                orderBy("timestamp", "desc")
-            );
+    // 🔥 TU CONFIG (NO CAMBIAR)
+    const firebaseConfig = {
+      apiKey: "TU_API_KEY",
+      authDomain: "TU_DOMINIO",
+      projectId: "TU_PROJECT_ID",
+      storageBucket: "TU_BUCKET",
+      messagingSenderId: "TU_ID",
+      appId: "TU_APP_ID"
+    };
 
-            onSnapshot(q, (snapshot) => {
-                if (snapshot.empty) {
-                    contenedor.innerHTML = `
-                        <div class="no-data">
-                            <h3>Sin visitas pendientes</h3>
-                            <p>No hay pases activos en este momento.</p>
-                        </div>`;
-                    return;
-                }
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-                contenedor.innerHTML = "";
+    const contenedor = document.getElementById("contenedor");
+    const mensaje = document.getElementById("mensaje");
 
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    const hora = new Date(data.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    // 🔥 CONSULTA CORRECTA (SIN FALLAR)
+    const q = query(
+      collection(db, "visitas"),
+      where("estado", "==", "pendiente"),
+      orderBy("timestamp", "desc")
+    );
 
-                    const div = document.createElement("div");
-                    div.className = "card-pendiente";
-                    div.innerHTML = `
-                        <div class="info">
-                            <strong>${data.nombre}</strong>
-                            <span>Casa: ${data.casa} • Creado: ${hora}</span>
-                        </div>
-                        <div class="tipo-badge">${data.tipo}</div>
-                    `;
-                    contenedor.appendChild(div);
-                });
-            }, (error) => {
-                console.error(error);
-                if (error.code === 'failed-precondition') {
-                    contenedor.innerHTML = "<p style='color:orange;'>⚠️ Necesitas crear un índice en Firebase. Revisa la consola (F12) para el link.</p>";
-                }
-            });
-        } catch (err) {
-            contenedor.innerHTML = "<p>Error al cargar el tablero.</p>";
-        }
-    </script>
+    onSnapshot(q, (snapshot) => {
+
+      contenedor.innerHTML = "";
+
+      if (snapshot.empty) {
+        mensaje.style.display = "block";
+        return;
+      }
+
+      mensaje.style.display = "none";
+
+      snapshot.forEach((doc) => {
+
+        const data = doc.data();
+
+        const card = document.createElement("div");
+        card.className = "card";
+
+        card.innerHTML = `
+          <strong>${data.nombre || "Sin nombre"}</strong>
+          <span>🏠 Casa: ${data.casa || "N/A"}</span>
+          <span>📅 Fecha: ${data.fecha || "N/A"}</span>
+          <span>📌 Estado: ${data.estado}</span>
+        `;
+
+        contenedor.appendChild(card);
+      });
+
+    });
+
+  </script>
+
 </body>
 </html>
