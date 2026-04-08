@@ -1,165 +1,205 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner Caseta - Valle Esmeralda</title>
-    
-    <script src="https://unpkg.com/html5-qrcode"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <style>
-        :root {
-            --bg: #0f172a;
-            --card: #1e293b;
-            --success: #22c55e;
-            --danger: #ef4444;
-            --warning: #f59e0b;
-        }
+<title>Scanner Acceso</title>
 
-        body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            background-color: var(--bg);
-            color: white;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-        }
+<style>
+body {
+    margin: 0;
+    font-family: Arial;
+    background: black;
+    color: white;
+    text-align: center;
+}
 
-        header {
-            width: 100%;
-            padding: 20px;
-            text-align: center;
-            background: var(--card);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        }
+#reader {
+    width: 100%;
+}
 
-        #reader {
-            width: 100%;
-            max-width: 450px;
-            border: none !important;
-            margin-top: 20px;
-        }
+#estado {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    padding: 25px;
+    font-size: 22px;
+    font-weight: bold;
+    background: #111;
+}
 
-        #resultado {
-            width: 90%;
-            max-width: 400px;
-            margin: 20px auto;
-            padding: 20px;
-            border-radius: 15px;
-            text-align: center;
-            display: none;
-            box-sizing: border-box;
-        }
+.ok {
+    background: #16a34a !important;
+}
 
-        .controles {
-            width: 90%;
-            max-width: 400px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-bottom: 30px;
-        }
+.error {
+    background: #dc2626 !important;
+}
 
-        button {
-            padding: 16px;
-            border-radius: 12px;
-            border: none;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.2s;
-        }
+.neutral {
+    background: #111 !important;
+}
 
-        .btn-pendientes {
-            background: var(--warning);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
+.mensaje {
+    font-size: 26px;
+}
 
-        .btn-reset {
-            background: #475569;
-            color: white;
-        }
+.sub {
+    font-size: 16px;
+    opacity: 0.8;
+}
+</style>
 
-        .btn-salir {
-            background: transparent;
-            color: #64748b;
-            border: 1px solid #334155;
-        }
+<!-- LIBRERÍA QR -->
+<script src="https://unpkg.com/html5-qrcode"></script>
 
-        /* Estilos para el visor de la cámara */
-        #reader__scan_region { background: #000; }
-    </style>
 </head>
+
 <body>
 
-    <header>
-        <h2 style="margin:0; color:var(--success)">🛡️ Control de Caseta</h2>
-        <p style="margin:5px 0 0 0; color:#94a3b8; font-size:0.9rem;">Escanee el código del visitante</p>
-    </header>
+<div id="reader"></div>
 
-    <div id="reader"></div>
+<div id="estado" class="neutral">
+    <div class="mensaje">📷 Escanea un código</div>
+    <div class="sub">Esperando...</div>
+</div>
 
-    <div id="resultado"></div>
+<!-- SONIDOS -->
+<audio id="okSound" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
+<audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 
-    <div class="controles">
-        <button class="btn-pendientes" onclick="location.href='pendientes.html'">
-            ⏳ Ver Visitas Por Llegar
-        </button>
+<script type="module">
+import { db } from "./firebase.js";
+import {
+  doc,
+  getDoc,
+  updateDoc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        <button class="btn-reset" onclick="reiniciarEscaneo()">
-            🔄 Limpiar / Nuevo Escaneo
-        </button>
+let activo = true;
 
-        <button class="btn-salir" onclick="location.href='dashboard.html'">
-            ⬅ Volver al Menú
-        </button>
-    </div>
+const estadoDiv = document.getElementById("estado");
+const okSound = document.getElementById("okSound");
+const errorSound = document.getElementById("errorSound");
 
-    <script type="module" src="scanner.js"></script>
+// 🔥 EXTRAER ID
+function obtenerID(qrTexto) {
+    try {
+        if (qrTexto.includes("id=")) {
+            const url = new URL(qrTexto);
+            return url.searchParams.get("id");
+        }
+        return qrTexto;
+    } catch {
+        return null;
+    }
+}
 
-    <script>
-        let html5QrCode;
+// 🔥 UI
+function mostrarOK(nombre, casa) {
+    estadoDiv.className = "ok";
+    estadoDiv.innerHTML = `
+        <div class="mensaje">✅ ACCESO PERMITIDO</div>
+        <div class="sub">${nombre} - Casa ${casa}</div>
+    `;
+    okSound.play();
+    navigator.vibrate(200);
+}
 
-        async function iniciarCamara() {
-            html5QrCode = new Html5Qrcode("reader");
-            const config = { 
-                fps: 20, 
-                qrbox: { width: 250, height: 250 },
-                aspectRatio: 1.0 
-            };
+function mostrarError(msg) {
+    estadoDiv.className = "error";
+    estadoDiv.innerHTML = `
+        <div class="mensaje">❌ ${msg}</div>
+        <div class="sub">Intenta nuevamente</div>
+    `;
+    errorSound.play();
+    navigator.vibrate([100, 100, 100]);
+}
+
+function resetUI() {
+    estadoDiv.className = "neutral";
+    estadoDiv.innerHTML = `
+        <div class="mensaje">📷 Escanea un código</div>
+        <div class="sub">Esperando...</div>
+    `;
+}
+
+// 🔥 ESCÁNER
+const html5QrCode = new Html5Qrcode("reader");
+
+Html5Qrcode.getCameras().then(cameras => {
+
+    let camaraTrasera = cameras.find(cam =>
+        cam.label.toLowerCase().includes("back") ||
+        cam.label.toLowerCase().includes("rear")
+    );
+
+    const camaraID = camaraTrasera ? camaraTrasera.id : cameras[0].id;
+
+    html5QrCode.start(
+        camaraID,
+        { fps: 10, qrbox: 250 },
+
+        async (decodedText) => {
+
+            if (!activo) return;
+            activo = false;
+
+            const id = obtenerID(decodedText);
+
+            if (!id) {
+                mostrarError("QR inválido");
+                return reset();
+            }
 
             try {
-                await html5QrCode.start(
-                    { facingMode: "environment" }, 
-                    config, 
-                    (decodedText) => {
-                        html5QrCode.pause();
-                        if (window.onScanSuccess) {
-                            window.onScanSuccess(decodedText);
-                        }
-                    }
-                );
-            } catch (err) {
-                alert("Error al abrir cámara. Asegúrese de dar permisos.");
+
+                const ref = doc(db, "visitas", id);
+                const snap = await getDoc(ref);
+
+                if (!snap.exists()) {
+                    mostrarError("No existe registro");
+                    return reset();
+                }
+
+                const data = snap.data();
+
+                if (data.estado === "usado") {
+                    mostrarError("YA UTILIZADO");
+                    return reset();
+                }
+
+                if (data.estado === "expirado") {
+                    mostrarError("EXPIRADO");
+                    return reset();
+                }
+
+                await updateDoc(ref, {
+                    estado: "usado",
+                    escaneadoEn: new Date().toLocaleString()
+                });
+
+                mostrarOK(data.nombre, data.casa);
+
+            } catch (e) {
+                mostrarError("Error conexión");
             }
+
+            reset();
+
         }
+    );
 
-        window.reiniciarEscaneo = function() {
-            const resDiv = document.getElementById("resultado");
-            resDiv.style.display = "none";
-            resDiv.innerHTML = "";
-            if (html5QrCode) {
-                html5QrCode.resume();
-            }
-        };
+});
 
-        window.onload = iniciarCamara;
-    </script>
+function reset() {
+    setTimeout(() => {
+        activo = true;
+        resetUI();
+    }, 3000);
+}
+</script>
+
 </body>
 </html>
