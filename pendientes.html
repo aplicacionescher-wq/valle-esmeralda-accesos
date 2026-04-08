@@ -2,10 +2,9 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Visitas Pendientes</title>
+  <title>Panel de Pendientes</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Estilos -->
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -14,15 +13,43 @@
       padding: 20px;
     }
 
+    .top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
     h1 {
-      text-align: center;
-      margin-bottom: 20px;
+      margin: 0;
+    }
+
+    button {
+      background: #38bdf8;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    input {
+      padding: 8px;
+      border-radius: 6px;
+      border: none;
+    }
+
+    .contador {
+      font-size: 18px;
+      margin-top: 10px;
+      color: #38bdf8;
     }
 
     .card {
       background: #1e293b;
       padding: 15px;
-      margin-bottom: 10px;
+      margin-top: 10px;
       border-radius: 10px;
       border-left: 5px solid #38bdf8;
     }
@@ -32,9 +59,18 @@
       margin-top: 5px;
     }
 
+    .acciones {
+      margin-top: 10px;
+    }
+
+    .btn-ok {
+      background: #22c55e;
+      color: white;
+    }
+
     .vacio {
       text-align: center;
-      margin-top: 50px;
+      margin-top: 40px;
       color: #94a3b8;
     }
   </style>
@@ -42,15 +78,28 @@
 
 <body>
 
-  <h1>📋 Visitas Pendientes</h1>
+  <div class="top">
+    <h1>📋 Pendientes</h1>
+
+    <div>
+      <input type="text" id="filtroCasa" placeholder="Filtrar por casa">
+      <button onclick="volver()">⬅ Volver</button>
+    </div>
+  </div>
+
+  <div class="contador">
+    Pendientes: <span id="total">0</span>
+  </div>
 
   <div id="contenedor"></div>
 
   <div id="mensaje" class="vacio" style="display:none;">
-    No hay visitas pendientes
+    No hay pendientes
   </div>
 
-  <!-- Firebase -->
+  <!-- 🔔 sonido -->
+  <audio id="sonido" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
+
   <script type="module">
 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -58,12 +107,12 @@
       getFirestore,
       collection,
       query,
-      where,
       orderBy,
-      onSnapshot
+      onSnapshot,
+      doc,
+      updateDoc
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    // 🔥 TU CONFIG (NO CAMBIAR)
     const firebaseConfig = {
       apiKey: "TU_API_KEY",
       authDomain: "TU_DOMINIO",
@@ -78,28 +127,36 @@
 
     const contenedor = document.getElementById("contenedor");
     const mensaje = document.getElementById("mensaje");
+    const totalSpan = document.getElementById("total");
+    const filtroInput = document.getElementById("filtroCasa");
+    const sonido = document.getElementById("sonido");
 
-    // 🔥 CONSULTA CORRECTA (SIN FALLAR)
+    let ultimaCantidad = 0;
+
     const q = query(
       collection(db, "visitas"),
-      where("estado", "==", "pendiente"),
-      orderBy("timestamp", "desc")
+      orderBy("fecha", "desc")
     );
 
     onSnapshot(q, (snapshot) => {
 
       contenedor.innerHTML = "";
+      let total = 0;
 
-      if (snapshot.empty) {
-        mensaje.style.display = "block";
-        return;
-      }
+      snapshot.forEach((docSnap) => {
 
-      mensaje.style.display = "none";
+        const data = docSnap.data();
+        const id = docSnap.id;
 
-      snapshot.forEach((doc) => {
+        const estado = data.estado || "pendiente";
 
-        const data = doc.data();
+        if (estado !== "pendiente") return;
+
+        const filtro = filtroInput.value.toLowerCase();
+
+        if (filtro && !(data.casa || "").toLowerCase().includes(filtro)) return;
+
+        total++;
 
         const card = document.createElement("div");
         card.className = "card";
@@ -108,12 +165,49 @@
           <strong>${data.nombre || "Sin nombre"}</strong>
           <span>🏠 Casa: ${data.casa || "N/A"}</span>
           <span>📅 Fecha: ${data.fecha || "N/A"}</span>
-          <span>📌 Estado: ${data.estado}</span>
+
+          <div class="acciones">
+            <button class="btn-ok" onclick="atender('${id}')">
+              ✔ Atender
+            </button>
+          </div>
         `;
 
         contenedor.appendChild(card);
       });
 
+      totalSpan.innerText = total;
+
+      if (total === 0) {
+        mensaje.style.display = "block";
+      } else {
+        mensaje.style.display = "none";
+      }
+
+      // 🔔 sonido si llegan nuevos
+      if (total > ultimaCantidad) {
+        sonido.play();
+      }
+
+      ultimaCantidad = total;
+
+    });
+
+    // 🔥 marcar como usado
+    window.atender = async (id) => {
+      await updateDoc(doc(db, "visitas", id), {
+        estado: "usado"
+      });
+    };
+
+    // 🔙 volver
+    window.volver = () => {
+      window.location.href = "index.html";
+    };
+
+    // 🔎 filtro en vivo
+    filtroInput.addEventListener("input", () => {
+      location.reload();
     });
 
   </script>
