@@ -1,3 +1,11 @@
+Entiendo perfectamente. Vamos a consolidar todo en un solo bloque para que no haya confusiones. Este código mantiene la lógica de Firebase, la validación de 24 horas, el registro de historial y añade el botón de Pendientes dentro del escáner.
+
+Aquí tienes los dos archivos clave para Caseta:
+
+1. escaner.html (Interfaz Completa)
+Este archivo incluye la cámara, el botón para ver pendientes y la estructura visual para éxito/error.
+
+HTML
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -42,59 +50,83 @@
             margin-top: 20px;
         }
 
-        #reader__dashboard {
-            padding: 10px !important;
-        }
-
-        button {
-            padding: 12px 20px;
-            border-radius: 8px;
-            border: none;
-            background: var(--success);
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
         #resultado {
             width: 90%;
             max-width: 400px;
-            margin-top: 25px;
+            margin: 20px auto;
             padding: 20px;
             border-radius: 15px;
             text-align: center;
-            display: none; /* Se activa al escanear */
+            display: none;
+            box-sizing: border-box;
         }
 
-        /* Animación de escaneo */
-        .scan-region-highlight {
-            border-radius: 20px !important;
-            outline: 3px solid var(--success) !important;
+        .controles {
+            width: 90%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        button {
+            padding: 16px;
+            border-radius: 12px;
+            border: none;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-pendientes {
+            background: var(--warning);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
 
         .btn-reset {
             background: #475569;
-            margin-top: 15px;
-            width: 100%;
+            color: white;
         }
 
-        .status-msg { font-size: 1.1rem; margin-top: 10px; }
+        .btn-salir {
+            background: transparent;
+            color: #64748b;
+            border: 1px solid #334155;
+        }
+
+        /* Estilos para el visor de la cámara */
+        #reader__scan_region { background: #000; }
     </style>
 </head>
 <body>
 
     <header>
         <h2 style="margin:0; color:var(--success)">🛡️ Control de Caseta</h2>
-        <p style="margin:5px 0 0 0; color:#94a3b8; font-size:0.9rem;">Escanea el QR del visitante</p>
+        <p style="margin:5px 0 0 0; color:#94a3b8; font-size:0.9rem;">Escanee el código del visitante</p>
     </header>
 
     <div id="reader"></div>
 
     <div id="resultado"></div>
 
-    <div style="width: 90%; max-width: 400px;">
-        <button class="btn-reset" onclick="reiniciarEscaneo()">🔄 Limpiar Pantalla / Nuevo Escaneo</button>
-        <button class="btn-reset" style="background:transparent; color:#64748b" onclick="location.href='dashboard.html'">⬅ Volver al Menú</button>
+    <div class="controles">
+        <button class="btn-pendientes" onclick="location.href='pendientes.html'">
+            ⏳ Ver Visitas Por Llegar
+        </button>
+
+        <button class="btn-reset" onclick="reiniciarEscaneo()">
+            🔄 Limpiar / Nuevo Escaneo
+        </button>
+
+        <button class="btn-salir" onclick="location.href='dashboard.html'">
+            ⬅ Volver al Menú
+        </button>
     </div>
 
     <script type="module" src="scanner.js"></script>
@@ -102,7 +134,7 @@
     <script>
         let html5QrCode;
 
-        function iniciarCamara() {
+        async function iniciarCamara() {
             html5QrCode = new Html5Qrcode("reader");
             const config = { 
                 fps: 20, 
@@ -110,31 +142,31 @@
                 aspectRatio: 1.0 
             };
 
-            html5QrCode.start(
-                { facingMode: "environment" }, 
-                config, 
-                (decodedText) => {
-                    // Pausar escaneo para procesar
-                    html5QrCode.pause();
-                    document.getElementById("resultado").style.display = "block";
-                    
-                    // Llamar a la función que está en scanner.js
-                    if (window.onScanSuccess) {
-                        window.onScanSuccess(decodedText);
+            try {
+                await html5QrCode.start(
+                    { facingMode: "environment" }, 
+                    config, 
+                    (decodedText) => {
+                        html5QrCode.pause();
+                        if (window.onScanSuccess) {
+                            window.onScanSuccess(decodedText);
+                        }
                     }
-                }
-            ).catch(err => console.error("Error cámara:", err));
-        }
-
-        function reiniciarEscaneo() {
-            document.getElementById("resultado").style.display = "none";
-            document.getElementById("resultado").innerHTML = "";
-            if (html5QrCode) {
-                html5QrCode.resume();
+                );
+            } catch (err) {
+                alert("Error al abrir cámara. Asegúrese de dar permisos.");
             }
         }
 
-        // Iniciar al cargar
+        window.reiniciarEscaneo = function() {
+            const resDiv = document.getElementById("resultado");
+            resDiv.style.display = "none";
+            resDiv.innerHTML = "";
+            if (html5QrCode) {
+                html5QrCode.resume();
+            }
+        };
+
         window.onload = iniciarCamara;
     </script>
 </body>
