@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Generar Pase - Valle Esmeralda</title>
+    
+    <link rel="icon" href="data:,">
+
+    <script type="module" src="qrcode.min.js"></script>
+    <script type="module" src="html2canvas.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #22c55e;
+            --bg: #0f172a;
+            --card: #1e293b;
+            --text: #f8fafc;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .container {
+            background-color: var(--card);
+            padding: 30px;
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        h2 {
+            margin: 0 0 20px 0;
+            color: var(--primary);
+            font-size: 1.6rem;
+        }
+
+        .form-group {
+            text-align: left;
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+            color: #94a3b8;
+            padding-left: 5px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid #334155;
+            background-color: #0f172a;
+            color: white;
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-gen {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-gen:active { transform: scale(0.98); }
+
+        .btn-whats {
+            background-color: #25d366;
+            color: white;
+            display: none; /* Se activa tras generar el QR */
+            margin-top: 20px;
+        }
+
+        /* ÁREA DEL QR - Crucial para html2canvas */
+        #qr-container {
+            display: none; /* Oculto inicialmente */
+            background: white; /* Fondo blanco para contraste del escáner */
+            padding: 20px;
+            border-radius: 16px;
+            margin: 25px auto;
+            width: fit-content;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        #qr-container canvas, #qr-container img {
+            display: block;
+            margin: 0 auto;
+        }
+
+        .loading-text {
+            display: none;
+            color: var(--primary);
+            margin: 15px 0;
+            font-weight: 500;
+        }
+
+        .btn-back {
+            background: transparent;
+            color: #64748b;
+            text-decoration: none;
+            margin-top: 15px;
+            display: inline-block;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Crear Invitación</h2>
+        
+        <div class="form-group">
+            <label>Nombre del Invitado</label>
+            <input type="text" id="nombre" placeholder="Nombre completo" autocomplete="off">
+        </div>
+
+        <div class="form-group">
+            <label>Tipo de visita</label>
+            <select id="tipo">
+                <option value="visita">Visita Familiar</option>
+                <option value="uber">Servicio (Uber/Didi)</option>
+                <option value="proveedor">Proveedor / Mantenimiento</option>
+                <option value="paqueteria">Paquetería</option>
+            </select>
+        </div>
+
+        <div class="loading-text" id="loader">Generando código en Firebase...</div>
+
+        <button class="btn btn-gen" id="btnGen" onclick="crearQR()">✨ Generar Código QR</button>
+
+        <div id="qr-container">
+            <div id="qr"></div>
+        </div>
+
+        <button class="btn btn-whats" id="btnWhats" onclick="enviarWhats()">📱 Compartir por WhatsApp</button>
+        
+        <a href="dashboard.html" class="btn-back">⬅ Volver al panel</a>
+    </div>
+
+    <script type="module" src="qr.js"></script>
+
+    <script>
+        // Función de seguridad para verificar librerías al cargar
+        window.addEventListener('load', () => {
+            if (typeof QRCode === 'undefined') console.error('Falta qrcode.min.js');
+            if (typeof html2canvas === 'undefined') console.error('Falta html2canvas.min.js');
+        });
+    </script>
+</body>
+</html>
