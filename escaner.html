@@ -62,6 +62,7 @@ header {
 .warn { border-left: 6px solid orange; }
 </style>
 
+<!-- LIBRERÍA QR -->
 <script src="https://unpkg.com/html5-qrcode"></script>
 
 </head>
@@ -92,17 +93,33 @@ import {
 let activo = true;
 const resultado = document.getElementById("resultado");
 
-// 🔥 EXTRAER ID SEGURO
-function obtenerID(qrTexto) {
+// 🔥 FUNCIÓN CORRECTA PARA LEER ID
+function obtenerID(texto) {
     try {
-        if (!qrTexto) return null;
+        if (!texto) return null;
 
-        if (qrTexto.includes("id=")) {
-            const url = new URL(qrTexto);
-            return url.searchParams.get("id");
+        texto = texto.trim();
+        console.log("QR COMPLETO:", texto);
+
+        // Caso 1: URL con ?id=
+        if (texto.includes("id=")) {
+            const url = new URL(texto);
+            const id = url.searchParams.get("id");
+            console.log("ID EXTRAÍDO:", id);
+            return id;
         }
 
-        return qrTexto;
+        // Caso 2: URL tipo /visitas/ID
+        if (texto.includes("/")) {
+            const id = texto.split("/").pop();
+            console.log("ID EXTRAÍDO:", id);
+            return id;
+        }
+
+        // Caso 3: ID directo
+        console.log("ID DIRECTO:", texto);
+        return texto;
+
     } catch (e) {
         console.error("Error leyendo QR:", e);
         return null;
@@ -115,11 +132,25 @@ function setResultado(msg, tipo = "") {
     resultado.innerHTML = msg;
 }
 
+// 🔥 RESET
+function reset() {
+    setTimeout(() => {
+        activo = true;
+        setResultado("Esperando escaneo...");
+    }, 2500);
+}
+
 // 🔥 ESCÁNER
 const html5QrCode = new Html5Qrcode("reader");
 
 Html5Qrcode.getCameras().then(cameras => {
 
+    if (!cameras.length) {
+        setResultado("❌ No hay cámara disponible", "error");
+        return;
+    }
+
+    // 🔥 FORZAR CÁMARA TRASERA
     let camaraTrasera = cameras.find(cam =>
         cam.label.toLowerCase().includes("back") ||
         cam.label.toLowerCase().includes("rear")
@@ -129,14 +160,12 @@ Html5Qrcode.getCameras().then(cameras => {
 
     html5QrCode.start(
         camaraID,
-        { fps: 8, qrbox: 250 },
+        { fps: 10, qrbox: 250 },
 
         async (decodedText) => {
 
             if (!activo) return;
             activo = false;
-
-            console.log("QR leído:", decodedText);
 
             const id = obtenerID(decodedText);
 
@@ -147,7 +176,10 @@ Html5Qrcode.getCameras().then(cameras => {
 
             try {
 
-                const ref = doc(db, "visitas", id);
+                const idFinal = String(id).trim();
+                console.log("ID FINAL:", idFinal);
+
+                const ref = doc(db, "visitas", idFinal);
                 const snap = await getDoc(ref);
 
                 if (!snap.exists()) {
@@ -167,7 +199,6 @@ Html5Qrcode.getCameras().then(cameras => {
                     return reset();
                 }
 
-                // 🔥 ACTUALIZAR
                 await updateDoc(ref, {
                     estado: "usado",
                     escaneadoEn: new Date().toLocaleString()
@@ -181,7 +212,12 @@ Html5Qrcode.getCameras().then(cameras => {
 
             } catch (e) {
                 console.error(e);
-                setResultado("❌ Error Firebase", "error");
+
+                if (e.code === "unavailable") {
+                    setResultado("🌐 Sin internet", "error");
+                } else {
+                    setResultado("❌ Error Firebase", "error");
+                }
             }
 
             reset();
@@ -192,14 +228,6 @@ Html5Qrcode.getCameras().then(cameras => {
     console.error(err);
     setResultado("❌ Error cámara", "error");
 });
-
-// 🔥 RESET LIMPIO
-function reset() {
-    setTimeout(() => {
-        activo = true;
-        setResultado("Esperando escaneo...");
-    }, 2500);
-}
 </script>
 
 </body>
