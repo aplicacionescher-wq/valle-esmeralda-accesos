@@ -1,32 +1,48 @@
 import { db } from "./firebase.js";
-import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-export async function login() {
-    const usuario = document.getElementById("domicilio").value;
-    const pass = document.getElementById("password").value;
+import {
+  getAuth,
+  signInWithEmailAndPassword
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-    if (!usuario || !pass) return alert("Ingresa datos");
+import {
+  doc,
+  getDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    try {
-        const q = query(collection(db, "usuarios"), where("domicilio", "==", usuario), where("password", "==", pass));
-        const querySnapshot = await getDocs(q);
+const auth = getAuth();
 
-        if (querySnapshot.empty) {
-            alert("Usuario o contraseña incorrectos");
-            return;
-        }
+window.login = async function () {
 
-        querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            localStorage.setItem("rol", data.rol);
-            localStorage.setItem("casa", data.domicilio);
-            localStorage.setItem("usuario", data.nombre || "Residente");
+  const correo = document.getElementById("correo").value;
+  const password = document.getElementById("password").value;
 
-            if (data.rol === "admin") window.location.href = "historial.html";
-            else if (data.rol === "residente") window.location.href = "dashboard.html";
-            else if (data.rol === "caseta") window.location.href = "escaner.html";
-        });
-    } catch (e) {
-        alert("Error de conexión");
+  try {
+
+    const userCredential = await signInWithEmailAndPassword(auth, correo, password);
+    const uid = userCredential.user.uid;
+
+    const ref = doc(db, "usuarios", uid);
+    const snap = await getDoc(ref);
+
+    if (!snap.exists()) {
+      alert("Usuario sin rol");
+      return;
     }
-}
+
+    const data = snap.data();
+
+    // 🔐 Redirección por rol
+    if (data.rol === "admin") {
+      window.location.href = "admin.html";
+    } else if (data.rol === "caseta") {
+      window.location.href = "escaner.html";
+    } else {
+      window.location.href = "generar.html";
+    }
+
+  } catch (error) {
+    document.getElementById("error").innerText = "Error de login";
+  }
+
+};
