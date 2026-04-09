@@ -1,144 +1,242 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="es">
 <head>
-
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Panel Administrador</title>
+<title>Panel Admin</title>
 
 <style>
-
-body{
-font-family:Arial;
-margin:0;
-background:#f4f4f4;
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Arial;
+    background: #f1f5f9;
 }
 
-header{
-background:#2e7d32;
-color:white;
-padding:15px;
-text-align:center;
+header {
+    background: #020617;
+    color: white;
+    padding: 18px;
+    text-align: center;
+    font-size: 22px;
+    font-weight: bold;
 }
 
-.logo{
-width:80px;
-margin-bottom:10px;
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
 }
 
-.container{
-padding:20px;
+.btn {
+    background: #1e293b;
+    color: white;
+    padding: 8px 14px;
+    border-radius: 8px;
+    text-decoration: none;
 }
 
-.card{
-background:white;
-padding:20px;
-margin:10px auto;
-border-radius:10px;
-max-width:400px;
-box-shadow:0 2px 5px rgba(0,0,0,0.2);
-text-align:center;
+.filtros {
+    display: flex;
+    justify-content: space-around;
+    margin: 10px;
 }
 
-button{
-width:100%;
-padding:15px;
-margin-top:10px;
-border:none;
-border-radius:8px;
-background:#2e7d32;
-color:white;
-font-size:16px;
-cursor:pointer;
+.filtro {
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    background: #e2e8f0;
 }
 
-button:hover{
-background:#1b5e20;
+.filtro.active {
+    background: #0f172a;
+    color: white;
 }
 
-.footer{
-text-align:center;
-padding:15px;
-font-size:12px;
-color:#777;
+.stats {
+    display: flex;
+    justify-content: space-around;
+    margin: 10px;
 }
 
+.stat {
+    background: white;
+    padding: 10px;
+    border-radius: 10px;
+    text-align: center;
+    width: 30%;
+}
+
+#buscador {
+    width: 90%;
+    margin: 10px auto;
+    display: block;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+}
+
+#lista {
+    padding: 10px;
+}
+
+.card {
+    background: white;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.estado {
+    font-weight: bold;
+    margin-top: 8px;
+}
+
+.pendiente { color: orange; }
+.usado { color: green; }
+.expirado { color: red; }
+
+.vacio {
+    text-align: center;
+    margin-top: 30px;
+    color: gray;
+}
 </style>
 
+<script type="module">
+import { db } from "./firebase.js";
+import {
+    collection,
+    query,
+    orderBy,
+    onSnapshot
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+let estadoFiltro = "todos";
+let datosGlobal = [];
+
+window.addEventListener("DOMContentLoaded", () => {
+    cargarDatos();
+});
+
+// 🔥 CARGA REALTIME
+function cargarDatos() {
+
+    const q = query(
+        collection(db, "visitas"),
+        orderBy("timestamp", "desc")
+    );
+
+    onSnapshot(q, (snapshot) => {
+
+        datosGlobal = [];
+
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            data.id = doc.id;
+            datosGlobal.push(data);
+        });
+
+        render();
+
+    });
+}
+
+// 🔥 RENDER PRINCIPAL
+function render() {
+
+    const lista = document.getElementById("lista");
+    const buscador = document.getElementById("buscador").value.toLowerCase();
+
+    lista.innerHTML = "";
+
+    let pendientes = 0;
+    let usados = 0;
+    let expirados = 0;
+
+    datosGlobal.forEach(d => {
+
+        // CONTADORES
+        if (d.estado === "pendiente") pendientes++;
+        if (d.estado === "usado") usados++;
+        if (d.estado === "expirado") expirados++;
+
+        // FILTRO
+        if (estadoFiltro !== "todos" && d.estado !== estadoFiltro) return;
+
+        // BUSCADOR
+        if (!d.nombre.toLowerCase().includes(buscador)) return;
+
+        const card = document.createElement("div");
+        card.className = "card";
+
+        let claseEstado = d.estado;
+
+        card.innerHTML = `
+            <h3>${d.nombre}</h3>
+            <p>🏠 Casa: ${d.casa}</p>
+            <p>📅 ${d.fecha}</p>
+            <p class="estado ${claseEstado}">${d.estado.toUpperCase()}</p>
+        `;
+
+        lista.appendChild(card);
+    });
+
+    // CONTADORES
+    document.getElementById("pendientes").innerText = pendientes;
+    document.getElementById("usados").innerText = usados;
+    document.getElementById("expirados").innerText = expirados;
+
+    if (lista.innerHTML === "") {
+        lista.innerHTML = "<div class='vacio'>No hay resultados</div>";
+    }
+}
+
+// FILTROS
+window.setFiltro = function(filtro) {
+    estadoFiltro = filtro;
+
+    document.querySelectorAll(".filtro").forEach(f => f.classList.remove("active"));
+    document.getElementById("f_" + filtro).classList.add("active");
+
+    render();
+}
+
+// BUSCADOR
+window.buscar = function() {
+    render();
+}
+</script>
 </head>
 
 <body>
 
 <header>
-
-<img src="logo.png" class="logo">
-
-<h2>Valle Esmeralda</h2>
-
-<p>Panel Administrador</p>
-
+📊 PANEL ADMIN
 </header>
 
-<div class="container">
-
-<div class="card">
-
-<h3>Accesos</h3>
-
-<button onclick="ir('generar.html')">Registrar visita</button>
-
-<button onclick="ir('scanner.html')">Escanear QR</button>
-
+<div class="topbar">
+    <a class="btn" href="index.html">⬅ Volver</a>
 </div>
 
-<div class="card">
+<input id="buscador" onkeyup="buscar()" placeholder="Buscar por nombre...">
 
-<h3>Control</h3>
-
-<button onclick="ir('historial.html')">Ver historial</button>
-
-<button onclick="ir('usuarios.html')">Usuarios</button>
-
+<div class="stats">
+    <div class="stat">🟡 <span id="pendientes">0</span><br>Pendientes</div>
+    <div class="stat">🟢 <span id="usados">0</span><br>Usados</div>
+    <div class="stat">🔴 <span id="expirados">0</span><br>Expirados</div>
 </div>
 
-<div class="card">
-
-<h3>Sistema</h3>
-
-<button onclick="alert('Sistema activo correctamente')">Estado</button>
-
-<button onclick="cerrarSesion()">Cerrar sesión</button>
-
+<div class="filtros">
+    <div id="f_todos" class="filtro active" onclick="setFiltro('todos')">Todos</div>
+    <div id="f_pendiente" class="filtro" onclick="setFiltro('pendiente')">Pendientes</div>
+    <div id="f_usado" class="filtro" onclick="setFiltro('usado')">Usados</div>
+    <div id="f_expirado" class="filtro" onclick="setFiltro('expirado')">Expirados</div>
 </div>
 
-</div>
-
-<div class="footer">
-
-Sistema de Accesos © Valle Esmeralda
-
-</div>
-
-<script>
-
-function ir(pagina){
-window.location.href=pagina
-}
-
-function cerrarSesion(){
-
-localStorage.clear()
-
-alert("Sesión cerrada")
-
-window.location.href="index.html"
-
-}
-
-</script>
+<div id="lista"></div>
 
 </body>
-
 </html>
