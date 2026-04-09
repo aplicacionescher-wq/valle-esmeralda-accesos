@@ -1,60 +1,30 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Login - Valle Esmeralda</title>
-
-<style>
-body {
-  font-family: Arial;
-  background: #0f172a;
-  color: white;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-}
-
-.container {
-  background: #1e293b;
-  padding: 30px;
-  border-radius: 10px;
-  width: 300px;
-}
-
-input, button {
-  width: 100%;
-  padding: 10px;
-  margin-top: 10px;
-  border-radius: 5px;
-  border: none;
-}
-
-button {
-  background: #22c55e;
-  color: white;
-  font-weight: bold;
-  cursor: pointer;
-}
-</style>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valle Esmeralda - Login</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        body { font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f0f2f5; }
+        .login-box { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 320px; text-align: center; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #065f46; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+    </style>
 </head>
-
 <body>
-
-<div class="container">
-  <h2>Iniciar Sesión</h2>
-
-  <input type="email" id="correo" placeholder="Correo">
-  <input type="password" id="password" placeholder="Contraseña">
-
-  <button onclick="login()">Entrar</button>
-
-  <p id="error"></p>
-</div>
-
-<script type="module" src="login.js"></script>
-
+    <div class="login-box">
+        <h2>Valle Esmeralda</h2>
+        <input id="domicilio" type="text" placeholder="Usuario (Calle y Número)">
+        <input id="password" type="password" placeholder="Contraseña">
+        <button id="loginBtn">Entrar</button>
+    </div>
+    <script type="module">
+        import { login } from "./login.js";
+        document.getElementById("loginBtn").addEventListener("click", login);
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.register("./sw.js").then(() => console.log("SW OK"));
+        }
+    </script>
 </body>
 </html>
