@@ -9,14 +9,14 @@
 <style>
 body {
     margin: 0;
-    font-family: 'Segoe UI', Arial;
+    font-family: Arial;
     background: #f5f5f5;
     text-align: center;
 }
 
 /* HEADER */
 header {
-    background: linear-gradient(90deg, #1e3a8a, #2563eb);
+    background: #1e3a8a;
     color: white;
     padding: 15px;
     font-size: 18px;
@@ -33,10 +33,9 @@ header {
     background: #1e3a8a;
     color: white;
     padding: 10px 15px;
-    border-radius: 10px;
+    border-radius: 8px;
     text-decoration: none;
     font-size: 14px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
 /* SCANNER */
@@ -48,18 +47,10 @@ header {
 
 /* RESULTADO */
 #resultado {
-    margin: 15px;
+    margin-top: 15px;
     padding: 15px;
-    border-radius: 10px;
     font-weight: bold;
-    background: white;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    transition: 0.3s;
 }
-
-.ok { border-left: 6px solid green; }
-.error { border-left: 6px solid red; }
-.warn { border-left: 6px solid orange; }
 </style>
 
 <!-- LIBRERÍA QR -->
@@ -75,7 +66,7 @@ header {
 
 <div class="topbar">
     <a class="btn" href="index.html">⬅ Volver</a>
-    <a class="btn" href="pendientes.html">📋 Pendientes</a>
+    <a class="btn" href="pendientes.html">📋 Ver Pendientes</a>
 </div>
 
 <div id="reader"></div>
@@ -93,51 +84,17 @@ import {
 let activo = true;
 const resultado = document.getElementById("resultado");
 
-// 🔥 FUNCIÓN CORRECTA PARA LEER ID
-function obtenerID(texto) {
+// 🔥 EXTRAER ID
+function obtenerID(qrTexto) {
     try {
-        if (!texto) return null;
-
-        texto = texto.trim();
-        console.log("QR COMPLETO:", texto);
-
-        // Caso 1: URL con ?id=
-        if (texto.includes("id=")) {
-            const url = new URL(texto);
-            const id = url.searchParams.get("id");
-            console.log("ID EXTRAÍDO:", id);
-            return id;
+        if (qrTexto.includes("id=")) {
+            const url = new URL(qrTexto);
+            return url.searchParams.get("id");
         }
-
-        // Caso 2: URL tipo /visitas/ID
-        if (texto.includes("/")) {
-            const id = texto.split("/").pop();
-            console.log("ID EXTRAÍDO:", id);
-            return id;
-        }
-
-        // Caso 3: ID directo
-        console.log("ID DIRECTO:", texto);
-        return texto;
-
-    } catch (e) {
-        console.error("Error leyendo QR:", e);
+        return qrTexto;
+    } catch {
         return null;
     }
-}
-
-// 🔥 UI
-function setResultado(msg, tipo = "") {
-    resultado.className = tipo;
-    resultado.innerHTML = msg;
-}
-
-// 🔥 RESET
-function reset() {
-    setTimeout(() => {
-        activo = true;
-        setResultado("Esperando escaneo...");
-    }, 2500);
 }
 
 // 🔥 ESCÁNER
@@ -145,12 +102,6 @@ const html5QrCode = new Html5Qrcode("reader");
 
 Html5Qrcode.getCameras().then(cameras => {
 
-    if (!cameras.length) {
-        setResultado("❌ No hay cámara disponible", "error");
-        return;
-    }
-
-    // 🔥 FORZAR CÁMARA TRASERA
     let camaraTrasera = cameras.find(cam =>
         cam.label.toLowerCase().includes("back") ||
         cam.label.toLowerCase().includes("rear")
@@ -170,32 +121,29 @@ Html5Qrcode.getCameras().then(cameras => {
             const id = obtenerID(decodedText);
 
             if (!id) {
-                setResultado("❌ QR inválido", "error");
+                resultado.innerHTML = "❌ QR inválido";
                 return reset();
             }
 
             try {
 
-                const idFinal = String(id).trim();
-                console.log("ID FINAL:", idFinal);
-
-                const ref = doc(db, "visitas", idFinal);
+                const ref = doc(db, "visitas", id);
                 const snap = await getDoc(ref);
 
                 if (!snap.exists()) {
-                    setResultado("❌ No existe registro", "error");
+                    resultado.innerHTML = "❌ No existe registro";
                     return reset();
                 }
 
                 const data = snap.data();
 
                 if (data.estado === "usado") {
-                    setResultado("⚠️ YA UTILIZADO", "warn");
+                    resultado.innerHTML = "⚠️ YA UTILIZADO";
                     return reset();
                 }
 
                 if (data.estado === "expirado") {
-                    setResultado("❌ EXPIRADO", "error");
+                    resultado.innerHTML = "❌ EXPIRADO";
                     return reset();
                 }
 
@@ -204,30 +152,30 @@ Html5Qrcode.getCameras().then(cameras => {
                     escaneadoEn: new Date().toLocaleString()
                 });
 
-                setResultado(`
-                    ✅ ACCESO PERMITIDO<br>
-                    👤 ${data.nombre}<br>
+                resultado.innerHTML = `
+                    ✅ ACCESO PERMITIDO <br>
+                    👤 ${data.nombre} <br>
                     🏠 Casa ${data.casa}
-                `, "ok");
+                `;
 
             } catch (e) {
-                console.error(e);
-
-                if (e.code === "unavailable") {
-                    setResultado("🌐 Sin internet", "error");
-                } else {
-                    setResultado("❌ Error Firebase", "error");
-                }
+                resultado.innerHTML = "❌ Error de conexión";
             }
 
             reset();
+
         }
     );
 
-}).catch(err => {
-    console.error(err);
-    setResultado("❌ Error cámara", "error");
 });
+
+// 🔥 RESET
+function reset() {
+    setTimeout(() => {
+        activo = true;
+        resultado.innerHTML = "Esperando escaneo...";
+    }, 3000);
+}
 </script>
 
 </body>
