@@ -1,75 +1,97 @@
 import { db } from "./firebase.js";
-import {
-  collection,
-  addDoc,
-  serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-let qrGeneradoID = null;
-
-// 🔥 CREAR QR
-window.crearQR = async function () {
-
+window.crearQR = async function() {
     const nombre = document.getElementById("nombre").value.trim();
-    const tipo = document.getElementById("tipo").value;
+    const qrDiv = document.getElementById("qr");
+    const btnGen = document.getElementById("btnGen");
 
-    if (!nombre) {
-        alert("⚠️ Ingresa un nombre");
-        return;
+    if (!nombre) return alert("Escribe el nombre del invitado");
+
+    // VALIDACIÓN DE LIBRERÍA 1
+    if (typeof QRCode === "undefined") {
+        return alert("❌ ERROR: La librería qrcode.min.js no se cargó. Revisa que el archivo esté en la carpeta public.");
     }
 
-    document.getElementById("loader").style.display = "block";
-    document.getElementById("btnGen").disabled = true;
-
     try {
+        btnGen.disabled = true;
+        btnGen.innerText = "⏳ Guardando...";
 
-        // 🔥 GUARDAR EN FIREBASE
         const docRef = await addDoc(collection(db, "visitas"), {
-            nombre,
-            tipo,
-            estado: "pendiente",
-            fecha: serverTimestamp()
+            nombre: nombre,
+            tipo: document.getElementById("tipo").value,
+            casa: localStorage.getItem("casa") || "S/N",
+            autoriza: localStorage.getItem("usuario") || "Residente",
+            timestamp: Date.now()
         });
 
-        // 🔥 ESTE ES EL ID REAL
-        qrGeneradoID = docRef.id;
+        window.currentQrID = docRef.id;
+        const linkPase = `${window.location.origin}/verqr.html?id=${docRef.id}`;
 
-        console.log("ID GENERADO:", qrGeneradoID);
-
-        // 🔥 GENERAR QR CON EL ID
-        const qrDiv = document.getElementById("qr");
-        qrDiv.innerHTML = "";
-
+        qrDiv.innerHTML = ""; 
         new QRCode(qrDiv, {
-            text: qrGeneradoID, // 🔥 AQUÍ ESTÁ LA CLAVE
-            width: 220,
-            height: 220
+            text: linkPase,
+            width: 300,
+            height: 300,
+            correctLevel: QRCode.CorrectLevel.H
         });
 
         document.getElementById("qr-container").style.display = "block";
         document.getElementById("btnWhats").style.display = "block";
+        btnGen.disabled = false;
+        btnGen.innerText = "✨ Generar Nuevo";
 
-    } catch (error) {
-        console.error(error);
-        alert("❌ Error al guardar en Firebase");
+    } catch (e) {
+        alert("Error Firebase: " + e.message);
+        btnGen.disabled = false;
     }
-
-    document.getElementById("loader").style.display = "none";
-    document.getElementById("btnGen").disabled = false;
 };
 
-// 🔥 ENVIAR POR WHATSAPP
-window.enviarWhats = async function () {
+window.enviarWhats = async function() {
+    const qrDiv = document.getElementById("qr");
+    const btn = document.getElementById("btnWhats");
 
-    const qrContainer = document.getElementById("qr-container");
+    // VALIDACIÓN DE LIBRERÍA 2
+    if (typeof html2canvas === "undefined") {
+        return alert("❌ ERROR: La librería html2canvas.min.js no se encuentra. El envío de imagen no funcionará.");
+    }
 
-    const canvas = await html2canvas(qrContainer);
-    const imgData = canvas.toDataURL("image/png");
+    try {
+        btn.innerText = "⏳ Creando Imagen...";
+        
+        // Captura el QR con fondo blanco forzado
+        const canvas = await html2canvas(qrDiv, { 
+            backgroundColor: "#ffffff",
+            scale: 2,
+            useCORS: true // Importante para evitar bloqueos de seguridad
+        });
+        
+        canvas.toBlob(async (blob) => {
+            if (!blob) return alert("No se pudo crear la imagen");
 
-    const link = document.createElement("a");
-    link.href = imgData;
-    link.download = "qr.png";
-    link.click();
+            const file = new File([blob], "Pase_Valle.png", { type: "image/png" });
 
-    alert("📲 Imagen lista. Compártela por WhatsApp.");
+            // WEB SHARE API: Esto solo funciona en móviles con HTTPS
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({
+                        files: [file],
+                        title: 'Pase de Acceso'
+                    });
+                } catch (err) {
+                    console.log("Compartir cancelado");
+                }
+            } else {
+                // RESPALDO SI NO ES MÓVIL O NO SOPORTA IMAGEN
+                alert("Tu dispositivo no permite enviar imágenes directamente. Enviando link...");
+                const link = `${window.location.origin}/verqr.html?id=${window.currentQrID}`;
+                window.open(`https://wa.me/?text=${encodeURIComponent("Usa este link para tu acceso: " + link)}`);
+            }
+            btn.innerText = "📱 Enviar por WhatsApp";
+        }, "image/png");
+
+    } catch (err) {
+        btn.innerText = "📱 Enviar por WhatsApp";
+        alert("Error técnico: " + err.message);
+    }
 };
