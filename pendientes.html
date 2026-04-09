@@ -6,6 +6,7 @@
 
 <title>Visitas Pendientes</title>
 
+<!-- ESTILOS -->
 <style>
 body {
     margin: 0;
@@ -26,21 +27,6 @@ header {
     text-align: center;
     padding: 10px;
     color: #64748b;
-}
-
-.topbar {
-    display: flex;
-    justify-content: space-between;
-    padding: 10px;
-}
-
-.btn {
-    background: #1e293b;
-    color: white;
-    padding: 8px 14px;
-    border-radius: 8px;
-    text-decoration: none;
-    font-size: 14px;
 }
 
 #lista {
@@ -87,6 +73,21 @@ header {
     font-size: 12px;
 }
 
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+}
+
+.btn {
+    background: #1e293b;
+    color: white;
+    padding: 8px 14px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 14px;
+}
+
 .vacio {
     text-align: center;
     margin-top: 40px;
@@ -95,33 +96,34 @@ header {
 }
 </style>
 
+<!-- FIREBASE -->
 <script type="module">
 import { db } from "./firebase.js";
 import {
     collection,
     query,
     orderBy,
-    onSnapshot,
-    doc,
-    updateDoc
+    onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+// CONTENEDOR
 let contenedor;
 
+// INICIAR
 window.addEventListener("DOMContentLoaded", () => {
     contenedor = document.getElementById("lista");
     cargarPendientes();
 });
 
-// 🔥 FUNCIÓN PRINCIPAL
+// FUNCIÓN PRINCIPAL
 function cargarPendientes() {
 
     const q = query(
         collection(db, "visitas"),
-        orderBy("timestamp", "desc")
+        orderBy("timestamp", "desc") // 🔥 FIX REAL
     );
 
-    onSnapshot(q, async (snapshot) => {
+    onSnapshot(q, (snapshot) => {
 
         contenedor.innerHTML = "";
 
@@ -135,28 +137,10 @@ function cargarPendientes() {
         }
 
         let hayPendientes = false;
-        const ahora = Date.now();
-        const limite = 12 * 60 * 60 * 1000; // 12 horas
 
-        for (const d of snapshot.docs) {
+        snapshot.forEach(doc => {
 
-            const data = d.data();
-
-            // 🔥 EXPIRACIÓN AUTOMÁTICA
-            if (
-                data.estado === "pendiente" &&
-                data.timestamp &&
-                (ahora - data.timestamp > limite)
-            ) {
-                try {
-                    await updateDoc(doc(db, "visitas", d.id), {
-                        estado: "expirado"
-                    });
-                } catch (e) {
-                    console.error("Error expirando:", e);
-                }
-                continue;
-            }
+            const data = doc.data();
 
             // 🔥 SOLO MOSTRAR PENDIENTES
             if (data.estado === "pendiente") {
@@ -181,7 +165,8 @@ function cargarPendientes() {
 
                 contenedor.appendChild(card);
             }
-        }
+
+        });
 
         // 🔥 SI NO HAY PENDIENTES
         if (!hayPendientes) {
