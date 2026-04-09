@@ -1,102 +1,75 @@
 import { db } from "./firebase.js";
-import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import {
+  collection,
+  addDoc,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-window.crearQR = async function() {
+let qrGeneradoID = null;
+
+// 🔥 CREAR QR
+window.crearQR = async function () {
+
     const nombre = document.getElementById("nombre").value.trim();
-    const qrDiv = document.getElementById("qr");
-    const btnGen = document.getElementById("btnGen");
+    const tipo = document.getElementById("tipo").value;
 
-    if (!nombre) return alert("Escribe el nombre del invitado");
-
-    if (typeof QRCode === "undefined") {
-        return alert("❌ ERROR: Falta qrcode.min.js");
+    if (!nombre) {
+        alert("⚠️ Ingresa un nombre");
+        return;
     }
 
+    document.getElementById("loader").style.display = "block";
+    document.getElementById("btnGen").disabled = true;
+
     try {
-        btnGen.disabled = true;
-        btnGen.innerText = "⏳ Guardando...";
 
-        console.log("Intentando guardar en Firebase...");
-
+        // 🔥 GUARDAR EN FIREBASE
         const docRef = await addDoc(collection(db, "visitas"), {
-            nombre: nombre,
-            tipo: document.getElementById("tipo").value,
-            casa: localStorage.getItem("casa") || "S/N",
-            autoriza: localStorage.getItem("usuario") || "Residente",
-
-            // 🔥 CLAVE PARA PENDIENTES
+            nombre,
+            tipo,
             estado: "pendiente",
-            fecha: new Date().toLocaleString(),
-            timestamp: Date.now()
+            fecha: serverTimestamp()
         });
 
-        console.log("Guardado con ID:", docRef.id);
+        // 🔥 ESTE ES EL ID REAL
+        qrGeneradoID = docRef.id;
 
-        window.currentQrID = docRef.id;
+        console.log("ID GENERADO:", qrGeneradoID);
 
-        const linkPase = `${window.location.origin}/verqr.html?id=${docRef.id}`;
-
+        // 🔥 GENERAR QR CON EL ID
+        const qrDiv = document.getElementById("qr");
         qrDiv.innerHTML = "";
 
         new QRCode(qrDiv, {
-            text: linkPase,
-            width: 300,
-            height: 300,
-            correctLevel: QRCode.CorrectLevel.H
+            text: qrGeneradoID, // 🔥 AQUÍ ESTÁ LA CLAVE
+            width: 220,
+            height: 220
         });
 
         document.getElementById("qr-container").style.display = "block";
         document.getElementById("btnWhats").style.display = "block";
 
-        btnGen.disabled = false;
-        btnGen.innerText = "✨ Generar Nuevo";
-
-    } catch (e) {
-        console.error(e);
-        alert("Error Firebase: " + e.message);
-        btnGen.disabled = false;
-        btnGen.innerText = "✨ Generar Código QR";
+    } catch (error) {
+        console.error(error);
+        alert("❌ Error al guardar en Firebase");
     }
+
+    document.getElementById("loader").style.display = "none";
+    document.getElementById("btnGen").disabled = false;
 };
 
-// WHATSAPP (sin cambios)
-window.enviarWhats = async function() {
-    const qrDiv = document.getElementById("qr");
-    const btn = document.getElementById("btnWhats");
+// 🔥 ENVIAR POR WHATSAPP
+window.enviarWhats = async function () {
 
-    if (typeof html2canvas === "undefined") {
-        return alert("❌ ERROR: Falta html2canvas.min.js");
-    }
+    const qrContainer = document.getElementById("qr-container");
 
-    try {
-        btn.innerText = "⏳ Creando Imagen...";
+    const canvas = await html2canvas(qrContainer);
+    const imgData = canvas.toDataURL("image/png");
 
-        const canvas = await html2canvas(qrDiv, {
-            backgroundColor: "#ffffff",
-            scale: 2,
-            useCORS: true
-        });
+    const link = document.createElement("a");
+    link.href = imgData;
+    link.download = "qr.png";
+    link.click();
 
-        canvas.toBlob(async (blob) => {
-            if (!blob) return alert("No se pudo crear la imagen");
-
-            const file = new File([blob], "Pase_Valle.png", { type: "image/png" });
-
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                await navigator.share({
-                    files: [file],
-                    title: 'Pase de Acceso'
-                });
-            } else {
-                const link = `${window.location.origin}/verqr.html?id=${window.currentQrID}`;
-                window.open(`https://wa.me/?text=${encodeURIComponent("Usa este acceso: " + link)}`);
-            }
-
-            btn.innerText = "📱 Enviar por WhatsApp";
-        });
-
-    } catch (err) {
-        btn.innerText = "📱 Enviar por WhatsApp";
-        alert("Error técnico: " + err.message);
-    }
+    alert("📲 Imagen lista. Compártela por WhatsApp.");
 };
