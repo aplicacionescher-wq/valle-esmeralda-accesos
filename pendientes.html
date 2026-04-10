@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visitas Pendientes - Valle Esmeralda</title>
+    <title>Visitas por Llegar - Valle Esmeralda</title>
+    
     <style>
         :root {
             --bg: #0f172a;
@@ -11,46 +12,87 @@
             --accent: #38bdf8;
             --text: #f8fafc;
             --success: #22c55e;
+            --border: #334155;
         }
+
         body {
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', system-ui, sans-serif;
             background-color: var(--bg);
             color: var(--text);
             margin: 0;
             padding: 20px;
+            display: flex;
+            justify-content: center;
         }
-        .container { max-width: 500px; margin: auto; }
-        h2 { text-align: center; color: var(--accent); }
-        
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .btn-back {
+            display: inline-block;
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
         .card-visita {
             background: var(--card);
-            border-radius: 12px;
-            padding: 15px;
+            border-radius: 16px;
+            padding: 18px;
             margin-bottom: 15px;
-            border-left: 5px solid var(--accent);
+            border: 1px solid var(--border);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: transform 0.2s;
         }
-        .info b { display: block; font-size: 1.1rem; }
-        .info span { font-size: 0.85rem; color: #94a3b8; }
-        
+
+        .info b {
+            display: block;
+            font-size: 1.1rem;
+            color: var(--accent);
+            margin-bottom: 4px;
+        }
+
+        .info span {
+            display: block;
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+
         .btn-check {
             background: var(--success);
             color: white;
             border: none;
-            padding: 10px 15px;
-            border-radius: 8px;
-            cursor: pointer;
+            padding: 12px 18px;
+            border-radius: 10px;
             font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(34, 197, 94, 0.2);
         }
-        .vacio { text-align: center; padding: 50px; color: #64748b; }
-        .btn-back { color: var(--text); text-decoration: none; font-size: 14px; display: block; margin-bottom: 20px; }
+
+        .vacio {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 16px;
+            border: 2px dashed var(--border);
+        }
     </style>
 
     <script type="module">
-        import { db } from "./firebase.js";
+        // Importamos la base de datos desde tu archivo local
+        import { db } from "./firebase.js"; 
+        
         import { 
             collection, 
             query, 
@@ -63,53 +105,68 @@
 
         const contenedor = document.getElementById("lista-pendientes");
 
-        // Escuchamos la colección "visitas" donde el estado NO sea "usado"
-        // Esto mostrará todo lo que esté "pendiente" o sin estado definido aún
-        const q = query(
-            collection(db, "visitas"), 
-            where("estado", "!=", "usado"),
-            orderBy("estado"),
-            orderBy("timestamp", "desc")
-        );
+        // Consulta: Traer visitas cuyo estado NO sea 'usado'
+        // IMPORTANTE: Requiere un índice en Firebase (revisar consola si falla)
+        try {
+            const q = query(
+                collection(db, "visitas"), 
+                where("estado", "!=", "usado"),
+                orderBy("estado"),
+                orderBy("timestamp", "desc")
+            );
 
-        onSnapshot(q, (snapshot) => {
-            contenedor.innerHTML = "";
+            onSnapshot(q, (snapshot) => {
+                contenedor.innerHTML = "";
 
-            if (snapshot.empty) {
-                contenedor.innerHTML = '<div class="vacio">✅ No hay visitas por llegar</div>';
-                return;
-            }
+                if (snapshot.empty) {
+                    contenedor.innerHTML = `
+                        <div class="vacio">
+                            <p style="font-size: 3rem; margin: 0;">✅</p>
+                            <p>No hay visitas pendientes por llegar en este momento.</p>
+                        </div>`;
+                    return;
+                }
 
-            snapshot.forEach((docSnap) => {
-                const item = docSnap.data();
-                const id = docSnap.id;
-                const hora = new Date(item.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                snapshot.forEach((docSnap) => {
+                    const item = docSnap.data();
+                    const id = docSnap.id;
+                    const hora = item.timestamp ? new Date(item.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--:--';
 
-                const div = document.createElement("div");
-                div.className = "card-visita";
-                div.innerHTML = `
-                    <div class="info">
-                        <b>${item.nombre}</b>
-                        <span>🏠 Casa: ${item.casa} | 🚗 ${item.tipo}</span>
-                        <span>⏰ Generado: ${hora}</span>
-                    </div>
-                    <button class="btn-check" id="btn-${id}">Ingresó</button>
-                `;
-                
-                contenedor.appendChild(div);
+                    const div = document.createElement("div");
+                    div.className = "card-visita";
+                    div.innerHTML = `
+                        <div class="info">
+                            <b>${item.nombre || 'Invitado'}</b>
+                            <span>🏠 Casa: ${item.casa || 'S/N'}</span>
+                            <span>🚗 Tipo: ${item.tipo || 'Visita'}</span>
+                            <span>⏰ Generado: ${hora}</span>
+                        </div>
+                        <button class="btn-check" id="btn-${id}">Ingresó</button>
+                    `;
+                    
+                    contenedor.appendChild(div);
 
-                // Asignar evento al botón
-                div.querySelector(`#btn-${id}`).onclick = () => marcarEntrada(id);
+                    // Evento para marcar como usado
+                    div.querySelector(`#btn-${id}`).onclick = () => marcarEntrada(id);
+                });
+            }, (error) => {
+                console.error("Error en onSnapshot:", error);
+                if (error.message.includes("index")) {
+                    contenedor.innerHTML = `<div class="vacio">⚠️ Error: Falta crear un índice en Firebase. Revisa la consola (F12) para el link.</div>`;
+                }
             });
-        }, (error) => {
-            console.log("Error:", error);
-            contenedor.innerHTML = '<div class="vacio">Error al cargar datos. Verifica índices en Firebase.</div>';
-        });
+        } catch (err) {
+            console.error("Error al inicializar consulta:", err);
+        }
 
         async function marcarEntrada(id) {
-            if(confirm("¿Confirmar ingreso de esta visita?")) {
-                const ref = doc(db, "visitas", id);
-                await updateDoc(ref, { estado: "usado" });
+            if(confirm("¿Confirmar que esta visita ha ingresado?")) {
+                try {
+                    const ref = doc(db, "visitas", id);
+                    await updateDoc(ref, { estado: "usado" });
+                } catch (e) {
+                    alert("Error al actualizar: " + e.message);
+                }
             }
         }
     </script>
@@ -117,10 +174,15 @@
 <body>
 
     <div class="container">
-        <a href="escaner.html" class="btn-back">⬅ Volver</a>
-        <h2>⏳ Visitas por Llegar</h2>
+        <a href="escaner.html" class="btn-back">⬅ Volver al Escáner</a>
+        
+        <div class="header">
+            <h2 style="margin: 0; color: var(--accent);">⏳ Visitas por Llegar</h2>
+            <p style="color: #94a3b8; font-size: 0.9rem;">Lista en tiempo real</p>
+        </div>
+
         <div id="lista-pendientes">
-            <div class="vacio">Cargando...</div>
+            <div class="vacio">Cargando datos de caseta...</div>
         </div>
     </div>
 
