@@ -1,257 +1,128 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Panel - Visitas Pendientes</title>
-
-<style>
-body {
-    margin: 0;
-    font-family: 'Segoe UI', Arial;
-    background: #f1f5f9;
-    display: flex;
-}
-
-/* SIDEBAR */
-.sidebar {
-    width: 220px;
-    background: #0f172a;
-    color: white;
-    height: 100vh;
-    padding: 20px;
-    position: fixed;
-}
-
-.sidebar h2 {
-    font-size: 18px;
-    margin-bottom: 20px;
-}
-
-.sidebar a {
-    display: block;
-    color: #cbd5f5;
-    text-decoration: none;
-    padding: 10px;
-    border-radius: 8px;
-    margin-bottom: 10px;
-    transition: 0.2s;
-}
-
-.sidebar a:hover {
-    background: #1e293b;
-    color: white;
-}
-
-/* CONTENIDO */
-.main {
-    margin-left: 240px;
-    width: 100%;
-}
-
-/* HEADER */
-.header {
-    background: white;
-    padding: 15px 20px;
-    display: flex;
-    justify-content: space-between;
-    box-shadow: 0px 2px 5px rgba(0,0,0,0.1);
-}
-
-.title {
-    font-size: 18px;
-    font-weight: bold;
-}
-
-/* CONTADOR */
-.stats {
-    padding: 20px;
-}
-
-.card-stat {
-    background: #1e293b;
-    color: white;
-    padding: 15px;
-    border-radius: 12px;
-    display: inline-block;
-    margin-right: 10px;
-}
-
-/* LISTA */
-#lista {
-    padding: 20px;
-}
-
-.card {
-    background: white;
-    margin-bottom: 15px;
-    padding: 18px;
-    border-radius: 12px;
-    box-shadow: 0px 3px 10px rgba(0,0,0,0.15);
-}
-
-.nombre {
-    font-size: 18px;
-    font-weight: bold;
-}
-
-.info {
-    font-size: 14px;
-    margin-top: 5px;
-}
-
-/* BOTONES */
-.actions {
-    margin-top: 10px;
-}
-
-.btn {
-    padding: 6px 12px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    margin-right: 5px;
-}
-
-.aprobar {
-    background: #16a34a;
-    color: white;
-}
-
-.rechazar {
-    background: #dc2626;
-    color: white;
-}
-
-/* VACIO */
-.vacio {
-    text-align: center;
-    margin-top: 40px;
-    color: #64748b;
-}
-</style>
-
-<script type="module">
-import { db } from "./firebase.js";
-import {
-    collection,
-    query,
-    orderBy,
-    onSnapshot,
-    updateDoc,
-    doc
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-let contenedor;
-let contador;
-
-window.addEventListener("DOMContentLoaded", () => {
-    contenedor = document.getElementById("lista");
-    contador = document.getElementById("contador");
-    cargarPendientes();
-});
-
-function cargarPendientes() {
-
-    const q = query(
-        collection(db, "visitas"),
-        orderBy("timestamp", "desc")
-    );
-
-    onSnapshot(q, (snapshot) => {
-
-        contenedor.innerHTML = "";
-        let total = 0;
-
-        if (snapshot.empty) {
-            contenedor.innerHTML = `<div class="vacio">🚫 Sin registros</div>`;
-            contador.innerText = "0";
-            return;
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visitas Pendientes - Valle Esmeralda</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --accent: #38bdf8;
+            --text: #f8fafc;
+            --success: #22c55e;
         }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+        }
+        .container { max-width: 500px; margin: auto; }
+        h2 { text-align: center; color: var(--accent); }
+        
+        .card-visita {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 5px solid var(--accent);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .info b { display: block; font-size: 1.1rem; }
+        .info span { font-size: 0.85rem; color: #94a3b8; }
+        
+        .btn-check {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .vacio { text-align: center; padding: 50px; color: #64748b; }
+        .btn-back { color: var(--text); text-decoration: none; font-size: 14px; display: block; margin-bottom: 20px; }
+    </style>
 
-        snapshot.forEach(docSnap => {
+    <script type="module">
+        import { db } from "./firebase.js";
+        import { 
+            collection, 
+            query, 
+            where, 
+            onSnapshot, 
+            orderBy, 
+            doc, 
+            updateDoc 
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-            const data = docSnap.data();
+        const contenedor = document.getElementById("lista-pendientes");
 
-            if (data.estado === "pendiente") {
+        // Escuchamos la colección "visitas" donde el estado NO sea "usado"
+        // Esto mostrará todo lo que esté "pendiente" o sin estado definido aún
+        const q = query(
+            collection(db, "visitas"), 
+            where("estado", "!=", "usado"),
+            orderBy("estado"),
+            orderBy("timestamp", "desc")
+        );
 
-                total++;
+        onSnapshot(q, (snapshot) => {
+            contenedor.innerHTML = "";
 
-                const card = document.createElement("div");
-                card.className = "card";
-
-                card.innerHTML = `
-                    <div class="nombre">👤 ${data.nombre}</div>
-                    <div class="info">🏠 Casa: ${data.casa}</div>
-                    <div class="info">📅 Fecha: ${data.fecha}</div>
-                    <div class="info">📌 Tipo: ${data.tipo}</div>
-                    <div class="info">👮 Autoriza: ${data.autoriza}</div>
-
-                    <div class="actions">
-                        <button class="btn aprobar">Aprobar</button>
-                        <button class="btn rechazar">Rechazar</button>
-                    </div>
-                `;
-
-                // BOTONES FUNCIONALES 🔥
-                card.querySelector(".aprobar").onclick = () => cambiarEstado(docSnap.id, "aprobado");
-                card.querySelector(".rechazar").onclick = () => cambiarEstado(docSnap.id, "rechazado");
-
-                contenedor.appendChild(card);
+            if (snapshot.empty) {
+                contenedor.innerHTML = '<div class="vacio">✅ No hay visitas por llegar</div>';
+                return;
             }
 
+            snapshot.forEach((docSnap) => {
+                const item = docSnap.data();
+                const id = docSnap.id;
+                const hora = new Date(item.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+                const div = document.createElement("div");
+                div.className = "card-visita";
+                div.innerHTML = `
+                    <div class="info">
+                        <b>${item.nombre}</b>
+                        <span>🏠 Casa: ${item.casa} | 🚗 ${item.tipo}</span>
+                        <span>⏰ Generado: ${hora}</span>
+                    </div>
+                    <button class="btn-check" id="btn-${id}">Ingresó</button>
+                `;
+                
+                contenedor.appendChild(div);
+
+                // Asignar evento al botón
+                div.querySelector(`#btn-${id}`).onclick = () => marcarEntrada(id);
+            });
+        }, (error) => {
+            console.log("Error:", error);
+            contenedor.innerHTML = '<div class="vacio">Error al cargar datos. Verifica índices en Firebase.</div>';
         });
 
-        contador.innerText = total;
-
-        if (total === 0) {
-            contenedor.innerHTML = `<div class="vacio">✅ No hay pendientes</div>`;
+        async function marcarEntrada(id) {
+            if(confirm("¿Confirmar ingreso de esta visita?")) {
+                const ref = doc(db, "visitas", id);
+                await updateDoc(ref, { estado: "usado" });
+            }
         }
-
-    });
-}
-
-// CAMBIAR ESTADO 🔥
-async function cambiarEstado(id, estado) {
-    const ref = doc(db, "visitas", id);
-    await updateDoc(ref, { estado });
-}
-</script>
+    </script>
 </head>
-
 <body>
 
-<!-- SIDEBAR -->
-<div class="sidebar">
-    <h2>🏢 Valle Esmeralda</h2>
-
-    <a href="index.html">🏠 Inicio</a>
-    <a href="pendientes.html">📋 Pendientes</a>
-    <a href="#">✅ Aprobadas</a>
-    <a href="#">❌ Rechazadas</a>
-</div>
-
-<!-- MAIN -->
-<div class="main">
-
-    <!-- HEADER -->
-    <div class="header">
-        <div class="title">📋 Panel de Visitas</div>
-        <div>👤 Admin</div>
-    </div>
-
-    <!-- STATS -->
-    <div class="stats">
-        <div class="card-stat">
-            Pendientes: <span id="contador">0</span>
+    <div class="container">
+        <a href="escaner.html" class="btn-back">⬅ Volver</a>
+        <h2>⏳ Visitas por Llegar</h2>
+        <div id="lista-pendientes">
+            <div class="vacio">Cargando...</div>
         </div>
     </div>
-
-    <!-- LISTA -->
-    <div id="lista"></div>
-
-</div>
 
 </body>
 </html>
