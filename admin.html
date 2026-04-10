@@ -1,242 +1,62 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Panel Admin</title>
-
-<style>
-body {
-    margin: 0;
-    font-family: 'Segoe UI', Arial;
-    background: #f1f5f9;
-}
-
-header {
-    background: #020617;
-    color: white;
-    padding: 18px;
-    text-align: center;
-    font-size: 22px;
-    font-weight: bold;
-}
-
-.topbar {
-    display: flex;
-    justify-content: space-between;
-    padding: 10px;
-}
-
-.btn {
-    background: #1e293b;
-    color: white;
-    padding: 8px 14px;
-    border-radius: 8px;
-    text-decoration: none;
-}
-
-.filtros {
-    display: flex;
-    justify-content: space-around;
-    margin: 10px;
-}
-
-.filtro {
-    padding: 8px 12px;
-    border-radius: 8px;
-    cursor: pointer;
-    background: #e2e8f0;
-}
-
-.filtro.active {
-    background: #0f172a;
-    color: white;
-}
-
-.stats {
-    display: flex;
-    justify-content: space-around;
-    margin: 10px;
-}
-
-.stat {
-    background: white;
-    padding: 10px;
-    border-radius: 10px;
-    text-align: center;
-    width: 30%;
-}
-
-#buscador {
-    width: 90%;
-    margin: 10px auto;
-    display: block;
-    padding: 10px;
-    border-radius: 10px;
-    border: 1px solid #ccc;
-}
-
-#lista {
-    padding: 10px;
-}
-
-.card {
-    background: white;
-    padding: 15px;
-    margin-bottom: 10px;
-    border-radius: 10px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-}
-
-.estado {
-    font-weight: bold;
-    margin-top: 8px;
-}
-
-.pendiente { color: orange; }
-.usado { color: green; }
-.expirado { color: red; }
-
-.vacio {
-    text-align: center;
-    margin-top: 30px;
-    color: gray;
-}
-</style>
-
-<script type="module">
-import { db } from "./firebase.js";
-import {
-    collection,
-    query,
-    orderBy,
-    onSnapshot
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-let estadoFiltro = "todos";
-let datosGlobal = [];
-
-window.addEventListener("DOMContentLoaded", () => {
-    cargarDatos();
-});
-
-// 🔥 CARGA REALTIME
-function cargarDatos() {
-
-    const q = query(
-        collection(db, "visitas"),
-        orderBy("timestamp", "desc")
-    );
-
-    onSnapshot(q, (snapshot) => {
-
-        datosGlobal = [];
-
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            data.id = doc.id;
-            datosGlobal.push(data);
-        });
-
-        render();
-
-    });
-}
-
-// 🔥 RENDER PRINCIPAL
-function render() {
-
-    const lista = document.getElementById("lista");
-    const buscador = document.getElementById("buscador").value.toLowerCase();
-
-    lista.innerHTML = "";
-
-    let pendientes = 0;
-    let usados = 0;
-    let expirados = 0;
-
-    datosGlobal.forEach(d => {
-
-        // CONTADORES
-        if (d.estado === "pendiente") pendientes++;
-        if (d.estado === "usado") usados++;
-        if (d.estado === "expirado") expirados++;
-
-        // FILTRO
-        if (estadoFiltro !== "todos" && d.estado !== estadoFiltro) return;
-
-        // BUSCADOR
-        if (!d.nombre.toLowerCase().includes(buscador)) return;
-
-        const card = document.createElement("div");
-        card.className = "card";
-
-        let claseEstado = d.estado;
-
-        card.innerHTML = `
-            <h3>${d.nombre}</h3>
-            <p>🏠 Casa: ${d.casa}</p>
-            <p>📅 ${d.fecha}</p>
-            <p class="estado ${claseEstado}">${d.estado.toUpperCase()}</p>
-        `;
-
-        lista.appendChild(card);
-    });
-
-    // CONTADORES
-    document.getElementById("pendientes").innerText = pendientes;
-    document.getElementById("usados").innerText = usados;
-    document.getElementById("expirados").innerText = expirados;
-
-    if (lista.innerHTML === "") {
-        lista.innerHTML = "<div class='vacio'>No hay resultados</div>";
-    }
-}
-
-// FILTROS
-window.setFiltro = function(filtro) {
-    estadoFiltro = filtro;
-
-    document.querySelectorAll(".filtro").forEach(f => f.classList.remove("active"));
-    document.getElementById("f_" + filtro).classList.add("active");
-
-    render();
-}
-
-// BUSCADOR
-window.buscar = function() {
-    render();
-}
-</script>
+    <meta charset="UTF-8">
+    <title>Panel de Administración</title>
+    <style>
+        body { font-family: sans-serif; background: #f1f5f9; margin: 0; padding: 20px; }
+        .stats { display: flex; gap: 10px; margin-bottom: 20px; }
+        .stat-box { background: white; padding: 20px; border-radius: 10px; flex: 1; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        table { width: 100%; background: white; border-collapse: collapse; border-radius: 10px; overflow: hidden; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        th { background: #0f172a; color: white; }
+        .status { padding: 5px 10px; border-radius: 5px; font-size: 12px; font-weight: bold; }
+        .pendiente { background: #fef9c3; color: #a16207; }
+        .usado { background: #dcfce7; color: #166534; }
+    </style>
 </head>
-
 <body>
+    <h2>📊 Administración de Accesos</h2>
+    
+    <div id="lista-general">
+        <table>
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Nombre</th>
+                    <th>Casa</th>
+                    <th>Tipo</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-body"></tbody>
+        </table>
+    </div>
 
-<header>
-📊 PANEL ADMIN
-</header>
+    <script type="module">
+        import { db } from "./firebase.js";
+        import { collection, query, onSnapshot, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-<div class="topbar">
-    <a class="btn" href="index.html">⬅ Volver</a>
-</div>
+        const tbody = document.getElementById("tabla-body");
 
-<input id="buscador" onkeyup="buscar()" placeholder="Buscar por nombre...">
+        const q = query(collection(db, "visitas"), orderBy("timestamp", "desc"));
 
-<div class="stats">
-    <div class="stat">🟡 <span id="pendientes">0</span><br>Pendientes</div>
-    <div class="stat">🟢 <span id="usados">0</span><br>Usados</div>
-    <div class="stat">🔴 <span id="expirados">0</span><br>Expirados</div>
-</div>
-
-<div class="filtros">
-    <div id="f_todos" class="filtro active" onclick="setFiltro('todos')">Todos</div>
-    <div id="f_pendiente" class="filtro" onclick="setFiltro('pendiente')">Pendientes</div>
-    <div id="f_usado" class="filtro" onclick="setFiltro('usado')">Usados</div>
-    <div id="f_expirado" class="filtro" onclick="setFiltro('expirado')">Expirados</div>
-</div>
-
-<div id="lista"></div>
-
+        onSnapshot(q, (snapshot) => {
+            tbody.innerHTML = "";
+            snapshot.forEach(docSnap => {
+                const data = docSnap.data();
+                const fecha = new Date(data.timestamp).toLocaleString();
+                const fila = document.createElement("tr");
+                fila.innerHTML = `
+                    <td>${fecha}</td>
+                    <td>${data.nombre}</td>
+                    <td>${data.casa}</td>
+                    <td>${data.tipo}</td>
+                    <td><span class="status ${data.estado || 'pendiente'}">${data.estado || 'pendiente'}</span></td>
+                `;
+                tbody.appendChild(fila);
+            });
+        });
+    </script>
 </body>
 </html>
