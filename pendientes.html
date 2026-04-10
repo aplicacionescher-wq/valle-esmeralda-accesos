@@ -3,137 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visitas por Llegar - Valle Esmeralda</title>
+    <title>Visitas Pendientes</title>
     <style>
-        :root {
-            --bg: #0f172a;
-            --card: #1e293b;
-            --accent: #38bdf8;
-            --text: #f8fafc;
-            --success: #22c55e;
-            --border: #334155;
-        }
-        body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-        }
-        .container { width: 100%; max-width: 500px; }
-        .header { text-align: center; margin-bottom: 25px; }
-        .btn-back { color: var(--accent); text-decoration: none; font-size: 14px; display: block; margin-bottom: 15px; }
-        
-        .card-visita {
-            background: var(--card);
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 12px;
-            border-left: 5px solid var(--accent);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-        .info b { display: block; font-size: 1.1rem; color: var(--accent); }
-        .info span { display: block; font-size: 0.85rem; color: #94a3b8; margin-top: 2px; }
-        
-        .btn-check {
-            background: var(--success);
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .vacio { text-align: center; padding: 50px; color: #64748b; border: 2px dashed var(--border); border-radius: 12px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: white; padding: 20px; }
+        .container { max-width: 600px; margin: auto; }
+        .card { background: #1e293b; padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 6px solid #38bdf8; }
+        .info b { font-size: 1.2rem; color: #38bdf8; display: block; }
+        .btn-ok { background: #22c55e; color: white; border: none; padding: 12px 18px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .vacio { text-align: center; padding: 50px; color: #64748b; }
     </style>
-
-    <script type="module">
-        // Importamos la configuración desde tu archivo local
-        import { db } from "./firebase.js";
-        import { 
-            collection, 
-            query, 
-            where, 
-            onSnapshot, 
-            orderBy, 
-            doc, 
-            updateDoc 
-        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-        const contenedor = document.getElementById("lista-pendientes");
-
-        // SOLUCIÓN AL PROBLEMA DE CARGA:
-        // Buscamos pases donde el estado NO sea 'usado'. 
-        // Esto incluirá los pases nuevos que no tienen el campo estado aún.
-        try {
-            const q = query(
-                collection(db, "visitas"), 
-                where("estado", "!=", "usado"),
-                orderBy("estado"),
-                orderBy("timestamp", "desc")
-            );
-
-            onSnapshot(q, (snapshot) => {
-                contenedor.innerHTML = "";
-
-                if (snapshot.empty) {
-                    contenedor.innerHTML = '<div class="vacio">✅ No hay visitas pendientes por llegar</div>';
-                    return;
-                }
-
-                snapshot.forEach((docSnap) => {
-                    const item = docSnap.data();
-                    const id = docSnap.id;
-                    // Validamos que exista el timestamp para evitar errores de formato
-                    const fecha = item.timestamp ? new Date(item.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--:--';
-
-                    const div = document.createElement("div");
-                    div.className = "card-visita";
-                    div.innerHTML = `
-                        <div class="info">
-                            <b>${item.nombre || 'Invitado'}</b>
-                            <span>🏠 Casa: ${item.casa || 'S/N'} | 🚗 ${item.tipo || 'Visita'}</span>
-                            <span>⏰ Generado: ${fecha}</span>
-                        </div>
-                        <button class="btn-check" id="btn-${id}">Ingresó</button>
-                    `;
-                    contenedor.appendChild(div);
-
-                    // Función del botón para marcar como usado manualmente
-                    div.querySelector(`#btn-${id}`).onclick = async () => {
-                        if(confirm("¿Marcar ingreso de " + item.nombre + "?")) {
-                            const ref = doc(db, "visitas", id);
-                            await updateDoc(ref, { estado: "usado" });
-                        }
-                    };
-                });
-            }, (error) => {
-                console.error("Error de Firestore:", error);
-                // Si el error es por falta de índice (muy común con !=), mostramos aviso
-                if (error.message.includes("index")) {
-                    contenedor.innerHTML = '<div class="vacio">⚠️ Falta crear un índice en Firebase. Revisa la consola (F12) para el link.</div>';
-                }
-            });
-        } catch (e) {
-            console.error("Error al iniciar:", e);
-        }
-    </script>
 </head>
 <body>
     <div class="container">
-        <a href="escaner.html" class="btn-back">⬅ Volver al Escáner</a>
-        <div class="header">
-            <h2 style="margin:0;">⏳ Visitas por Llegar</h2>
-            <p style="color: #94a3b8; font-size: 0.8rem;">Monitoreo en tiempo real (Caseta)</p>
-        </div>
-        <div id="lista-pendientes">
-            <div class="vacio">Cargando solicitudes...</div>
-        </div>
+        <h2>⏳ Visitas por Llegar</h2>
+        <div id="lista-pendientes"><div class="vacio">Cargando...</div></div>
     </div>
+
+    <script type="module">
+        import { db } from "./firebase.js";
+        import { collection, query, where, onSnapshot, doc, updateDoc, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const contenedor = document.getElementById("lista-pendientes");
+
+        const q = query(
+            collection(db, "visitas"), 
+            where("estado", "==", "pendiente"),
+            orderBy("timestamp", "desc")
+        );
+
+        onSnapshot(q, (snapshot) => {
+            contenedor.innerHTML = "";
+            if (snapshot.empty) {
+                contenedor.innerHTML = '<div class="vacio">✅ No hay visitas pendientes</div>';
+                return;
+            }
+
+            snapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                const id = docSnap.id;
+                const div = document.createElement("div");
+                div.className = "card";
+                div.innerHTML = `
+                    <div class="info">
+                        <b>${data.nombre}</b>
+                        <span>🏠 Casa: ${data.casa} | 🚗 ${data.tipo}</span>
+                    </div>
+                    <button class="btn-ok" id="btn-${id}">Ingresó</button>
+                `;
+                contenedor.appendChild(div);
+
+                div.querySelector(`#btn-${id}`).onclick = async () => {
+                    if(confirm("¿Confirmar ingreso?")) {
+                        await updateDoc(doc(db, "visitas", id), { estado: "usado" });
+                    }
+                };
+            });
+        });
+    </script>
 </body>
 </html>
