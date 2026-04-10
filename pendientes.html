@@ -3,28 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visitas Pendientes</title>
+    <title>Panel - Visitas Pendientes</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: white; padding: 20px; }
-        .container { max-width: 600px; margin: auto; }
-        .card { background: #1e293b; padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 6px solid #38bdf8; }
-        .info b { font-size: 1.2rem; color: #38bdf8; display: block; }
-        .btn-ok { background: #22c55e; color: white; border: none; padding: 12px 18px; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .vacio { text-align: center; padding: 50px; color: #64748b; }
+        body { margin: 0; font-family: 'Segoe UI', Arial; background: #f1f5f9; display: flex; }
+        .sidebar { width: 220px; background: #0f172a; color: white; height: 100vh; padding: 20px; position: fixed; }
+        .sidebar h2 { font-size: 18px; margin-bottom: 20px; }
+        .sidebar a { display: block; color: #cbd5f5; text-decoration: none; padding: 10px; border-radius: 8px; margin-bottom: 10px; }
+        .main { margin-left: 240px; width: 100%; padding: 20px; }
+        .header { background: white; padding: 15px; display: flex; justify-content: space-between; border-radius: 10px; margin-bottom: 20px; }
+        .card-visita { background: white; padding: 20px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .btn { padding: 10px 15px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; }
+        .aprobar { background: #22c55e; color: white; }
+        .vacio { text-align: center; padding: 40px; color: #64748b; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2>⏳ Visitas por Llegar</h2>
-        <div id="lista-pendientes"><div class="vacio">Cargando...</div></div>
+    <div class="sidebar">
+        <h2>🏢 Valle Esmeralda</h2>
+        <a href="index.html">🏠 Inicio</a>
+        <a href="pendientes.html" style="background: #1e293b;">📋 Pendientes</a>
+        <a href="admin.html">📊 Admin General</a>
+    </div>
+
+    <div class="main">
+        <div class="header">
+            <div style="font-size: 20px; font-weight: bold;">📋 Visitas por Llegar</div>
+            <div>Pendientes: <span id="contador">0</span></div>
+        </div>
+
+        <div id="contenedor-pendientes">
+            <div class="vacio">Cargando datos de caseta...</div>
+        </div>
     </div>
 
     <script type="module">
         import { db } from "./firebase.js";
-        import { collection, query, where, onSnapshot, doc, updateDoc, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { collection, query, where, onSnapshot, orderBy, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        const contenedor = document.getElementById("lista-pendientes");
+        const contenedor = document.getElementById("contenedor-pendientes");
+        const contador = document.getElementById("contador");
 
+        // Escucha en tiempo real de visitas con estado 'pendiente'
         const q = query(
             collection(db, "visitas"), 
             where("estado", "==", "pendiente"),
@@ -33,31 +52,43 @@
 
         onSnapshot(q, (snapshot) => {
             contenedor.innerHTML = "";
+            let total = 0;
+
             if (snapshot.empty) {
-                contenedor.innerHTML = '<div class="vacio">✅ No hay visitas pendientes</div>';
+                contenedor.innerHTML = `<div class="vacio">✅ No hay visitas pendientes en este momento.</div>`;
+                contador.innerText = "0";
                 return;
             }
 
             snapshot.forEach((docSnap) => {
+                total++;
                 const data = docSnap.data();
                 const id = docSnap.id;
-                const div = document.createElement("div");
-                div.className = "card";
-                div.innerHTML = `
-                    <div class="info">
-                        <b>${data.nombre}</b>
-                        <span>🏠 Casa: ${data.casa} | 🚗 ${data.tipo}</span>
-                    </div>
-                    <button class="btn-ok" id="btn-${id}">Ingresó</button>
-                `;
-                contenedor.appendChild(div);
+                const hora = data.timestamp ? new Date(data.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--:--';
 
-                div.querySelector(`#btn-${id}`).onclick = async () => {
-                    if(confirm("¿Confirmar ingreso?")) {
+                const card = document.createElement("div");
+                card.className = "card-visita";
+                card.innerHTML = `
+                    <div>
+                        <b style="font-size: 1.1rem; color: #0f172a;">${data.nombre}</b><br>
+                        <small>🏠 Casa: ${data.casa} | ⏰ ${hora}</small>
+                    </div>
+                    <button class="btn aprobar" id="btn-${id}">Marcar Ingreso</button>
+                `;
+                contenedor.appendChild(card);
+
+                card.querySelector(`#btn-${id}`).onclick = async () => {
+                    if(confirm("¿Confirmar que la visita ha ingresado?")) {
                         await updateDoc(doc(db, "visitas", id), { estado: "usado" });
                     }
                 };
             });
+            contador.innerText = total;
+        }, (error) => {
+            console.error(error);
+            if(error.message.includes("index")) {
+                contenedor.innerHTML = `<div class="vacio">⚠️ Falta crear un índice en Firebase. Revisa la consola F12.</div>`;
+            }
         });
     </script>
 </body>
