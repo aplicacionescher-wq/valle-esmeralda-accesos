@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pases por Llegar - Valle Esmeralda</title>
+    <title>Visitas por Llegar - Valle Esmeralda</title>
     <style>
         :root {
             --bg: #0f172a;
@@ -19,8 +19,10 @@
             color: var(--text);
             margin: 0;
             padding: 20px;
+            display: flex;
+            justify-content: center;
         }
-        .container { max-width: 500px; margin: auto; }
+        .container { width: 100%; max-width: 500px; }
         .header { text-align: center; margin-bottom: 25px; }
         .btn-back { color: var(--accent); text-decoration: none; font-size: 14px; display: block; margin-bottom: 15px; }
         
@@ -51,6 +53,7 @@
     </style>
 
     <script type="module">
+        // Importamos la configuración desde tu archivo local
         import { db } from "./firebase.js";
         import { 
             collection, 
@@ -64,8 +67,9 @@
 
         const contenedor = document.getElementById("lista-pendientes");
 
-        // CAMBIO CLAVE: Consultamos todos los que NO están marcados como 'usado'
-        // Esto incluirá los pases nuevos que no tienen el campo 'estado' todavía.
+        // SOLUCIÓN AL PROBLEMA DE CARGA:
+        // Buscamos pases donde el estado NO sea 'usado'. 
+        // Esto incluirá los pases nuevos que no tienen el campo estado aún.
         try {
             const q = query(
                 collection(db, "visitas"), 
@@ -85,39 +89,38 @@
                 snapshot.forEach((docSnap) => {
                     const item = docSnap.data();
                     const id = docSnap.id;
+                    // Validamos que exista el timestamp para evitar errores de formato
                     const fecha = item.timestamp ? new Date(item.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--:--';
 
                     const div = document.createElement("div");
                     div.className = "card-visita";
                     div.innerHTML = `
                         <div class="info">
-                            <b>${item.nombre}</b>
-                            <span>🏠 Casa: ${item.casa} | 🚗 ${item.tipo}</span>
+                            <b>${item.nombre || 'Invitado'}</b>
+                            <span>🏠 Casa: ${item.casa || 'S/N'} | 🚗 ${item.tipo || 'Visita'}</span>
                             <span>⏰ Generado: ${fecha}</span>
                         </div>
                         <button class="btn-check" id="btn-${id}">Ingresó</button>
                     `;
                     contenedor.appendChild(div);
 
-                    // Evento para el botón
-                    div.querySelector(`#btn-${id}`).onclick = () => registrarIngreso(id);
+                    // Función del botón para marcar como usado manualmente
+                    div.querySelector(`#btn-${id}`).onclick = async () => {
+                        if(confirm("¿Marcar ingreso de " + item.nombre + "?")) {
+                            const ref = doc(db, "visitas", id);
+                            await updateDoc(ref, { estado: "usado" });
+                        }
+                    };
                 });
             }, (error) => {
                 console.error("Error de Firestore:", error);
-                // Si ves este error, es que falta crear el índice en la consola de Firebase
+                // Si el error es por falta de índice (muy común con !=), mostramos aviso
                 if (error.message.includes("index")) {
                     contenedor.innerHTML = '<div class="vacio">⚠️ Falta crear un índice en Firebase. Revisa la consola (F12) para el link.</div>';
                 }
             });
         } catch (e) {
-            console.error("Error inicial:", e);
-        }
-
-        async function registrarIngreso(id) {
-            if(confirm("¿Marcar esta visita como ingresada?")) {
-                const ref = doc(db, "visitas", id);
-                await updateDoc(ref, { estado: "usado" });
-            }
+            console.error("Error al iniciar:", e);
         }
     </script>
 </head>
@@ -126,7 +129,7 @@
         <a href="escaner.html" class="btn-back">⬅ Volver al Escáner</a>
         <div class="header">
             <h2 style="margin:0;">⏳ Visitas por Llegar</h2>
-            <p style="color: #94a3b8; font-size: 0.8rem;">Monitoreo en tiempo real para Caseta</p>
+            <p style="color: #94a3b8; font-size: 0.8rem;">Monitoreo en tiempo real (Caseta)</p>
         </div>
         <div id="lista-pendientes">
             <div class="vacio">Cargando solicitudes...</div>
