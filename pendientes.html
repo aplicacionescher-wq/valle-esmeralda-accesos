@@ -4,33 +4,83 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Visitas Pendientes</title>
+<title>Panel - Visitas Pendientes</title>
 
-<!-- ESTILOS -->
 <style>
 body {
     margin: 0;
     font-family: 'Segoe UI', Arial;
     background: #f1f5f9;
+    display: flex;
 }
 
-header {
+/* SIDEBAR */
+.sidebar {
+    width: 220px;
     background: #0f172a;
     color: white;
-    padding: 18px;
-    text-align: center;
-    font-size: 20px;
+    height: 100vh;
+    padding: 20px;
+    position: fixed;
+}
+
+.sidebar h2 {
+    font-size: 18px;
+    margin-bottom: 20px;
+}
+
+.sidebar a {
+    display: block;
+    color: #cbd5f5;
+    text-decoration: none;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    transition: 0.2s;
+}
+
+.sidebar a:hover {
+    background: #1e293b;
+    color: white;
+}
+
+/* CONTENIDO */
+.main {
+    margin-left: 240px;
+    width: 100%;
+}
+
+/* HEADER */
+.header {
+    background: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    box-shadow: 0px 2px 5px rgba(0,0,0,0.1);
+}
+
+.title {
+    font-size: 18px;
     font-weight: bold;
 }
 
-.subheader {
-    text-align: center;
-    padding: 10px;
-    color: #64748b;
+/* CONTADOR */
+.stats {
+    padding: 20px;
 }
 
-#lista {
+.card-stat {
+    background: #1e293b;
+    color: white;
     padding: 15px;
+    border-radius: 12px;
+    display: inline-block;
+    margin-right: 10px;
+}
+
+/* LISTA */
+#lista {
+    padding: 20px;
 }
 
 .card {
@@ -39,171 +89,169 @@ header {
     padding: 18px;
     border-radius: 12px;
     box-shadow: 0px 3px 10px rgba(0,0,0,0.15);
-    transition: 0.2s;
-}
-
-.card:hover {
-    transform: scale(1.01);
 }
 
 .nombre {
     font-size: 18px;
     font-weight: bold;
-    color: #0f172a;
 }
 
 .info {
-    margin-top: 6px;
     font-size: 14px;
-    color: #334155;
+    margin-top: 5px;
 }
 
-.estado {
+/* BOTONES */
+.actions {
     margin-top: 10px;
-    font-weight: bold;
-    color: orange;
-}
-
-.badge {
-    display: inline-block;
-    padding: 5px 10px;
-    background: orange;
-    color: white;
-    border-radius: 8px;
-    font-size: 12px;
-}
-
-.topbar {
-    display: flex;
-    justify-content: space-between;
-    padding: 10px;
 }
 
 .btn {
-    background: #1e293b;
-    color: white;
-    padding: 8px 14px;
+    padding: 6px 12px;
+    border: none;
     border-radius: 8px;
-    text-decoration: none;
-    font-size: 14px;
+    cursor: pointer;
+    margin-right: 5px;
 }
 
+.aprobar {
+    background: #16a34a;
+    color: white;
+}
+
+.rechazar {
+    background: #dc2626;
+    color: white;
+}
+
+/* VACIO */
 .vacio {
     text-align: center;
     margin-top: 40px;
     color: #64748b;
-    font-size: 16px;
 }
 </style>
 
-<!-- FIREBASE -->
 <script type="module">
 import { db } from "./firebase.js";
 import {
     collection,
     query,
     orderBy,
-    onSnapshot
+    onSnapshot,
+    updateDoc,
+    doc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// CONTENEDOR
 let contenedor;
+let contador;
 
-// INICIAR
 window.addEventListener("DOMContentLoaded", () => {
     contenedor = document.getElementById("lista");
+    contador = document.getElementById("contador");
     cargarPendientes();
 });
 
-// FUNCIÓN PRINCIPAL
 function cargarPendientes() {
 
     const q = query(
         collection(db, "visitas"),
-        orderBy("timestamp", "desc") // 🔥 FIX REAL
+        orderBy("timestamp", "desc")
     );
 
     onSnapshot(q, (snapshot) => {
 
         contenedor.innerHTML = "";
+        let total = 0;
 
         if (snapshot.empty) {
-            contenedor.innerHTML = `
-                <div class="vacio">
-                    🚫 No hay visitas registradas
-                </div>
-            `;
+            contenedor.innerHTML = `<div class="vacio">🚫 Sin registros</div>`;
+            contador.innerText = "0";
             return;
         }
 
-        let hayPendientes = false;
+        snapshot.forEach(docSnap => {
 
-        snapshot.forEach(doc => {
+            const data = docSnap.data();
 
-            const data = doc.data();
-
-            // 🔥 SOLO MOSTRAR PENDIENTES
             if (data.estado === "pendiente") {
 
-                hayPendientes = true;
+                total++;
 
                 const card = document.createElement("div");
                 card.className = "card";
 
                 card.innerHTML = `
-                    <div class="nombre">👤 ${data.nombre || "Sin nombre"}</div>
+                    <div class="nombre">👤 ${data.nombre}</div>
+                    <div class="info">🏠 Casa: ${data.casa}</div>
+                    <div class="info">📅 Fecha: ${data.fecha}</div>
+                    <div class="info">📌 Tipo: ${data.tipo}</div>
+                    <div class="info">👮 Autoriza: ${data.autoriza}</div>
 
-                    <div class="info">🏠 Casa: ${data.casa || "N/A"}</div>
-                    <div class="info">📌 Tipo: ${data.tipo || "N/A"}</div>
-                    <div class="info">📅 Fecha: ${data.fecha || "N/A"}</div>
-                    <div class="info">👮 Autoriza: ${data.autoriza || "N/A"}</div>
-
-                    <div class="estado">
-                        <span class="badge">PENDIENTE</span>
+                    <div class="actions">
+                        <button class="btn aprobar">Aprobar</button>
+                        <button class="btn rechazar">Rechazar</button>
                     </div>
                 `;
+
+                // BOTONES FUNCIONALES 🔥
+                card.querySelector(".aprobar").onclick = () => cambiarEstado(docSnap.id, "aprobado");
+                card.querySelector(".rechazar").onclick = () => cambiarEstado(docSnap.id, "rechazado");
 
                 contenedor.appendChild(card);
             }
 
         });
 
-        // 🔥 SI NO HAY PENDIENTES
-        if (!hayPendientes) {
-            contenedor.innerHTML = `
-                <div class="vacio">
-                    ✅ No hay visitas pendientes
-                </div>
-            `;
+        contador.innerText = total;
+
+        if (total === 0) {
+            contenedor.innerHTML = `<div class="vacio">✅ No hay pendientes</div>`;
         }
 
-    }, (error) => {
-        console.error(error);
-        contenedor.innerHTML = `
-            <div class="vacio">
-                ❌ Error cargando datos
-            </div>
-        `;
     });
+}
+
+// CAMBIAR ESTADO 🔥
+async function cambiarEstado(id, estado) {
+    const ref = doc(db, "visitas", id);
+    await updateDoc(ref, { estado });
 }
 </script>
 </head>
 
 <body>
 
-<header>
-    📋 VISITAS PENDIENTES
-</header>
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <h2>🏢 Valle Esmeralda</h2>
 
-<div class="topbar">
-    <a class="btn" href="index.html">⬅ Volver</a>
+    <a href="index.html">🏠 Inicio</a>
+    <a href="pendientes.html">📋 Pendientes</a>
+    <a href="#">✅ Aprobadas</a>
+    <a href="#">❌ Rechazadas</a>
 </div>
 
-<div class="subheader">
-    Monitoreo en tiempo real
-</div>
+<!-- MAIN -->
+<div class="main">
 
-<div id="lista"></div>
+    <!-- HEADER -->
+    <div class="header">
+        <div class="title">📋 Panel de Visitas</div>
+        <div>👤 Admin</div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats">
+        <div class="card-stat">
+            Pendientes: <span id="contador">0</span>
+        </div>
+    </div>
+
+    <!-- LISTA -->
+    <div id="lista"></div>
+
+</div>
 
 </body>
 </html>
