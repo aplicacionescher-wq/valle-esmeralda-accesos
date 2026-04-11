@@ -2,27 +2,185 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Panel Residente</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Residente - Valle Esmeralda</title>
+    
+    <script>
+        (function() {
+            const rol = localStorage.getItem("rol");
+            const sesionActiva = localStorage.getItem("sesionActiva");
+            // Permitir solo a residentes o administradores
+            if (!sesionActiva || (rol !== "residente" && rol !== "admin")) {
+                window.location.replace("index.html");
+            }
+        })();
+    </script>
+
     <style>
-        body { font-family: Arial; text-align: center; padding: 20px; background: #f4f4f4; }
-        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 350px; margin: auto; }
-        button { width: 100%; padding: 15px; margin: 10px 0; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold; }
-        .btn-reg { background: #2e7d32; color: white; }
-        .btn-out { background: #dc3545; color: white; }
+        :root {
+            --primary: #1e293b;
+            --accent: #00a99d;
+            --danger: #e11d48;
+            --bg: #f8fafc;
+        }
+
+        body { 
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
+            margin: 0; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            background-color: var(--bg);
+            color: var(--primary);
+        }
+
+        .card { 
+            background: white; 
+            padding: 40px 30px; 
+            border-radius: 24px; 
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05); 
+            max-width: 380px; 
+            width: 90%;
+            text-align: center;
+            border: 1px solid #f1f5f9;
+        }
+
+        .icon-header {
+            width: 70px;
+            height: 70px;
+            background: #f0fdfa;
+            color: var(--accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            margin: 0 auto 20px;
+        }
+
+        h2 { 
+            margin: 0 0 10px 0; 
+            font-size: 24px;
+            font-weight: 800;
+        }
+
+        .user-info {
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+
+        .user-info span {
+            display: block;
+            font-size: 11px;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+
+        #casa-txt { 
+            font-size: 18px; 
+            font-weight: 600; 
+            color: var(--primary);
+            margin: 0;
+        }
+
+        .actions {
+            display: grid;
+            gap: 12px;
+        }
+
+        button { 
+            width: 100%; 
+            padding: 16px; 
+            border: none; 
+            border-radius: 14px; 
+            cursor: pointer; 
+            font-size: 16px; 
+            font-weight: 700; 
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-reg { 
+            background: var(--primary); 
+            color: #38bdf8;
+        }
+
+        .btn-reg:hover { 
+            background: #0f172a;
+            transform: scale(1.02);
+        }
+
+        .btn-reg:active { transform: scale(0.98); }
+
+        .btn-out { 
+            background: transparent; 
+            color: #94a3b8;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .btn-out:hover { 
+            color: var(--danger);
+            background: #fff1f2;
+        }
+
+        .brand-footer {
+            margin-top: 30px;
+            font-size: 12px;
+            color: #cbd5e1;
+        }
     </style>
 </head>
 <body>
+
     <div class="card">
-        <h2>Panel Residente</h2>
-        <p id="casa-txt" style="font-weight: bold; color: #555;"></p>
-        <button class="btn-reg" onclick="location.href='generar.html'">Registrar Visita</button>
-        <button class="btn-out" onclick="logout()">Cerrar Sesión</button>
+        <div class="icon-header">🏘️</div>
+        <h2>Panel de Residente</h2>
+        
+        <div class="user-info">
+            <span>Ubicación Registrada</span>
+            <p id="casa-txt">Cargando domicilio...</p>
+        </div>
+
+        <div class="actions">
+            <button class="btn-reg" onclick="location.href='generar.html'">
+                <span>➕</span> Registrar Visita
+            </button>
+            
+            <button class="btn-out" onclick="logout()">
+                Cerrar Sesión
+            </button>
+        </div>
+
+        <div class="brand-footer">
+            Valle Esmeralda Residencial
+        </div>
     </div>
+
     <script>
-        if (localStorage.getItem("rol") !== "residente") window.location.href = "index.html";
-        document.getElementById("casa-txt").innerText = "Casa: " + localStorage.getItem("casa");
-        function logout() { localStorage.clear(); window.location.href = "index.html"; }
+        // Obtener el nombre de la casa guardado en el login
+        const casaGuardada = localStorage.getItem("usuario");
+        
+        if (casaGuardada) {
+            document.getElementById("casa-txt").innerText = casaGuardada;
+        } else {
+            document.getElementById("casa-txt").innerText = "Sin asignar";
+        }
+
+        function logout() { 
+            if (confirm("¿Deseas cerrar tu sesión?")) {
+                localStorage.clear(); 
+                window.location.replace("index.html"); 
+            }
+        }
     </script>
 </body>
 </html>
