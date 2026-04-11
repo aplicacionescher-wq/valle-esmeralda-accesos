@@ -34,9 +34,6 @@
         .btn-secundario { background: #f1f5f9; color: #475569; }
         .btn-secundario:hover { background: #e2e8f0; color: #0f172a; }
 
-        .btn-bulk { background: transparent; color: #ec008c; border: 2px solid #ec008c; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s; font-size: 12px; text-transform: uppercase; margin-left: auto; }
-        .btn-bulk:hover { background: #ec008c; color: white; }
-
         /* TABLA ESTANDARIZADA */
         .tabla-contenedor { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         table { width: 100%; border-collapse: collapse; }
@@ -67,22 +64,25 @@
 
     <div class="main">
         <div class="filter-card" style="border-top-color: #38bdf8;">
-            <h2 style="margin: 0 0 20px 0; color: #0f172a;">👥 Control de Usuarios</h2>
+            <h2 style="margin: 0 0 20px 0; color: #0f172a;">👥 Alta de Usuarios</h2>
             <div class="grid-filtros">
                 <div class="campo">
-                    <label>Nuevo Domicilio</label>
+                    <label>Domicilio / Usuario</label>
                     <input type="text" id="userDom" placeholder="Ej: Valle de Onix 1">
                 </div>
                 <div class="campo">
-                    <label>Rol de Usuario</label>
+                    <label>Contraseña</label>
+                    <input type="text" id="userPass" placeholder="Contraseña">
+                </div>
+                <div class="campo">
+                    <label>Rol</label>
                     <select id="userRol">
                         <option value="residente">Residente</option>
                         <option value="caseta">Caseta</option>
                         <option value="admin">Administrador</option>
                     </select>
                 </div>
-                <button class="btn-accion" id="btnCrearUser">💾 Guardar</button>
-                <button class="btn-bulk" id="btnGenerarCalles">🚀 Generar Calles Masivo</button>
+                <button class="btn-accion" id="btnCrearUser">💾 Guardar Usuario</button>
             </div>
             <div id="msg-status"></div>
         </div>
@@ -164,21 +164,33 @@
             });
         }
 
-        // --- CARGA INICIAL HISTORIAL ---
+        // --- CARGA INICIAL (TIEMPO REAL) ---
         const qInicial = query(collection(db, "visitas"), orderBy("timestamp", "desc"));
         unsubscribe = onSnapshot(qInicial, renderizarTabla);
 
-        // --- FILTRADO DE HISTORIAL ---
+        // --- FILTRADO POR FECHAS ---
         document.getElementById("btnFiltrar").onclick = async () => {
             const f1 = document.getElementById("fechaInicio").value;
             const f2 = document.getElementById("fechaFin").value;
             if (!f1 || !f2) return alert("Selecciona ambas fechas.");
+            
             unsubscribe();
             const inicioMs = new Date(f1 + "T00:00:00").getTime();
             const finMs = new Date(f2 + "T23:59:59").getTime();
-            const qFiltrada = query(collection(db, "visitas"), where("timestamp", ">=", inicioMs), where("timestamp", "<=", finMs), orderBy("timestamp", "desc"));
-            const snap = await getDocs(qFiltrada);
-            renderizarTabla(snap);
+
+            const qFiltrada = query(
+                collection(db, "visitas"),
+                where("timestamp", ">=", inicioMs),
+                where("timestamp", "<=", finMs),
+                orderBy("timestamp", "desc")
+            );
+
+            try {
+                const snap = await getDocs(qFiltrada);
+                renderizarTabla(snap);
+            } catch (error) {
+                console.error(error);
+            }
         };
 
         document.getElementById("btnLimpiar").onclick = () => {
@@ -187,40 +199,44 @@
             unsubscribe = onSnapshot(qInicial, renderizarTabla);
         };
 
-        // --- GESTIÓN DE USUARIOS: CREAR INDIVIDUAL ---
+        // --- ALTA DE USUARIO (CORREGIDO) ---
         document.getElementById("btnCrearUser").onclick = async () => {
             const dom = document.getElementById("userDom").value.trim();
+            const pass = document.getElementById("userPass").value.trim();
             const rol = document.getElementById("userRol").value;
-            if(!dom) return alert("Escribe un domicilio.");
+
+            if(!dom || !pass) {
+                alert("Por favor ingresa domicilio y contraseña.");
+                return;
+            }
 
             try {
-                await addDoc(collection(db, "usuarios"), { domicilio: dom, password: "1234", rol: rol });
-                mostrarStatus("Usuario creado con éxito", "#10b981");
+                // Referencia limpia a la colección 'usuarios'
+                const usuariosRef = collection(db, "usuarios");
+                
+                await addDoc(usuariosRef, {
+                    domicilio: dom,
+                    password: pass,
+                    rol: rol
+                });
+
+                mostrarStatus("¡Usuario guardado correctamente!", "#10b981");
+                
+                // Limpiar campos
                 document.getElementById("userDom").value = "";
-            } catch (e) { mostrarStatus("Error al crear", "#ef4444"); }
-        };
-
-        // --- GESTIÓN DE USUARIOS: GENERACIÓN MASIVA (TU SCRIPT) ---
-        document.getElementById("btnGenerarCalles").onclick = async () => {
-            if(!confirm("¿Deseas generar 100 usuarios para cada calle (700 en total)?")) return;
-            const calles = ["Valle Turquesa Norte", "Valle Turquesa Sur", "Valle Turquesa Oriente", "Valle Turquesa Poniente", "Valle de la Perla", "Valle de Onix", "Valle de Opalo"];
-            const btn = document.getElementById("btnGenerarCalles");
-            btn.disabled = true; btn.innerText = "⏳ Procesando...";
-
-            try {
-                for(let calle of calles) {
-                    for(let i=1; i<=100; i++) {
-                        await addDoc(collection(db, "usuarios"), { domicilio: calle + " " + i, password: "1234", rol: "residente" });
-                    }
-                }
-                alert("700 usuarios generados correctamente.");
-            } catch (e) { alert("Error en la generación masiva."); }
-            btn.disabled = false; btn.innerText = "🚀 Generar Calles Masivo";
+                document.getElementById("userPass").value = "";
+                
+            } catch (e) {
+                console.error("Error al guardar:", e);
+                mostrarStatus("Error al guardar en Firebase", "#ef4444");
+            }
         };
 
         function mostrarStatus(txt, color) {
-            statusDiv.innerText = txt; statusDiv.style.color = color; statusDiv.style.display = "block";
-            setTimeout(() => { statusDiv.style.display = "none"; }, 3000);
+            statusDiv.innerText = txt;
+            statusDiv.style.color = color;
+            statusDiv.style.display = "block";
+            setTimeout(() => { statusDiv.style.display = "none"; }, 4000);
         }
     </script>
 </body>
