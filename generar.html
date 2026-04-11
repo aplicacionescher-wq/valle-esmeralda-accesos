@@ -2,175 +2,249 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generar Acceso - Valle Esmeralda</title>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Generar Pase - Valle Esmeralda</title>
+    
     <script>
         (function() {
             const sesion = localStorage.getItem("sesionActiva");
             const rol = localStorage.getItem("rol");
-            // Si no hay sesión o el rol no es residente/admin, redirigir al login
             if (!sesion || (rol !== "residente" && rol !== "admin")) {
                 window.location.replace("index.html");
             }
         })();
     </script>
 
+    <link rel="icon" href="data:,">
+
+    <script src="qrcode.min.js"></script>
+    <script src="html2canvas.min.js"></script>
+
     <style>
         :root {
-            --primary: #1e293b;
-            --accent: #00a99d;
-            --bg: #f1f5f9;
+            --primary: #22c55e;
+            --bg: #0f172a;
+            --card: #1e293b;
+            --text: #f8fafc;
         }
 
-        body { 
-            font-family: 'Segoe UI', system-ui, sans-serif; 
-            background: var(--bg); 
-            margin: 0; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            min-height: 100vh; 
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
         }
 
-        .card { 
-            background: white; 
-            padding: 30px; 
-            border-radius: 20px; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05); 
-            width: 90%; 
-            max-width: 400px; 
+        .container {
+            background-color: var(--card);
+            padding: 30px;
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 400px;
             text-align: center;
         }
 
-        h2 { color: var(--primary); margin-bottom: 25px; }
+        h2 { margin: 0 0 20px 0; color: var(--primary); font-size: 1.6rem; }
 
-        .campo { text-align: left; margin-bottom: 20px; }
-        
-        .campo label { 
-            display: block; 
-            font-size: 11px; 
-            font-weight: bold; 
-            color: #64748b; 
-            text-transform: uppercase; 
-            margin-bottom: 5px; 
-        }
+        .form-group { text-align: left; margin-bottom: 15px; }
 
-        .campo input { 
-            width: 100%; 
-            padding: 12px; 
-            border: 1px solid #e2e8f0; 
-            border-radius: 10px; 
-            font-size: 16px; 
-            box-sizing: border-box; 
-        }
-
-        .info-autorizacion {
-            background: #f8fafc;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 25px;
-            border: 1px solid #e2e8f0;
-            text-align: left;
-        }
-
-        .info-autorizacion p {
-            margin: 5px 0;
-            font-size: 14px;
-            color: var(--primary);
-        }
-
-        .info-autorizacion b { color: var(--accent); }
-
-        .btn-generar { 
-            width: 100%; 
-            padding: 15px; 
-            background: var(--primary); 
-            color: #38bdf8; 
-            border: none; 
-            border-radius: 12px; 
-            font-weight: bold; 
-            font-size: 16px; 
-            cursor: pointer; 
-            transition: 0.3s;
-        }
-
-        .btn-generar:hover { background: var(--accent); color: white; }
-
-        .btn-regresar {
+        label {
             display: block;
-            margin-top: 15px;
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+            color: #94a3b8;
+            padding-left: 5px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid #334155;
+            background-color: #0f172a;
+            color: white;
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+
+        input:focus { border-color: var(--primary); outline: none; }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-gen { background-color: var(--primary); color: white; }
+        .btn-gen:active { transform: scale(0.98); }
+
+        .btn-whats {
+            background-color: #25d366;
+            color: white;
+            display: none; 
+            margin-top: 20px;
+        }
+
+        #qr-container {
+            display: none;
+            background: white;
+            padding: 20px;
+            border-radius: 16px;
+            margin: 25px auto;
+            width: fit-content;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        #qr-container canvas, #qr-container img {
+            display: block;
+            margin: 0 auto;
+        }
+
+        .loading-text {
+            display: none;
+            color: var(--primary);
+            margin: 15px 0;
+            font-weight: 500;
+        }
+
+        .btn-back {
+            background: transparent;
             color: #64748b;
             text-decoration: none;
-            font-size: 14px;
+            margin-top: 15px;
+            display: inline-block;
+            font-size: 0.9rem;
         }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <h2>Registrar Invitado</h2>
-
-        <div class="info-autorizacion">
-            <p>Casa (Usuario): <b id="display-casa">Cargando...</b></p>
-            <p>Autoriza (Rol): <b id="display-rol">Cargando...</b></p>
-        </div>
-
-        <div class="campo">
+    <div class="container">
+        <h2>Crear Invitación</h2>
+        
+        <div class="form-group">
             <label>Nombre del Invitado</label>
-            <input type="text" id="nombreInvitado" placeholder="Ej: Juan Pérez">
+            <input type="text" id="nombre" placeholder="Nombre completo" autocomplete="off">
         </div>
 
-        <button class="btn-generar" id="btnGuardar">💾 Crear Registro de Acceso</button>
+        <div class="form-group">
+            <label>Tipo de visita</label>
+            <select id="tipo">
+                <option value="visita">Visita Familiar</option>
+                <option value="uber">Servicio (Uber/Didi)</option>
+                <option value="proveedor">Proveedor / Mantenimiento</option>
+                <option value="paqueteria">Paquetería</option>
+            </select>
+        </div>
 
-        <a href="dashboard.html" class="btn-regresar">← Volver al Panel</a>
+        <div class="loading-text" id="loader">Generando código en Firebase...</div>
+
+        <button class="btn btn-gen" id="btnGen" onclick="crearQR()">✨ Generar Código QR</button>
+
+        <div id="qr-container">
+            <div id="qr"></div>
+        </div>
+
+        <button class="btn btn-whats" id="btnWhats" onclick="enviarWhats()">📱 Compartir por WhatsApp</button>
+        
+        <a href="dashboard.html" class="btn-back">⬅ Volver al panel</a>
     </div>
 
     <script type="module">
         import { db } from "./firebase.js";
         import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // Recuperar datos de la sesión para mostrar y guardar
-        const casaUsuario = localStorage.getItem("usuario") || "No identificado";
+        // Datos de sesión para el registro automático
+        const casaUsuario = localStorage.getItem("usuario") || "N/A";
         const rolUsuario = localStorage.getItem("rol") || "residente";
 
-        // Mostrar en pantalla los datos que solicitaste
-        document.getElementById("display-casa").innerText = casaUsuario;
-        document.getElementById("display-rol").innerText = rolUsuario.toUpperCase();
-
-        document.getElementById("btnGuardar").onclick = async () => {
-            const nombre = document.getElementById("nombreInvitado").value.trim();
+        window.crearQR = async () => {
+            const nombre = document.getElementById("nombre").value.trim();
+            const tipo = document.getElementById("tipo").value;
+            const loader = document.getElementById("loader");
+            const btnGen = document.getElementById("btnGen");
 
             if (!nombre) {
-                alert("Por favor, escribe el nombre del invitado.");
+                alert("Por favor, ingresa el nombre del invitado.");
                 return;
             }
 
             try {
-                const btn = document.getElementById("btnGuardar");
-                btn.innerText = "Guardando...";
-                btn.disabled = true;
+                btnGen.style.display = "none";
+                loader.style.display = "block";
 
-                // Guardar en Firebase con la estructura solicitada
-                await addDoc(collection(db, "visitas"), {
+                // Guardar en Firebase (Registro automático de Casa y Autoriza)
+                const docRef = await addDoc(collection(db, "visitas"), {
                     nombre: nombre,
-                    casa: casaUsuario,      // El usuario que inició sesión
-                    autoriza: rolUsuario,   // El rol que inició sesión
+                    tipo: tipo,
+                    casa: casaUsuario,      // Usuario logueado
+                    autoriza: rolUsuario,   // Su rol
                     timestamp: Date.now(),
-                    estado: "pendiente",
-                    tipo: "Visita"
+                    estado: "pendiente"
                 });
 
-                alert("Acceso registrado correctamente.");
-                window.location.href = "dashboard.html";
+                // Generar QR visualmente con el ID del documento
+                document.getElementById("qr").innerHTML = "";
+                new QRCode(document.getElementById("qr"), {
+                    text: docRef.id,
+                    width: 200,
+                    height: 200,
+                    colorDark : "#000000",
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.H
+                });
+
+                // Mostrar resultados
+                loader.style.display = "none";
+                document.getElementById("qr-container").style.display = "block";
+                document.getElementById("btnWhats").style.display = "block";
 
             } catch (error) {
-                console.error("Error:", error);
-                alert("Hubo un error al guardar.");
-                document.getElementById("btnGuardar").innerText = "💾 Crear Registro de Acceso";
-                document.getElementById("btnGuardar").disabled = false;
+                console.error("Error al generar:", error);
+                alert("Error de conexión con Firebase.");
+                btnGen.style.display = "block";
+                loader.style.display = "none";
             }
         };
+
+        window.enviarWhats = async () => {
+            const container = document.getElementById("qr-container");
+            const nombre = document.getElementById("nombre").value;
+            
+            // 1. Convertimos el QR a imagen y forzamos descarga (para que esté primero en la galería)
+            const canvas = await html2canvas(container, { backgroundColor: "#ffffff" });
+            const link = document.createElement('a');
+            link.download = `Pase_${nombre}.png`;
+            link.href = canvas.toDataURL("image/png");
+            link.click();
+
+            // 2. Abrimos WhatsApp con el mensaje formateado
+            // Al descargarse la imagen justo antes, queda como primera opción al adjuntar en WhatsApp
+            const msg = encodeURIComponent(`*PASE DE ACCESO - VALLE ESMERALDA*\n\nHola *${nombre}*, este es tu código de acceso para tu visita. Por favor, muestra la imagen adjunta en la caseta principal.`);
+            window.open(`https://wa.me/?text=${msg}`, '_blank');
+        };
+    </script>
+
+    <script>
+        // Verificación de librerías
+        window.addEventListener('load', () => {
+            if (typeof QRCode === 'undefined') console.error('Falta qrcode.min.js');
+            if (typeof html2canvas === 'undefined') console.error('Falta html2canvas.min.js');
+        });
     </script>
 </body>
 </html>
