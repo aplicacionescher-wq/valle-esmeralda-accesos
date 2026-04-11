@@ -3,306 +3,323 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Administración - Valle Esmeralda</title>
+    <title>Panel Administrativo - Valle Esmeralda</title>
+    <link rel="manifest" href="manifest.json">
     <style>
-        :root {
-            --primary: #00a99d;
-            --secondary: #0f172a;
-            --accent: #ec008c;
-            --bg: #f8fafc;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg);
-            margin: 0;
+        /* DISEÑO ORIGINAL VALLE ESMERALDA */
+        body { 
+            margin: 0; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: #0f172a; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            min-height: 100vh; 
             padding: 20px;
-            color: var(--secondary);
+            color: white;
         }
 
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-
-        header {
+        .header {
+            width: 100%;
+            max-width: 800px;
             display: flex;
-            align-items: center;
             justify-content: space-between;
+            align-items: center;
             margin-bottom: 30px;
-            background: white;
-            padding: 15px 25px;
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
 
-        .logo-small {
-            height: 50px;
+        .header img { 
+            max-width: 200px; 
+            height: auto; 
         }
 
-        .admin-grid {
-            display: grid;
-            grid-template-columns: 1fr 2fr;
-            gap: 20px;
+        .admin-card { 
+            background: white; 
+            padding: 35px; 
+            border-radius: 16px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+            width: 95%; 
+            max-width: 480px; 
+            text-align: center; 
+            border-top: 6px solid #00a99d; 
+            margin-bottom: 25px;
+            color: #1e293b;
         }
 
-        @media (max-width: 768px) {
-            .admin-grid { grid-template-columns: 1fr; }
-        }
-
-        .card {
-            background: white;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-
-        h3 {
-            margin-top: 0;
-            color: var(--secondary);
-            border-bottom: 2px solid var(--primary);
-            padding-bottom: 10px;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        label {
-            display: block;
-            font-size: 12px;
+        h2 { 
+            color: #0f172a; 
+            margin-top: 0; 
+            font-size: 24px; 
             font-weight: bold;
-            margin-bottom: 5px;
-            color: #64748b;
+            margin-bottom: 25px;
+        }
+        
+        .input-group { 
+            text-align: left; 
+            margin-bottom: 15px; 
+        }
+        
+        label { 
+            display: block; 
+            font-size: 11px; 
+            font-weight: bold; 
+            color: #64748b; 
+            margin-bottom: 5px; 
+            text-transform: uppercase; 
+            letter-spacing: 1px;
+        }
+        
+        input, select { 
+            width: 100%; 
+            padding: 12px; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 8px; 
+            box-sizing: border-box; 
+            font-size: 16px; 
+            background: #f8fafc;
+            color: #0f172a;
         }
 
-        input, select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            box-sizing: border-box;
+        input:focus {
+            outline: none;
+            border-color: #00a99d;
+            box-shadow: 0 0 0 3px rgba(0, 169, 157, 0.1);
         }
 
-        button {
-            width: 100%;
+        .btn-primary { 
+            width: 100%; 
+            padding: 15px; 
+            background: #0f172a; 
+            color: #38bdf8; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 16px; 
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .btn-primary:hover { 
+            background: #00a99d; 
+            color: white; 
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-bulk {
+            width: 100%; 
+            padding: 15px; 
+            background: transparent; 
+            color: #ec008c; 
+            border: 2px solid #ec008c; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 16px; 
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .btn-bulk:hover {
+            background: #ec008c;
+            color: white;
+        }
+
+        #status {
+            margin-top: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            display: none;
             padding: 12px;
-            background: var(--secondary);
-            color: #38bdf8;
-            border: none;
             border-radius: 8px;
-            font-weight: bold;
+        }
+
+        .logout-btn {
+            background: transparent; 
+            border: 1px solid #38bdf8; 
+            color: #38bdf8; 
+            padding: 10px 20px; 
+            border-radius: 8px; 
             cursor: pointer;
+            font-weight: 600;
             transition: 0.3s;
         }
 
-        button:hover {
-            background: var(--primary);
-            color: white;
-        }
-
-        /* Tabla de Usuarios */
-        .table-container {
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-
-        th {
-            background: #f1f5f9;
-            text-align: left;
-            padding: 12px;
-            font-size: 13px;
-        }
-
-        td {
-            padding: 12px;
-            border-bottom: 1px solid #f1f5f9;
-            font-size: 14px;
-        }
-
-        .btn-delete {
-            background: #fee2e2;
-            color: #ef4444;
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 12px;
-            width: auto;
-        }
-
-        .btn-delete:hover {
-            background: #ef4444;
-            color: white;
-        }
-
-        #statusMsg {
-            padding: 10px;
-            border-radius: 6px;
-            margin-top: 10px;
-            display: none;
-            font-size: 13px;
-            text-align: center;
+        .logout-btn:hover {
+            background: rgba(56, 189, 248, 0.1);
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <header>
-        <img src="logo.png" alt="Valle Esmeralda" class="logo-small">
-        <h2>Panel Administrativo</h2>
-        <button onclick="window.location.href='index.html'" style="width: auto; padding: 8px 15px;">Cerrar Sesión</button>
-    </header>
-
-    <div class="admin-grid">
-        <div class="card">
-            <h3>Registrar Usuario</h3>
-            <div class="form-group">
-                <label>DOMICILIO</label>
-                <input type="text" id="newDom" placeholder="Ej: Valle de Onix 1">
-            </div>
-            <div class="form-group">
-                <label>CONTRASEÑA</label>
-                <input type="text" id="newPass" value="1234">
-            </div>
-            <div class="form-group">
-                <label>ROL</label>
-                <select id="newRol">
-                    <option value="residente">Residente</option>
-                    <option value="caseta">Caseta</option>
-                    <option value="admin">Administrador</option>
-                </select>
-            </div>
-            <button id="saveUserBtn">Guardar Usuario</button>
-            <div id="statusMsg"></div>
-        </div>
-
-        <div class="card">
-            <h3>Usuarios Registrados</h3>
-            <div class="form-group">
-                <input type="text" id="searchInput" placeholder="Buscar domicilio..." onkeyup="filtrarTabla()">
-            </div>
-            <div class="table-container">
-                <table id="userTable">
-                    <thead>
-                        <tr>
-                            <th>Domicilio</th>
-                            <th>Rol</th>
-                            <th>Acción</th>
-                        </tr>
-                    </thead>
-                    <tbody id="userTableBody">
-                        </tbody>
-                </table>
-            </div>
-        </div>
+    <div class="header">
+        <img src="logo.png" alt="Valle Esmeralda">
+        <button class="logout-btn" onclick="window.location.href='index.html'">Cerrar Sesión</button>
     </div>
-</div>
 
-<script type="module">
-    import { db } from "./firebase.js";
-    import { 
-        collection, addDoc, getDocs, deleteDoc, doc, query, where, onSnapshot 
-    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    <div class="admin-card">
+        <h2>Registro de Usuarios</h2>
+        
+        <div class="input-group">
+            <label>Domicilio / Usuario</label>
+            <input id="newDom" type="text" placeholder="Ej: Valle de Onix 15">
+        </div>
 
-    const saveBtn = document.getElementById("saveUserBtn");
-    const statusMsg = document.getElementById("statusMsg");
-    const tableBody = document.getElementById("userTableBody");
+        <div class="input-group">
+            <label>Contraseña Sugerida</label>
+            <input id="newPass" type="text" value="1234">
+        </div>
 
-    // --- FUNCION 1: ESCUCHAR USUARIOS EN TIEMPO REAL ---
-    function cargarUsuarios() {
-        onSnapshot(collection(db, "usuarios"), (snapshot) => {
-            tableBody.innerHTML = "";
-            snapshot.forEach((userDoc) => {
-                const data = userDoc.data();
-                const row = document.createElement("tr");
-                row.innerHTML = `
-                    <td>${data.domicilio}</td>
-                    <td><span style="color: ${data.rol === 'admin' ? 'red' : 'green'}">${data.rol}</span></td>
-                    <td><button class="btn-delete" data-id="${userDoc.id}">Eliminar</button></td>
-                `;
-                tableBody.appendChild(row);
-            });
+        <div class="input-group">
+            <label>Tipo de Permiso (Rol)</label>
+            <select id="newRol">
+                <option value="residente">Residente</option>
+                <option value="caseta">Caseta / Guardia</option>
+                <option value="admin">Administrador</option>
+            </select>
+        </div>
 
-            // Asignar eventos de eliminación
-            document.querySelectorAll(".btn-delete").forEach(btn => {
-                btn.onclick = async (e) => {
-                    if(confirm("¿Seguro que deseas eliminar este usuario?")) {
-                        await deleteDoc(doc(db, "usuarios", e.target.getAttribute("data-id")));
-                    }
-                };
-            });
-        });
-    }
+        <button id="saveBtn" class="btn-primary">Guardar en Base de Datos</button>
+        <div id="status"></div>
+    </div>
 
-    // --- FUNCION 2: GUARDAR NUEVO USUARIO ---
-    saveBtn.onclick = async () => {
-        const domicilio = document.getElementById("newDom").value.trim();
-        const password = document.getElementById("newPass").value.trim();
-        const rol = document.getElementById("newRol").value;
+    <div class="admin-card" style="border-top-color: #ec008c;">
+        <h2>Acciones Masivas</h2>
+        <p style="font-size: 13px; color: #64748b; margin-bottom: 20px; line-height: 1.5;">
+            Al presionar este botón, se generarán automáticamente 100 usuarios (del 1 al 100) para cada calle del residencial.
+        </p>
+        <button id="bulkBtn" class="btn-bulk">
+            Generar Usuarios de Calles
+        </button>
+    </div>
 
-        if (!domicilio || !password) {
-            mostrarMensaje("Llena todos los campos", "#ef4444");
-            return;
-        }
+    <script type="module">
+        // Importación de configuración y métodos de Firebase
+        import { db } from "./firebase.js";
+        import { 
+            collection, 
+            addDoc, 
+            query, 
+            where, 
+            getDocs 
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        try {
-            saveBtn.disabled = true;
-            
-            // Validar duplicado
-            const q = query(collection(db, "usuarios"), where("domicilio", "==", domicilio));
-            const check = await getDocs(q);
-            
-            if (!check.empty) {
-                mostrarMensaje("El domicilio ya existe", "#ef4444");
-                saveBtn.disabled = false;
+        const saveBtn = document.getElementById("saveBtn");
+        const bulkBtn = document.getElementById("bulkBtn");
+        const statusMsg = document.getElementById("status");
+
+        // LÓGICA DE REGISTRO INDIVIDUAL
+        saveBtn.onclick = async () => {
+            const domicilio = document.getElementById("newDom").value.trim();
+            const password = document.getElementById("newPass").value.trim();
+            const rol = document.getElementById("newRol").value;
+
+            if (!domicilio || !password) {
+                mostrarStatus("Por favor llena todos los campos.", "red");
                 return;
             }
 
-            await addDoc(collection(db, "usuarios"), { domicilio, password, rol });
-            mostrarMensaje("Usuario creado", "#10b981");
-            document.getElementById("newDom").value = "";
-            
-        } catch (e) {
-            mostrarMensaje("Error al guardar", "#ef4444");
-        } finally {
-            saveBtn.disabled = false;
-        }
-    };
+            try {
+                saveBtn.disabled = true;
+                saveBtn.innerText = "Verificando...";
 
-    function mostrarMensaje(txt, color) {
-        statusMsg.innerText = txt;
-        statusMsg.style.backgroundColor = color + "22";
-        statusMsg.style.color = color;
-        statusMsg.style.display = "block";
-        setTimeout(() => { statusMsg.style.display = "none"; }, 3000);
-    }
+                // Validar si el usuario ya existe para evitar duplicados
+                const q = query(collection(db, "usuarios"), where("domicilio", "==", domicilio));
+                const querySnapshot = await getDocs(q);
 
-    // Iniciar carga
-    cargarUsuarios();
-</script>
+                if (!querySnapshot.empty) {
+                    mostrarStatus("Este usuario ya existe en el sistema.", "red");
+                    saveBtn.disabled = false;
+                    saveBtn.innerText = "Guardar en Base de Datos";
+                    return;
+                }
 
-<script>
-    // Buscador simple en la tabla
-    function filtrarTabla() {
-        const input = document.getElementById("searchInput");
-        const filter = input.value.toUpperCase();
-        const table = document.getElementById("userTable");
-        const tr = table.getElementsByTagName("tr");
+                // Guardar en la colección 'usuarios'
+                await addDoc(collection(db, "usuarios"), {
+                    domicilio: domicilio,
+                    password: password,
+                    rol: rol
+                });
 
-        for (let i = 1; i < tr.length; i++) {
-            let td = tr[i].getElementsByTagName("td")[0];
-            if (td) {
-                let txtValue = td.textContent || td.innerText;
-                tr[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+                mostrarStatus("¡Usuario registrado con éxito!", "green");
+                document.getElementById("newDom").value = "";
+                
+            } catch (error) {
+                console.error("Error al guardar:", error);
+                mostrarStatus("Error de conexión con Firebase.", "red");
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerText = "Guardar en Base de Datos";
             }
-        }
-    }
-</script>
+        };
 
+        // LÓGICA DE GENERACIÓN MASIVA DE CALLES
+        bulkBtn.onclick = async () => {
+            const confirmacion = confirm("¿Estás seguro de generar usuarios masivos? Esto añadirá 700 registros a la base de datos.");
+            if (!confirmacion) return;
+
+            const calles = [
+                "Valle Turquesa Norte",
+                "Valle Turquesa Sur",
+                "Valle Turquesa Oriente",
+                "Valle Turquesa Poniente",
+                "Valle de la Perla",
+                "Valle de Onix",
+                "Valle de Opalo"
+            ];
+
+            try {
+                bulkBtn.disabled = true;
+                bulkBtn.innerText = "Generando... No cierres esta ventana";
+
+                // Ciclo por cada calle definida
+                for (let calle of calles) {
+                    // Ciclo para generar 100 números de casa por calle
+                    for (let i = 1; i <= 100; i++) {
+                        let domicilioGenerado = calle + " " + i;
+                        
+                        // Guardar cada registro individualmente
+                        await addDoc(collection(db, "usuarios"), {
+                            domicilio: domicilioGenerado,
+                            password: "1234",
+                            rol: "residente"
+                        });
+                    }
+                    console.log("Completada: " + calle);
+                }
+
+                alert("¡Proceso terminado! Se han generado todos los usuarios de las calles.");
+                bulkBtn.innerText = "Generación Terminada";
+                
+            } catch (error) {
+                console.error("Error masivo:", error);
+                alert("Hubo un error en la conexión. Algunos usuarios podrían no haberse creado.");
+                bulkBtn.disabled = false;
+                bulkBtn.innerText = "Reintentar Generación";
+            }
+        };
+
+        // Función para mostrar alertas visuales en el panel
+        function mostrarStatus(texto, color) {
+            statusMsg.innerText = texto;
+            statusMsg.style.display = "block";
+            
+            if (color === "red") {
+                statusMsg.style.color = "#ef4444";
+                statusMsg.style.background = "#fee2e2";
+            } else {
+                statusMsg.style.color = "#10b981";
+                statusMsg.style.background = "#dcfce7";
+            }
+
+            setTimeout(() => {
+                statusMsg.style.display = "none";
+            }, 4000);
+        }
+    </script>
 </body>
 </html>
