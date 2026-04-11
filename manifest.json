@@ -2,11 +2,12 @@
   "name": "Control de Acceso Valle Esmeralda",
   "short_name": "Valle Esmeralda",
   "description": "Sistema de gestión de visitas para residentes y caseta.",
-  "start_url": "./index.html",
+  "start_url": "index.html",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#00a99d",
   "orientation": "portrait",
+  "scope": "/",
   "icons": [
     {
       "src": "logo.png",
