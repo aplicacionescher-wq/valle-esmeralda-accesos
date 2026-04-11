@@ -34,6 +34,9 @@
         .btn-secundario { background: #f1f5f9; color: #475569; }
         .btn-secundario:hover { background: #e2e8f0; color: #0f172a; }
 
+        .btn-peligro { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; padding: 11px 22px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; text-transform: uppercase; transition: 0.3s; }
+        .btn-peligro:hover { background: #991b1b; color: white; }
+
         /* TABLA ESTANDARIZADA */
         .tabla-contenedor { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         table { width: 100%; border-collapse: collapse; }
@@ -45,9 +48,9 @@
         .usado { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
         .pendiente { background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; }
         .cancelado { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
-        .expirado { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
+        .bloqueado { background: #1e293b; color: #ffffff; }
 
-        #msg-status { margin-top: 10px; font-size: 13px; font-weight: bold; display: none; }
+        #msg-status { margin-top: 15px; padding: 10px; border-radius: 6px; font-size: 13px; font-weight: bold; display: none; text-align: center; }
     </style>
 </head>
 <body>
@@ -64,7 +67,7 @@
 
     <div class="main">
         <div class="filter-card" style="border-top-color: #38bdf8;">
-            <h2 style="margin: 0 0 20px 0; color: #0f172a;">👥 Alta de Usuarios</h2>
+            <h2 style="margin: 0 0 20px 0; color: #0f172a;">👥 Gestión de Usuarios</h2>
             <div class="grid-filtros">
                 <div class="campo">
                     <label>Domicilio / Usuario</label>
@@ -82,7 +85,8 @@
                         <option value="admin">Administrador</option>
                     </select>
                 </div>
-                <button class="btn-accion" id="btnCrearUser">💾 Guardar Usuario</button>
+                <button class="btn-accion" id="btnCrearUser">💾 Guardar</button>
+                <button class="btn-peligro" id="btnBloquearUser">🚫 Bloquear / Desactivar</button>
             </div>
             <div id="msg-status"></div>
         </div>
@@ -123,9 +127,9 @@
 
     <script type="module">
         import { db } from "./firebase.js";
-        import { collection, query, onSnapshot, orderBy, where, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { collection, query, onSnapshot, orderBy, where, getDocs, addDoc, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // --- PROTECCIÓN DE RUTA ---
+        // --- PROTECCIÓN ---
         if (localStorage.getItem("rol") !== "admin") {
             window.location.href = "index.html";
         }
@@ -139,104 +143,115 @@
         const statusDiv = document.getElementById("msg-status");
         let unsubscribe;
 
-        // --- FUNCIÓN PARA DIBUJAR LA TABLA ---
+        // --- RENDER TABLA HISTORIAL ---
         function renderizarTabla(snapshot) {
             tablaCuerpo.innerHTML = "";
             if (snapshot.empty) {
-                tablaCuerpo.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:30px; color:#94a3b8;">No se encontraron registros.</td></tr>';
+                tablaCuerpo.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:30px; color:#94a3b8;">No hay datos para mostrar.</td></tr>';
                 return;
             }
 
             snapshot.forEach(docSnap => {
                 const d = docSnap.data();
                 const fecha = d.timestamp ? new Date(d.timestamp).toLocaleString() : "---";
-                const estadoClass = d.estado || "pendiente";
-                
+                const est = d.estado || "pendiente";
                 const tr = document.createElement("tr");
                 tr.innerHTML = `
                     <td>${fecha}</td>
                     <td><b>${d.nombre}</b></td>
                     <td>${d.casa}</td>
                     <td>${d.tipo || 'Visita'}</td>
-                    <td><span class="status ${estadoClass}">${estadoClass}</span></td>
+                    <td><span class="status ${est}">${est}</span></td>
                 `;
                 tablaCuerpo.appendChild(tr);
             });
         }
 
-        // --- CARGA INICIAL (TIEMPO REAL) ---
-        const qInicial = query(collection(db, "visitas"), orderBy("timestamp", "desc"));
-        unsubscribe = onSnapshot(qInicial, renderizarTabla);
+        const qIni = query(collection(db, "visitas"), orderBy("timestamp", "desc"));
+        unsubscribe = onSnapshot(qIni, renderizarTabla);
 
-        // --- FILTRADO POR FECHAS ---
-        document.getElementById("btnFiltrar").onclick = async () => {
-            const f1 = document.getElementById("fechaInicio").value;
-            const f2 = document.getElementById("fechaFin").value;
-            if (!f1 || !f2) return alert("Selecciona ambas fechas.");
-            
-            unsubscribe();
-            const inicioMs = new Date(f1 + "T00:00:00").getTime();
-            const finMs = new Date(f2 + "T23:59:59").getTime();
-
-            const qFiltrada = query(
-                collection(db, "visitas"),
-                where("timestamp", ">=", inicioMs),
-                where("timestamp", "<=", finMs),
-                orderBy("timestamp", "desc")
-            );
-
-            try {
-                const snap = await getDocs(qFiltrada);
-                renderizarTabla(snap);
-            } catch (error) {
-                console.error(error);
-            }
-        };
-
-        document.getElementById("btnLimpiar").onclick = () => {
-            document.getElementById("fechaInicio").value = "";
-            document.getElementById("fechaFin").value = "";
-            unsubscribe = onSnapshot(qInicial, renderizarTabla);
-        };
-
-        // --- ALTA DE USUARIO (CORREGIDO) ---
+        // --- GUARDAR USUARIO ---
         document.getElementById("btnCrearUser").onclick = async () => {
             const dom = document.getElementById("userDom").value.trim();
             const pass = document.getElementById("userPass").value.trim();
             const rol = document.getElementById("userRol").value;
 
-            if(!dom || !pass) {
-                alert("Por favor ingresa domicilio y contraseña.");
-                return;
-            }
+            if(!dom || !pass) return alert("Completa domicilio y contraseña.");
 
             try {
-                // Referencia limpia a la colección 'usuarios'
-                const usuariosRef = collection(db, "usuarios");
-                
-                await addDoc(usuariosRef, {
+                await addDoc(collection(db, "usuarios"), {
                     domicilio: dom,
                     password: pass,
-                    rol: rol
+                    rol: rol,
+                    activo: true
                 });
-
-                mostrarStatus("¡Usuario guardado correctamente!", "#10b981");
-                
-                // Limpiar campos
+                mostrarStatus("Usuario guardado con éxito", "#10b981", "#dcfce7");
                 document.getElementById("userDom").value = "";
                 document.getElementById("userPass").value = "";
-                
             } catch (e) {
-                console.error("Error al guardar:", e);
-                mostrarStatus("Error al guardar en Firebase", "#ef4444");
+                mostrarStatus("Error de permisos en Firebase", "#ef4444", "#fee2e2");
             }
         };
 
-        function mostrarStatus(txt, color) {
+        // --- BLOQUEAR USUARIO ---
+        document.getElementById("btnBloquearUser").onclick = async () => {
+            const dom = document.getElementById("userDom").value.trim();
+            if(!dom) return alert("Escribe el domicilio del usuario que deseas bloquear.");
+
+            if(!confirm(`¿Estás seguro de bloquear el acceso para: ${dom}?`)) return;
+
+            try {
+                const q = query(collection(db, "usuarios"), where("domicilio", "==", dom));
+                const snap = await getDocs(q);
+
+                if(snap.empty) {
+                    alert("No se encontró ningún usuario con ese domicilio.");
+                    return;
+                }
+
+                // Bloqueamos todos los documentos que coincidan con ese domicilio
+                const promesas = [];
+                snap.forEach((usuarioDoc) => {
+                    const ref = doc(db, "usuarios", usuarioDoc.id);
+                    promesas.push(updateDoc(ref, { activo: false, password: "BLOQUEADO_" + Math.random() }));
+                });
+
+                await Promise.all(promesas);
+                mostrarStatus(`Usuario ${dom} BLOQUEADO correctamente`, "#ffffff", "#1e293b");
+                document.getElementById("userDom").value = "";
+            } catch (e) {
+                console.error(e);
+                alert("Error al intentar bloquear.");
+            }
+        };
+
+        // --- FILTROS HISTORIAL ---
+        document.getElementById("btnFiltrar").onclick = async () => {
+            const f1 = document.getElementById("fechaInicio").value;
+            const f2 = document.getElementById("fechaFin").value;
+            if (!f1 || !f2) return alert("Selecciona fechas.");
+            
+            unsubscribe();
+            const inicioMs = new Date(f1 + "T00:00:00").getTime();
+            const finMs = new Date(f2 + "T23:59:59").getTime();
+
+            const qF = query(collection(db, "visitas"), where("timestamp", ">=", inicioMs), where("timestamp", "<=", finMs), orderBy("timestamp", "desc"));
+            const snap = await getDocs(qF);
+            renderizarTabla(snap);
+        };
+
+        document.getElementById("btnLimpiar").onclick = () => {
+            document.getElementById("fechaInicio").value = "";
+            document.getElementById("fechaFin").value = "";
+            unsubscribe = onSnapshot(qIni, renderizarTabla);
+        };
+
+        function mostrarStatus(txt, color, bg) {
             statusDiv.innerText = txt;
             statusDiv.style.color = color;
+            statusDiv.style.backgroundColor = bg;
             statusDiv.style.display = "block";
-            setTimeout(() => { statusDiv.style.display = "none"; }, 4000);
+            setTimeout(() => { statusDiv.style.display = "none"; }, 5000);
         }
     </script>
 </body>
