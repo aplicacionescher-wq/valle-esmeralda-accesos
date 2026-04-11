@@ -3,322 +3,224 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Administrativo - Valle Esmeralda</title>
-    <link rel="manifest" href="manifest.json">
+    <title>Admin General - Valle Esmeralda Residencial</title>
     <style>
-        /* DISEÑO ORIGINAL VALLE ESMERALDA */
-        body { 
-            margin: 0; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background: #0f172a; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            min-height: 100vh; 
-            padding: 20px;
-            color: white;
-        }
-
-        .header {
-            width: 100%;
-            max-width: 800px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-        }
-
-        .header img { 
-            max-width: 200px; 
-            height: auto; 
-        }
-
-        .admin-card { 
-            background: white; 
-            padding: 35px; 
-            border-radius: 16px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
-            width: 95%; 
-            max-width: 480px; 
-            text-align: center; 
-            border-top: 6px solid #00a99d; 
-            margin-bottom: 25px;
-            color: #1e293b;
-        }
-
-        h2 { 
-            color: #0f172a; 
-            margin-top: 0; 
-            font-size: 24px; 
-            font-weight: bold;
-            margin-bottom: 25px;
-        }
+        body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background: #f1f5f9; display: flex; }
         
-        .input-group { 
-            text-align: left; 
-            margin-bottom: 15px; 
-        }
+        /* BARRA LATERAL CON LOGO */
+        .sidebar { width: 220px; background: #1e293b; color: white; height: 100vh; padding: 20px; position: fixed; display: flex; flex-direction: column; align-items: center; border-right: 1px solid #334155; box-sizing: border-box; }
         
-        label { 
-            display: block; 
-            font-size: 11px; 
-            font-weight: bold; 
-            color: #64748b; 
-            margin-bottom: 5px; 
-            text-transform: uppercase; 
-            letter-spacing: 1px;
-        }
+        .sidebar-logo { margin-bottom: 30px; text-align: center; border-bottom: 1px solid #334155; padding-bottom: 20px; width: 100%; }
+        .sidebar-logo img { max-width: 150px; height: auto; }
         
-        input, select { 
-            width: 100%; 
-            padding: 12px; 
-            border: 1px solid #e2e8f0; 
-            border-radius: 8px; 
-            box-sizing: border-box; 
-            font-size: 16px; 
-            background: #f8fafc;
-            color: #0f172a;
-        }
+        .sidebar-links { width: 100%; }
+        .sidebar a { display: block; color: #cbd5f5; text-decoration: none; padding: 12px; border-radius: 8px; margin-bottom: 10px; transition: 0.3s; font-size: 14px; cursor: pointer; }
+        .sidebar a:hover { background: #334155; color: #38bdf8; }
+        .sidebar a.active { background: #0f172a; color: #00a99d; font-weight: bold; }
+        
+        .main { margin-left: 220px; width: calc(100% - 220px); padding: 20px; box-sizing: border-box; }
+        
+        /* CARDS DE CONTROL */
+        .filter-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 25px; border-top: 4px solid #00a99d; }
+        .grid-filtros { display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; }
+        .campo { display: flex; flex-direction: column; gap: 5px; }
+        .campo label { font-size: 11px; font-weight: bold; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+        .campo input, .campo select { padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; transition: 0.3s; min-width: 180px; }
+        .campo input:focus { border-color: #00a99d; outline: none; box-shadow: 0 0 0 3px rgba(0, 169, 157, 0.1); }
+        
+        /* BOTONES */
+        .btn-accion { background: #0f172a; color: #38bdf8; border: none; padding: 11px 22px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s; font-size: 13px; text-transform: uppercase; }
+        .btn-accion:hover { background: #00a99d; color: white; }
+        .btn-secundario { background: #f1f5f9; color: #475569; }
+        .btn-secundario:hover { background: #e2e8f0; color: #0f172a; }
 
-        input:focus {
-            outline: none;
-            border-color: #00a99d;
-            box-shadow: 0 0 0 3px rgba(0, 169, 157, 0.1);
-        }
+        .btn-bulk { background: transparent; color: #ec008c; border: 2px solid #ec008c; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s; font-size: 12px; text-transform: uppercase; margin-left: auto; }
+        .btn-bulk:hover { background: #ec008c; color: white; }
 
-        .btn-primary { 
-            width: 100%; 
-            padding: 15px; 
-            background: #0f172a; 
-            color: #38bdf8; 
-            border: none; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-weight: bold; 
-            font-size: 16px; 
-            transition: all 0.3s ease;
-            margin-top: 10px;
-        }
+        /* TABLA ESTANDARIZADA */
+        .tabla-contenedor { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #0f172a; color: white; padding: 15px; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+        td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 14px; color: #334155; }
+        
+        /* ESTADOS */
+        .status { padding: 5px 10px; border-radius: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase; }
+        .usado { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .pendiente { background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; }
+        .cancelado { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+        .expirado { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
 
-        .btn-primary:hover { 
-            background: #00a99d; 
-            color: white; 
-        }
-
-        .btn-primary:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .btn-bulk {
-            width: 100%; 
-            padding: 15px; 
-            background: transparent; 
-            color: #ec008c; 
-            border: 2px solid #ec008c; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-weight: bold; 
-            font-size: 16px; 
-            transition: all 0.3s ease;
-            margin-top: 10px;
-        }
-
-        .btn-bulk:hover {
-            background: #ec008c;
-            color: white;
-        }
-
-        #status {
-            margin-top: 20px;
-            font-size: 14px;
-            font-weight: 600;
-            display: none;
-            padding: 12px;
-            border-radius: 8px;
-        }
-
-        .logout-btn {
-            background: transparent; 
-            border: 1px solid #38bdf8; 
-            color: #38bdf8; 
-            padding: 10px 20px; 
-            border-radius: 8px; 
-            cursor: pointer;
-            font-weight: 600;
-            transition: 0.3s;
-        }
-
-        .logout-btn:hover {
-            background: rgba(56, 189, 248, 0.1);
-        }
+        #msg-status { margin-top: 10px; font-size: 13px; font-weight: bold; display: none; }
     </style>
 </head>
 <body>
-
-    <div class="header">
-        <img src="logo.png" alt="Valle Esmeralda">
-        <button class="logout-btn" onclick="window.location.href='index.html'">Cerrar Sesión</button>
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            <img src="logo.png" alt="Logo Valle Esmeralda">
+        </div>
+        <div class="sidebar-links">
+            <a href="pendientes.html">📋 Ver Pendientes</a>
+            <a href="admin.html" class="active">📊 Admin General</a>
+            <a onclick="cerrarSesion()" style="color:#ec008c; cursor:pointer; margin-top:30px; display:block; padding:12px; font-weight:bold;">🚪 Cerrar Sesión</a>
+        </div>
     </div>
 
-    <div class="admin-card">
-        <h2>Registro de Usuarios</h2>
-        
-        <div class="input-group">
-            <label>Domicilio / Usuario</label>
-            <input id="newDom" type="text" placeholder="Ej: Valle de Onix 15">
+    <div class="main">
+        <div class="filter-card" style="border-top-color: #38bdf8;">
+            <h2 style="margin: 0 0 20px 0; color: #0f172a;">👥 Control de Usuarios</h2>
+            <div class="grid-filtros">
+                <div class="campo">
+                    <label>Nuevo Domicilio</label>
+                    <input type="text" id="userDom" placeholder="Ej: Valle de Onix 1">
+                </div>
+                <div class="campo">
+                    <label>Rol de Usuario</label>
+                    <select id="userRol">
+                        <option value="residente">Residente</option>
+                        <option value="caseta">Caseta</option>
+                        <option value="admin">Administrador</option>
+                    </select>
+                </div>
+                <button class="btn-accion" id="btnCrearUser">💾 Guardar</button>
+                <button class="btn-bulk" id="btnGenerarCalles">🚀 Generar Calles Masivo</button>
+            </div>
+            <div id="msg-status"></div>
         </div>
 
-        <div class="input-group">
-            <label>Contraseña Sugerida</label>
-            <input id="newPass" type="text" value="1234">
+        <div class="filter-card">
+            <h2 style="margin: 0 0 20px 0; color: #0f172a;">📊 Historial Maestro de Accesos</h2>
+            <div class="grid-filtros">
+                <div class="campo">
+                    <label>Desde</label>
+                    <input type="date" id="fechaInicio">
+                </div>
+                <div class="campo">
+                    <label>Hasta</label>
+                    <input type="date" id="fechaFin">
+                </div>
+                <button class="btn-accion" id="btnFiltrar">🔍 Buscar</button>
+                <button class="btn-accion btn-secundario" id="btnLimpiar">🧹 Limpiar Filtros</button>
+            </div>
         </div>
 
-        <div class="input-group">
-            <label>Tipo de Permiso (Rol)</label>
-            <select id="newRol">
-                <option value="residente">Residente</option>
-                <option value="caseta">Caseta / Guardia</option>
-                <option value="admin">Administrador</option>
-            </select>
+        <div class="tabla-contenedor">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fecha y Hora</th>
+                        <th>Nombre del Invitado</th>
+                        <th>Casa</th>
+                        <th>Tipo</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-cuerpo">
+                    <tr><td colspan="5" style="text-align:center; padding:30px; color:#94a3b8;">Cargando historial...</td></tr>
+                </tbody>
+            </table>
         </div>
-
-        <button id="saveBtn" class="btn-primary">Guardar en Base de Datos</button>
-        <div id="status"></div>
-    </div>
-
-    <div class="admin-card" style="border-top-color: #ec008c;">
-        <h2>Acciones Masivas</h2>
-        <p style="font-size: 13px; color: #64748b; margin-bottom: 20px; line-height: 1.5;">
-            Al presionar este botón, se generarán automáticamente 100 usuarios (del 1 al 100) para cada calle del residencial.
-        </p>
-        <button id="bulkBtn" class="btn-bulk">
-            Generar Usuarios de Calles
-        </button>
     </div>
 
     <script type="module">
-        // Importación de configuración y métodos de Firebase
         import { db } from "./firebase.js";
-        import { 
-            collection, 
-            addDoc, 
-            query, 
-            where, 
-            getDocs 
-        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { collection, query, onSnapshot, orderBy, where, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        const saveBtn = document.getElementById("saveBtn");
-        const bulkBtn = document.getElementById("bulkBtn");
-        const statusMsg = document.getElementById("status");
+        // --- PROTECCIÓN DE RUTA ---
+        if (localStorage.getItem("rol") !== "admin") {
+            window.location.href = "index.html";
+        }
 
-        // LÓGICA DE REGISTRO INDIVIDUAL
-        saveBtn.onclick = async () => {
-            const domicilio = document.getElementById("newDom").value.trim();
-            const password = document.getElementById("newPass").value.trim();
-            const rol = document.getElementById("newRol").value;
+        window.cerrarSesion = () => {
+            localStorage.clear();
+            window.location.href = "index.html";
+        };
 
-            if (!domicilio || !password) {
-                mostrarStatus("Por favor llena todos los campos.", "red");
+        const tablaCuerpo = document.getElementById("tabla-cuerpo");
+        const statusDiv = document.getElementById("msg-status");
+        let unsubscribe;
+
+        // --- FUNCIÓN PARA DIBUJAR LA TABLA ---
+        function renderizarTabla(snapshot) {
+            tablaCuerpo.innerHTML = "";
+            if (snapshot.empty) {
+                tablaCuerpo.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:30px; color:#94a3b8;">No se encontraron registros.</td></tr>';
                 return;
             }
 
-            try {
-                saveBtn.disabled = true;
-                saveBtn.innerText = "Verificando...";
-
-                // Validar si el usuario ya existe para evitar duplicados
-                const q = query(collection(db, "usuarios"), where("domicilio", "==", domicilio));
-                const querySnapshot = await getDocs(q);
-
-                if (!querySnapshot.empty) {
-                    mostrarStatus("Este usuario ya existe en el sistema.", "red");
-                    saveBtn.disabled = false;
-                    saveBtn.innerText = "Guardar en Base de Datos";
-                    return;
-                }
-
-                // Guardar en la colección 'usuarios'
-                await addDoc(collection(db, "usuarios"), {
-                    domicilio: domicilio,
-                    password: password,
-                    rol: rol
-                });
-
-                mostrarStatus("¡Usuario registrado con éxito!", "green");
-                document.getElementById("newDom").value = "";
+            snapshot.forEach(docSnap => {
+                const d = docSnap.data();
+                const fecha = d.timestamp ? new Date(d.timestamp).toLocaleString() : "---";
+                const estadoClass = d.estado || "pendiente";
                 
-            } catch (error) {
-                console.error("Error al guardar:", error);
-                mostrarStatus("Error de conexión con Firebase.", "red");
-            } finally {
-                saveBtn.disabled = false;
-                saveBtn.innerText = "Guardar en Base de Datos";
-            }
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>${fecha}</td>
+                    <td><b>${d.nombre}</b></td>
+                    <td>${d.casa}</td>
+                    <td>${d.tipo || 'Visita'}</td>
+                    <td><span class="status ${estadoClass}">${estadoClass}</span></td>
+                `;
+                tablaCuerpo.appendChild(tr);
+            });
+        }
+
+        // --- CARGA INICIAL HISTORIAL ---
+        const qInicial = query(collection(db, "visitas"), orderBy("timestamp", "desc"));
+        unsubscribe = onSnapshot(qInicial, renderizarTabla);
+
+        // --- FILTRADO DE HISTORIAL ---
+        document.getElementById("btnFiltrar").onclick = async () => {
+            const f1 = document.getElementById("fechaInicio").value;
+            const f2 = document.getElementById("fechaFin").value;
+            if (!f1 || !f2) return alert("Selecciona ambas fechas.");
+            unsubscribe();
+            const inicioMs = new Date(f1 + "T00:00:00").getTime();
+            const finMs = new Date(f2 + "T23:59:59").getTime();
+            const qFiltrada = query(collection(db, "visitas"), where("timestamp", ">=", inicioMs), where("timestamp", "<=", finMs), orderBy("timestamp", "desc"));
+            const snap = await getDocs(qFiltrada);
+            renderizarTabla(snap);
         };
 
-        // LÓGICA DE GENERACIÓN MASIVA DE CALLES
-        bulkBtn.onclick = async () => {
-            const confirmacion = confirm("¿Estás seguro de generar usuarios masivos? Esto añadirá 700 registros a la base de datos.");
-            if (!confirmacion) return;
+        document.getElementById("btnLimpiar").onclick = () => {
+            document.getElementById("fechaInicio").value = "";
+            document.getElementById("fechaFin").value = "";
+            unsubscribe = onSnapshot(qInicial, renderizarTabla);
+        };
 
-            const calles = [
-                "Valle Turquesa Norte",
-                "Valle Turquesa Sur",
-                "Valle Turquesa Oriente",
-                "Valle Turquesa Poniente",
-                "Valle de la Perla",
-                "Valle de Onix",
-                "Valle de Opalo"
-            ];
+        // --- GESTIÓN DE USUARIOS: CREAR INDIVIDUAL ---
+        document.getElementById("btnCrearUser").onclick = async () => {
+            const dom = document.getElementById("userDom").value.trim();
+            const rol = document.getElementById("userRol").value;
+            if(!dom) return alert("Escribe un domicilio.");
 
             try {
-                bulkBtn.disabled = true;
-                bulkBtn.innerText = "Generando... No cierres esta ventana";
+                await addDoc(collection(db, "usuarios"), { domicilio: dom, password: "1234", rol: rol });
+                mostrarStatus("Usuario creado con éxito", "#10b981");
+                document.getElementById("userDom").value = "";
+            } catch (e) { mostrarStatus("Error al crear", "#ef4444"); }
+        };
 
-                // Ciclo por cada calle definida
-                for (let calle of calles) {
-                    // Ciclo para generar 100 números de casa por calle
-                    for (let i = 1; i <= 100; i++) {
-                        let domicilioGenerado = calle + " " + i;
-                        
-                        // Guardar cada registro individualmente
-                        await addDoc(collection(db, "usuarios"), {
-                            domicilio: domicilioGenerado,
-                            password: "1234",
-                            rol: "residente"
-                        });
+        // --- GESTIÓN DE USUARIOS: GENERACIÓN MASIVA (TU SCRIPT) ---
+        document.getElementById("btnGenerarCalles").onclick = async () => {
+            if(!confirm("¿Deseas generar 100 usuarios para cada calle (700 en total)?")) return;
+            const calles = ["Valle Turquesa Norte", "Valle Turquesa Sur", "Valle Turquesa Oriente", "Valle Turquesa Poniente", "Valle de la Perla", "Valle de Onix", "Valle de Opalo"];
+            const btn = document.getElementById("btnGenerarCalles");
+            btn.disabled = true; btn.innerText = "⏳ Procesando...";
+
+            try {
+                for(let calle of calles) {
+                    for(let i=1; i<=100; i++) {
+                        await addDoc(collection(db, "usuarios"), { domicilio: calle + " " + i, password: "1234", rol: "residente" });
                     }
-                    console.log("Completada: " + calle);
                 }
-
-                alert("¡Proceso terminado! Se han generado todos los usuarios de las calles.");
-                bulkBtn.innerText = "Generación Terminada";
-                
-            } catch (error) {
-                console.error("Error masivo:", error);
-                alert("Hubo un error en la conexión. Algunos usuarios podrían no haberse creado.");
-                bulkBtn.disabled = false;
-                bulkBtn.innerText = "Reintentar Generación";
-            }
+                alert("700 usuarios generados correctamente.");
+            } catch (e) { alert("Error en la generación masiva."); }
+            btn.disabled = false; btn.innerText = "🚀 Generar Calles Masivo";
         };
 
-        // Función para mostrar alertas visuales en el panel
-        function mostrarStatus(texto, color) {
-            statusMsg.innerText = texto;
-            statusMsg.style.display = "block";
-            
-            if (color === "red") {
-                statusMsg.style.color = "#ef4444";
-                statusMsg.style.background = "#fee2e2";
-            } else {
-                statusMsg.style.color = "#10b981";
-                statusMsg.style.background = "#dcfce7";
-            }
-
-            setTimeout(() => {
-                statusMsg.style.display = "none";
-            }, 4000);
+        function mostrarStatus(txt, color) {
+            statusDiv.innerText = txt; statusDiv.style.color = color; statusDiv.style.display = "block";
+            setTimeout(() => { statusDiv.style.display = "none"; }, 3000);
         }
     </script>
 </body>
