@@ -3,13 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Valle Esmeralda - Acceso</title>
+    <title>Valle Esmeralda Residencial - Acceso</title>
     <link rel="manifest" href="manifest.json">
     <style>
-        /* Estética Slate & Sky Blue */
-        body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background: #0f172a; display: flex; align-items: center; justify-content: center; height: 100vh; }
-        .login-box { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); width: 100%; max-width: 350px; text-align: center; }
-        h2 { color: #0f172a; margin-bottom: 25px; font-size: 24px; font-weight: bold; }
+        /* Estética Estandarizada con Acentos del Logo */
+        body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background: #0f172a; display: flex; align-items: center; justify-content: center; height: 100vh; flex-direction: column; }
+        
+        .logo-container { margin-bottom: 30px; text-align: center; }
+        .logo-container img { max-width: 250px; height: auto; }
+
+        .login-box { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); width: 100%; max-width: 350px; text-align: center; border-top: 5px solid #00a99d; /* Verde Esmeralda del logo */ }
+        h2 { color: #0f172a; margin-bottom: 25px; font-size: 22px; font-weight: bold; }
         
         .input-group { text-align: left; margin-bottom: 15px; }
         label { display: block; font-size: 12px; font-weight: bold; color: #64748b; margin-bottom: 5px; text-transform: uppercase; }
@@ -23,7 +27,7 @@
             font-size: 16px; 
             transition: 0.3s;
         }
-        input:focus { outline: none; border-color: #38bdf8; box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2); }
+        input:focus { outline: none; border-color: #ec008c; /* Rosa del logo */ box-shadow: 0 0 0 3px rgba(236, 0, 140, 0.2); }
         
         button { 
             width: 100%; 
@@ -38,13 +42,17 @@
             transition: 0.3s; 
             margin-top: 10px; 
         }
-        button:hover { background: #1e293b; color: white; }
+        button:hover { background: #00a99d; /* Verde Esmeralda al hover */ color: white; }
         button:disabled { opacity: 0.6; cursor: not-allowed; }
     </style>
 </head>
 <body>
+    <div class="logo-container">
+        <img src="logo.png" alt="Logo Valle Esmeralda Residencial">
+    </div>
+
     <div class="login-box">
-        <h2>🏢 Valle Esmeralda</h2>
+        <h2>Ingreso al Sistema</h2>
         
         <div class="input-group">
             <label>Usuario (Calle y Número)</label>
@@ -56,7 +64,7 @@
             <input id="password" type="password" placeholder="••••••••">
         </div>
         
-        <button id="loginBtn">Ingresar al Sistema</button>
+        <button id="loginBtn">Entrar</button>
     </div>
 
     <script type="module">
@@ -77,36 +85,28 @@
                 btn.disabled = true;
                 btn.innerText = "Verificando...";
 
-                // Consulta a la colección 'usuarios' donde el campo 'usuario' coincida
                 const q = query(collection(db, "usuarios"), where("usuario", "==", userIn));
                 const snap = await getDocs(q);
 
                 if (snap.empty) {
-                    alert("El usuario no existe en la base de datos.");
+                    alert("El usuario no existe.");
                     resetBtn();
                     return;
                 }
 
                 let userData = null;
-                snap.forEach(doc => {
-                    userData = doc.data();
-                });
+                snap.forEach(doc => { userData = doc.data(); });
 
-                // Validación de contraseña (sensible a mayúsculas/minúsculas)
                 if (userData.password === passIn) {
-                    // Guardar sesión local
                     localStorage.setItem("usuario", userIn);
                     localStorage.setItem("rol", userData.rol || "residente");
                     localStorage.setItem("casa", userData.casa || userIn);
 
-                    // Redirección por Rol
-                    const rol = userData.rol;
-                    if (rol === "admin") {
+                    if (userData.rol === "admin") {
                         window.location.href = "admin.html";
-                    } else if (rol === "caseta") {
+                    } else if (userData.rol === "caseta") {
                         window.location.href = "pendientes.html";
                     } else {
-                        // Si es un residente normal, lo mandas a su página de generar QR
                         window.location.href = "generar.html"; 
                     }
                 } else {
@@ -116,7 +116,7 @@
 
             } catch (error) {
                 console.error("Error en login:", error);
-                alert("Error de conexión con Firebase. Revisa tu internet.");
+                alert("Error de conexión.");
                 resetBtn();
             }
         }
@@ -124,17 +124,13 @@
         function resetBtn() {
             const btn = document.getElementById("loginBtn");
             btn.disabled = false;
-            btn.innerText = "Ingresar al Sistema";
+            btn.innerText = "Entrar";
         }
 
-        // Asignar evento al botón
         document.getElementById("loginBtn").onclick = login;
 
-        // Registro de Service Worker para PWA
         if ("serviceWorker" in navigator) {
-            navigator.serviceWorker.register("./sw.js")
-                .then(() => console.log("Service Worker Activo"))
-                .catch(err => console.log("Error en SW", err));
+            navigator.serviceWorker.register("./sw.js");
         }
     </script>
 </body>
