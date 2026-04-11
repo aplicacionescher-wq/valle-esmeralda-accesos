@@ -3,185 +3,306 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin General - Valle Esmeralda Residencial</title>
+    <title>Panel de Administración - Valle Esmeralda</title>
     <style>
-        body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background: #f1f5f9; display: flex; }
-        
-        /* BARRA LATERAL CON LOGO */
-        .sidebar { width: 220px; background: #1e293b; color: white; height: 100vh; padding: 20px; position: fixed; display: flex; flex-direction: column; align-items: center; border-right: 1px solid #334155; }
-        
-        .sidebar-logo { margin-bottom: 30px; text-align: center; border-bottom: 1px solid #334155; padding-bottom: 20px; width: 100%; }
-        .sidebar-logo img { max-width: 150px; height: auto; }
-        
-        .sidebar-links { width: 100%; }
-        .sidebar a { display: block; color: #cbd5f5; text-decoration: none; padding: 12px; border-radius: 8px; margin-bottom: 10px; transition: 0.3s; font-size: 14px; }
-        .sidebar a:hover { background: #334155; color: #38bdf8; }
-        .sidebar a.active { background: #0f172a; color: #00a99d; font-weight: bold; } /* Verde Esmeralda */
-        
-        .main { margin-left: 260px; width: calc(100% - 260px); padding: 20px; }
-        
-        /* CARD DE FILTROS */
-        .filter-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 25px; border-top: 4px solid #00a99d; }
-        .grid-filtros { display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; }
-        .campo { display: flex; flex-direction: column; gap: 5px; }
-        .campo label { font-size: 12px; font-weight: bold; color: #64748b; text-transform: uppercase; }
-        .campo input { padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; transition: 0.3s; }
-        .campo input:focus { border-color: #00a99d; outline: none; box-shadow: 0 0 0 3px rgba(0, 169, 157, 0.1); }
-        
-        /* BOTONES AJUSTADOS AL LOGO */
-        .btn-accion { background: #0f172a; color: #38bdf8; border: none; padding: 11px 22px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s; font-size: 13px; text-transform: uppercase; }
-        .btn-accion:hover { background: #00a99d; color: white; }
-        .btn-secundario { background: #f1f5f9; color: #475569; }
-        .btn-secundario:hover { background: #e2e8f0; color: #0f172a; }
+        :root {
+            --primary: #00a99d;
+            --secondary: #0f172a;
+            --accent: #ec008c;
+            --bg: #f8fafc;
+        }
 
-        /* TABLA ESTANDARIZADA */
-        .tabla-contenedor { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        table { width: 100%; border-collapse: collapse; }
-        th { background: #0f172a; color: white; padding: 15px; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
-        td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 14px; color: #334155; }
-        
-        /* ESTADOS AJUSTADOS AL LOGO */
-        .status { padding: 5px 10px; border-radius: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase; }
-        .usado { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; } /* PERMITIDO */
-        .pendiente { background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; }
-        .cancelado { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; } /* DENEGADO/CANCELADO - ROJO ACENTUADO */
-        .expirado { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 20px;
+            color: var(--secondary);
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            background: white;
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .logo-small {
+            height: 50px;
+        }
+
+        .admin-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .admin-grid { grid-template-columns: 1fr; }
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        h3 {
+            margin-top: 0;
+            color: var(--secondary);
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #64748b;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: var(--secondary);
+            color: #38bdf8;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Tabla de Usuarios */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th {
+            background: #f1f5f9;
+            text-align: left;
+            padding: 12px;
+            font-size: 13px;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 14px;
+        }
+
+        .btn-delete {
+            background: #fee2e2;
+            color: #ef4444;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            width: auto;
+        }
+
+        .btn-delete:hover {
+            background: #ef4444;
+            color: white;
+        }
+
+        #statusMsg {
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+            display: none;
+            font-size: 13px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
-    <div class="sidebar">
-        <div class="sidebar-logo">
-            <img src="logo.png" alt="Logo Valle Esmeralda">
-        </div>
-        <div class="sidebar-links">
-            <a href="escaner.html">🏠 Escáner QR</a>
-            <a href="pendientes.html">📋 Ver Pendientes</a>
-            <a href="admin.html" class="active">📊 Admin General</a>
-            <a onclick="cerrarSesion()" style="color:#ec008c; cursor:pointer; margin-top:30px; display:block; padding:12px; font-weight:bold;">🚪 Cerrar Sesión</a>
-        </div>
-    </div>
 
-    <div class="main">
-        <div class="filter-card">
-            <h2 style="margin: 0 0 20px 0; color: #0f172a;">📊 Historial Maestro de Accesos</h2>
-            <div class="grid-filtros">
-                <div class="campo">
-                    <label>Desde</label>
-                    <input type="date" id="fechaInicio">
-                </div>
-                <div class="campo">
-                    <label>Hasta</label>
-                    <input type="date" id="fechaFin">
-                </div>
-                <button class="btn-accion" id="btnFiltrar">🔍 Buscar</button>
-                <button class="btn-accion btn-secundario" id="btnLimpiar">🧹 Limpiar Filtros</button>
+<div class="container">
+    <header>
+        <img src="logo.png" alt="Valle Esmeralda" class="logo-small">
+        <h2>Panel Administrativo</h2>
+        <button onclick="window.location.href='index.html'" style="width: auto; padding: 8px 15px;">Cerrar Sesión</button>
+    </header>
+
+    <div class="admin-grid">
+        <div class="card">
+            <h3>Registrar Usuario</h3>
+            <div class="form-group">
+                <label>DOMICILIO</label>
+                <input type="text" id="newDom" placeholder="Ej: Valle de Onix 1">
+            </div>
+            <div class="form-group">
+                <label>CONTRASEÑA</label>
+                <input type="text" id="newPass" value="1234">
+            </div>
+            <div class="form-group">
+                <label>ROL</label>
+                <select id="newRol">
+                    <option value="residente">Residente</option>
+                    <option value="caseta">Caseta</option>
+                    <option value="admin">Administrador</option>
+                </select>
+            </div>
+            <button id="saveUserBtn">Guardar Usuario</button>
+            <div id="statusMsg"></div>
+        </div>
+
+        <div class="card">
+            <h3>Usuarios Registrados</h3>
+            <div class="form-group">
+                <input type="text" id="searchInput" placeholder="Buscar domicilio..." onkeyup="filtrarTabla()">
+            </div>
+            <div class="table-container">
+                <table id="userTable">
+                    <thead>
+                        <tr>
+                            <th>Domicilio</th>
+                            <th>Rol</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userTableBody">
+                        </tbody>
+                </table>
             </div>
         </div>
-
-        <div class="tabla-contenedor">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Fecha y Hora</th>
-                        <th>Nombre del Invitado</th>
-                        <th>Casa</th>
-                        <th>Tipo</th>
-                        <th>Estado</th>
-                    </tr>
-                </thead>
-                <tbody id="tabla-cuerpo">
-                    <tr><td colspan="5" style="text-align:center; padding:30px; color:#94a3b8;">Cargando historial...</td></tr>
-                </tbody>
-            </table>
-        </div>
     </div>
+</div>
 
-    <script type="module">
-        import { db } from "./firebase.js";
-        import { collection, query, onSnapshot, orderBy, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+<script type="module">
+    import { db } from "./firebase.js";
+    import { 
+        collection, addDoc, getDocs, deleteDoc, doc, query, where, onSnapshot 
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // --- PROTECCIÓN DE RUTA ---
-        if (localStorage.getItem("rol") !== "admin") {
-            window.location.href = "escaner.html";
-        }
+    const saveBtn = document.getElementById("saveUserBtn");
+    const statusMsg = document.getElementById("statusMsg");
+    const tableBody = document.getElementById("userTableBody");
 
-        window.cerrarSesion = () => {
-            localStorage.clear();
-            window.location.href = "index.html";
-        };
-
-        const tablaCuerpo = document.getElementById("tabla-cuerpo");
-        let unsubscribe;
-
-        // --- FUNCIÓN PARA DIBUJAR LA TABLA ---
-        function renderizarTabla(snapshot) {
-            tablaCuerpo.innerHTML = "";
-            if (snapshot.empty) {
-                tablaCuerpo.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:30px; color:#94a3b8;">No se encontraron registros para este periodo.</td></tr>';
-                return;
-            }
-
-            snapshot.forEach(docSnap => {
-                const d = docSnap.data();
-                const fecha = d.timestamp ? new Date(d.timestamp).toLocaleString() : "---";
-                const estadoClass = d.estado || "pendiente";
-                
-                const tr = document.createElement("tr");
-                tr.innerHTML = `
-                    <td>${fecha}</td>
-                    <td><b>${d.nombre}</b></td>
-                    <td>${d.casa}</td>
-                    <td>${d.tipo || 'Visita'}</td>
-                    <td><span class="status ${estadoClass}">${estadoClass}</span></td>
+    // --- FUNCION 1: ESCUCHAR USUARIOS EN TIEMPO REAL ---
+    function cargarUsuarios() {
+        onSnapshot(collection(db, "usuarios"), (snapshot) => {
+            tableBody.innerHTML = "";
+            snapshot.forEach((userDoc) => {
+                const data = userDoc.data();
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${data.domicilio}</td>
+                    <td><span style="color: ${data.rol === 'admin' ? 'red' : 'green'}">${data.rol}</span></td>
+                    <td><button class="btn-delete" data-id="${userDoc.id}">Eliminar</button></td>
                 `;
-                tablaCuerpo.appendChild(tr);
+                tableBody.appendChild(row);
             });
+
+            // Asignar eventos de eliminación
+            document.querySelectorAll(".btn-delete").forEach(btn => {
+                btn.onclick = async (e) => {
+                    if(confirm("¿Seguro que deseas eliminar este usuario?")) {
+                        await deleteDoc(doc(db, "usuarios", e.target.getAttribute("data-id")));
+                    }
+                };
+            });
+        });
+    }
+
+    // --- FUNCION 2: GUARDAR NUEVO USUARIO ---
+    saveBtn.onclick = async () => {
+        const domicilio = document.getElementById("newDom").value.trim();
+        const password = document.getElementById("newPass").value.trim();
+        const rol = document.getElementById("newRol").value;
+
+        if (!domicilio || !password) {
+            mostrarMensaje("Llena todos los campos", "#ef4444");
+            return;
         }
 
-        // --- CARGA INICIAL (TIEMPO REAL) ---
-        const qInicial = query(collection(db, "visitas"), orderBy("timestamp", "desc"));
-        unsubscribe = onSnapshot(qInicial, renderizarTabla);
-
-        // --- FILTRADO POR FECHAS ---
-        document.getElementById("btnFiltrar").onclick = async () => {
-            const f1 = document.getElementById("fechaInicio").value;
-            const f2 = document.getElementById("fechaFin").value;
-
-            if (!f1 || !f2) {
-                alert("Selecciona ambas fechas.");
+        try {
+            saveBtn.disabled = true;
+            
+            // Validar duplicado
+            const q = query(collection(db, "usuarios"), where("domicilio", "==", domicilio));
+            const check = await getDocs(q);
+            
+            if (!check.empty) {
+                mostrarMensaje("El domicilio ya existe", "#ef4444");
+                saveBtn.disabled = false;
                 return;
             }
 
-            // Detenemos tiempo real
-            unsubscribe();
+            await addDoc(collection(db, "usuarios"), { domicilio, password, rol });
+            mostrarMensaje("Usuario creado", "#10b981");
+            document.getElementById("newDom").value = "";
+            
+        } catch (e) {
+            mostrarMensaje("Error al guardar", "#ef4444");
+        } finally {
+            saveBtn.disabled = false;
+        }
+    };
 
-            const inicioMs = new Date(f1 + "T00:00:00").getTime();
-            const finMs = new Date(f2 + "T23:59:59").getTime();
+    function mostrarMensaje(txt, color) {
+        statusMsg.innerText = txt;
+        statusMsg.style.backgroundColor = color + "22";
+        statusMsg.style.color = color;
+        statusMsg.style.display = "block";
+        setTimeout(() => { statusMsg.style.display = "none"; }, 3000);
+    }
 
-            const qFiltrada = query(
-                collection(db, "visitas"),
-                where("timestamp", ">=", inicioMs),
-                where("timestamp", "<=", finMs),
-                orderBy("timestamp", "desc")
-            );
+    // Iniciar carga
+    cargarUsuarios();
+</script>
 
-            try {
-                const snap = await getDocs(qFiltrada);
-                renderizarTabla(snap);
-            } catch (error) {
-                console.error("Error al filtrar:", error);
-                if (error.message.includes("index")) {
-                    alert("⚠️ Falta crear un índice en Firebase. Revisa la consola (F12) para activarlo.");
-                }
+<script>
+    // Buscador simple en la tabla
+    function filtrarTabla() {
+        const input = document.getElementById("searchInput");
+        const filter = input.value.toUpperCase();
+        const table = document.getElementById("userTable");
+        const tr = table.getElementsByTagName("tr");
+
+        for (let i = 1; i < tr.length; i++) {
+            let td = tr[i].getElementsByTagName("td")[0];
+            if (td) {
+                let txtValue = td.textContent || td.innerText;
+                tr[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
             }
-        };
+        }
+    }
+</script>
 
-        // --- BOTÓN LIMPIAR ---
-        document.getElementById("btnLimpiar").onclick = () => {
-            document.getElementById("fechaInicio").value = "";
-            document.getElementById("fechaFin").value = "";
-            unsubscribe = onSnapshot(qInicial, renderizarTabla);
-        };
-    </script>
 </body>
 </html>
