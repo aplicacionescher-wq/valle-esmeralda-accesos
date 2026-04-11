@@ -11,9 +11,20 @@
         .sidebar a { display: block; color: #cbd5f5; text-decoration: none; padding: 10px; border-radius: 8px; margin-bottom: 10px; }
         .main { margin-left: 240px; width: 100%; padding: 20px; }
         .header { background: white; padding: 15px; display: flex; justify-content: space-between; border-radius: 10px; margin-bottom: 20px; }
+        
         .card-visita { background: white; padding: 20px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .btn { padding: 10px 15px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; }
+        .info b { font-size: 1.1rem; color: #0f172a; }
+        
+        .btn-group { display: flex; gap: 10px; }
+        .btn { padding: 10px 15px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        
         .aprobar { background: #22c55e; color: white; }
+        .aprobar:hover { background: #16a34a; }
+        
+        .cancelar { background: #ef4444; color: white; }
+        .cancelar:hover { background: #dc2626; }
+        
         .vacio { text-align: center; padding: 40px; color: #64748b; }
     </style>
 </head>
@@ -38,7 +49,16 @@
 
     <script type="module">
         import { db } from "./firebase.js";
-        import { collection, query, where, onSnapshot, orderBy, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { 
+            collection, 
+            query, 
+            where, 
+            onSnapshot, 
+            orderBy, 
+            doc, 
+            updateDoc,
+            addDoc 
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const contenedor = document.getElementById("contenedor-pendientes");
         const contador = document.getElementById("contador");
@@ -69,17 +89,78 @@
                 const card = document.createElement("div");
                 card.className = "card-visita";
                 card.innerHTML = `
-                    <div>
-                        <b style="font-size: 1.1rem; color: #0f172a;">${data.nombre}</b><br>
-                        <small>🏠 Casa: ${data.casa} | ⏰ ${hora}</small>
+                    <div class="info">
+                        <b>${data.nombre}</b><br>
+                        <small>🏠 Casa: ${data.casa} | ⏰ ${hora} | 🚗 ${data.tipo.toUpperCase()}</small>
                     </div>
-                    <button class="btn aprobar" id="btn-${id}">Marcar Ingreso</button>
+                    <div class="btn-group">
+                        <button class="btn aprobar" data-id="${id}" id="ingreso-${id}">Marcar Ingreso</button>
+                        <button class="btn cancelar" data-id="${id}" id="cancelar-${id}">Cancelar</button>
+                    </div>
                 `;
                 contenedor.appendChild(card);
 
-                card.querySelector(`#btn-${id}`).onclick = async () => {
-                    if(confirm("¿Confirmar que la visita ha ingresado?")) {
-                        await updateDoc(doc(db, "visitas", id), { estado: "usado" });
+                // FUNCIÓN PARA INGRESAR
+                document.getElementById(`ingreso-${id}`).onclick = async (e) => {
+                    const btn = e.target;
+                    if(confirm(`¿Confirmar ingreso de ${data.nombre}?`)) {
+                        try {
+                            btn.disabled = true;
+                            btn.innerText = "⏳...";
+                            
+                            const docRef = doc(db, "visitas", id);
+                            await updateDoc(docRef, { 
+                                estado: "usado",
+                                fechaEntrada: Date.now()
+                            });
+
+                            // Opcional: Registrar en historial_accesos
+                            await addDoc(collection(db, "historial_accesos"), {
+                                nombre: data.nombre,
+                                casa: data.casa,
+                                resultado: "PERMITIDO",
+                                motivo: "Ingreso Manual Caseta",
+                                timestamp: Date.now(),
+                                guardia: localStorage.getItem("usuario") || "Caseta"
+                            });
+
+                        } catch (error) {
+                            console.error("Error al marcar ingreso:", error);
+                            alert("No se pudo actualizar. Intente de nuevo.");
+                            btn.disabled = false;
+                            btn.innerText = "Marcar Ingreso";
+                        }
+                    }
+                };
+
+                // FUNCIÓN PARA CANCELAR
+                document.getElementById(`cancelar-${id}`).onclick = async (e) => {
+                    const btn = e.target;
+                    if(confirm(`¿Deseas cancelar la visita de ${data.nombre}?`)) {
+                        try {
+                            btn.disabled = true;
+                            btn.innerText = "⏳...";
+
+                            const docRef = doc(db, "visitas", id);
+                            await updateDoc(docRef, { 
+                                estado: "cancelado" 
+                            });
+
+                            await addDoc(collection(db, "historial_accesos"), {
+                                nombre: data.nombre,
+                                casa: data.casa,
+                                resultado: "DENEGADO",
+                                motivo: "Cancelado por Caseta",
+                                timestamp: Date.now(),
+                                guardia: localStorage.getItem("usuario") || "Caseta"
+                            });
+
+                        } catch (error) {
+                            console.error("Error al cancelar:", error);
+                            alert("Error al cancelar.");
+                            btn.disabled = false;
+                            btn.innerText = "Cancelar";
+                        }
                     }
                 };
             });
@@ -87,7 +168,7 @@
         }, (error) => {
             console.error(error);
             if(error.message.includes("index")) {
-                contenedor.innerHTML = `<div class="vacio">⚠️ Falta crear un índice en Firebase. Revisa la consola F12.</div>`;
+                contenedor.innerHTML = `<div class="vacio">⚠️ Error de Índice: Debes crear el índice en Firebase para ordenar por tiempo.</div>`;
             }
         });
     </script>
