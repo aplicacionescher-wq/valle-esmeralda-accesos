@@ -3,60 +3,165 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Valle Esmeralda - Acceso</title>
+    <title>Valle Esmeralda Residencial - Login</title>
     <link rel="manifest" href="manifest.json">
     <style>
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #0f172a; display: flex; align-items: center; justify-content: center; height: 100vh; flex-direction: column; }
-        .logo-container { margin-bottom: 25px; text-align: center; }
-        .logo-container img { max-width: 220px; height: auto; }
-        .login-box { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); width: 100%; max-width: 320px; text-align: center; border-top: 5px solid #00a99d; }
-        h2 { color: #0f172a; margin-bottom: 20px; font-size: 20px; font-weight: bold; }
-        .input-group { text-align: left; margin-bottom: 15px; }
-        label { display: block; font-size: 11px; font-weight: bold; color: #64748b; margin-bottom: 5px; text-transform: uppercase; }
-        input { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-        button { width: 100%; padding: 14px; background: #0f172a; color: #38bdf8; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; margin-top: 10px; transition: 0.3s; }
-        button:hover { background: #00a99d; color: white; }
-        #error-msg { color: #ef4444; font-size: 13px; margin-top: 15px; display: none; }
+        /* ESTILO INTEGRAL */
+        body { 
+            margin: 0; 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            background: #0f172a; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+            flex-direction: column; 
+        }
+        
+        .logo-container { 
+            margin-bottom: 25px; 
+            text-align: center; 
+        }
+
+        .logo-container img { 
+            max-width: 250px; 
+            height: auto; 
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+        }
+
+        .login-box { 
+            background: white; 
+            padding: 40px; 
+            border-radius: 16px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4); 
+            width: 90%; 
+            max-width: 340px; 
+            text-align: center; 
+            border-top: 6px solid #00a99d; 
+        }
+
+        h2 { 
+            color: #1e293b; 
+            margin-bottom: 25px; 
+            font-size: 22px; 
+            font-weight: bold; 
+        }
+        
+        .input-group { 
+            text-align: left; 
+            margin-bottom: 15px; 
+        }
+        
+        label { 
+            display: block; 
+            font-size: 11px; 
+            font-weight: bold; 
+            color: #64748b; 
+            margin-bottom: 5px; 
+            text-transform: uppercase; 
+        }
+        
+        input { 
+            width: 100%; 
+            padding: 12px; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 8px; 
+            box-sizing: border-box; 
+            font-size: 16px; 
+            transition: 0.3s;
+        }
+        
+        input:focus { 
+            outline: none; 
+            border-color: #ec008c; 
+            box-shadow: 0 0 0 3px rgba(236, 0, 140, 0.1); 
+        }
+        
+        button { 
+            width: 100%; 
+            padding: 15px; 
+            background: #0f172a; 
+            color: #38bdf8; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 16px; 
+            transition: 0.3s; 
+            margin-top: 10px; 
+        }
+        
+        button:hover { 
+            background: #00a99d; 
+            color: white; 
+        }
+        
+        button:disabled { 
+            opacity: 0.6; 
+            cursor: not-allowed; 
+        }
+
+        #error-msg {
+            color: #ef4444;
+            font-size: 13px;
+            margin-top: 15px;
+            display: none;
+            font-weight: 500;
+        }
     </style>
 </head>
 <body>
+
     <div class="logo-container">
         <img src="logo.png" alt="Valle Esmeralda">
     </div>
 
     <div class="login-box">
         <h2>Panel de Acceso</h2>
+        
         <div class="input-group">
             <label>Usuario (Domicilio)</label>
             <input id="domicilio" type="text" placeholder="Ej: caseta o Admin">
         </div>
+        
         <div class="input-group">
             <label>Contraseña</label>
             <input id="password" type="password" placeholder="••••">
         </div>
-        <button id="loginBtn">Entrar</button>
+        
+        <button id="loginBtn">Ingresar</button>
         <div id="error-msg"></div>
     </div>
 
     <script type="module">
+        // Importación de tu archivo de configuración
         import { db } from "./firebase.js";
-        import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        
+        // Importación de librerías de Firebase desde la CDN oficial
+        import { 
+            collection, 
+            query, 
+            where, 
+            getDocs 
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // Limpiar cualquier sesión previa al cargar el login
-        localStorage.clear();
-
+        // Referencias a los elementos del DOM
         const btn = document.getElementById("loginBtn");
         const errorDiv = document.getElementById("error-msg");
+        const inputDom = document.getElementById("domicilio");
+        const inputPass = document.getElementById("password");
 
-        async function login() {
-            const userIn = document.getElementById("domicilio").value.trim();
-            const passIn = document.getElementById("password").value.trim();
+        // Función principal de Login
+        async function realizarLogin() {
+            const userIn = inputDom.value.trim();
+            const passIn = inputPass.value.trim();
 
+            // Reset de errores
             errorDiv.style.display = "none";
+            errorDiv.innerText = "";
 
             if (!userIn || !passIn) {
-                errorDiv.innerText = "Ingresa todos los datos";
-                errorDiv.style.display = "block";
+                mostrarError("Por favor, ingresa tus credenciales.");
                 return;
             }
 
@@ -64,56 +169,78 @@
                 btn.disabled = true;
                 btn.innerText = "Verificando...";
 
-                // CONSULTA DIRECTA A FIREBASE
-                // Filtramos donde el campo 'domicilio' sea igual a lo escrito
-                const q = query(collection(db, "usuarios"), where("domicilio", "==", userIn));
-                const snap = await getDocs(q);
+                // CONSULTA A FIREBASE:
+                // Buscamos en la colección 'usuarios' donde el campo 'domicilio' coincida
+                const usuariosRef = collection(db, "usuarios");
+                const q = query(usuariosRef, where("domicilio", "==", userIn));
+                
+                const querySnapshot = await getDocs(q);
 
-                if (snap.empty) {
-                    errorDiv.innerText = "El usuario no existe en Firebase";
-                    errorDiv.style.display = "block";
+                if (querySnapshot.empty) {
+                    mostrarError("El usuario o domicilio no existe.");
                     resetBtn();
                     return;
                 }
 
                 let userData = null;
-                snap.forEach(doc => { userData = doc.data(); });
+                querySnapshot.forEach((doc) => {
+                    userData = doc.data();
+                });
 
-                // Comparamos contraseña (convertida a texto)
+                // Validación de contraseña (String asegura que no haya error si es numérico)
                 if (String(userData.password) === String(passIn)) {
                     
-                    // Guardamos en el navegador
+                    // GUARDAR SESIÓN LOCAL
                     localStorage.setItem("usuario", userIn);
                     localStorage.setItem("rol", userData.rol);
                     localStorage.setItem("casa", userData.domicilio);
 
-                    // Redirección según tu campo 'rol'
+                    // REDIRECCIÓN POR ROL (Admin, Caseta, Residente)
                     if (userData.rol === "admin") {
                         window.location.href = "admin.html";
                     } else if (userData.rol === "caseta") {
                         window.location.href = "pendientes.html";
                     } else {
+                        // Por defecto, residentes
                         window.location.href = "generar.html";
                     }
+
                 } else {
-                    errorDiv.innerText = "Contraseña incorrecta";
-                    errorDiv.style.display = "block";
+                    mostrarError("Contraseña incorrecta.");
                     resetBtn();
                 }
-            } catch (e) {
-                console.error(e);
-                errorDiv.innerText = "Error de conexión";
-                errorDiv.style.display = "block";
+
+            } catch (error) {
+                console.error("Error en Firebase:", error);
+                mostrarError("Error de conexión. Revisa tu internet.");
                 resetBtn();
             }
         }
 
-        function resetBtn() {
-            btn.disabled = false;
-            btn.innerText = "Entrar";
+        function mostrarError(msg) {
+            errorDiv.innerText = msg;
+            errorDiv.style.display = "block";
         }
 
-        btn.onclick = login;
+        function resetBtn() {
+            btn.disabled = false;
+            btn.innerText = "Ingresar";
+        }
+
+        // Asignación de evento al botón
+        btn.onclick = realizarLogin;
+
+        // Soporte para tecla Enter
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') realizarLogin();
+        });
+
+        // Registro de Service Worker para PWA
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.register("./sw.js")
+                .then(() => console.log("SW: Listo"))
+                .catch(err => console.error("SW: Error", err));
+        }
     </script>
 </body>
 </html>
