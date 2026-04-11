@@ -4,15 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin General - Valle Esmeralda Residencial</title>
+    
+    <script>
+        (function() {
+            const rol = localStorage.getItem("rol");
+            const sesionActiva = localStorage.getItem("sesionActiva");
+            // Si no hay sesión o el rol no es admin, redirigir al login inmediatamente
+            if (!sesionActiva || rol !== "admin") {
+                window.location.replace("index.html");
+            }
+        })();
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
     <style>
         body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background: #f1f5f9; display: flex; }
         
-        /* BARRA LATERAL CON LOGO */
-        .sidebar { width: 220px; background: #1e293b; color: white; height: 100vh; padding: 20px; position: fixed; display: flex; flex-direction: column; align-items: center; border-right: 1px solid #334155; box-sizing: border-box; }
-        
+        /* BARRA LATERAL */
+        .sidebar { width: 220px; background: #1e293b; color: white; height: 100vh; padding: 20px; position: fixed; display: flex; flex-direction: column; align-items: center; border-right: 1px solid #334155; box-sizing: border-box; z-index: 1000; }
         .sidebar-logo { margin-bottom: 30px; text-align: center; border-bottom: 1px solid #334155; padding-bottom: 20px; width: 100%; }
         .sidebar-logo img { max-width: 150px; height: auto; }
-        
         .sidebar-links { width: 100%; }
         .sidebar a { display: block; color: #cbd5f5; text-decoration: none; padding: 12px; border-radius: 8px; margin-bottom: 10px; transition: 0.3s; font-size: 14px; cursor: pointer; }
         .sidebar a:hover { background: #334155; color: #38bdf8; }
@@ -20,43 +32,43 @@
         
         .main { margin-left: 220px; width: calc(100% - 220px); padding: 20px; box-sizing: border-box; }
         
-        /* CARDS DE CONTROL */
+        /* CARDS */
         .filter-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 25px; border-top: 4px solid #00a99d; }
         .grid-filtros { display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; }
         .campo { display: flex; flex-direction: column; gap: 5px; }
         .campo label { font-size: 11px; font-weight: bold; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
         .campo input, .campo select { padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; transition: 0.3s; min-width: 180px; }
-        .campo input:focus { border-color: #00a99d; outline: none; box-shadow: 0 0 0 3px rgba(0, 169, 157, 0.1); }
         
         /* BOTONES */
         .btn-accion { background: #0f172a; color: #38bdf8; border: none; padding: 11px 22px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s; font-size: 13px; text-transform: uppercase; }
         .btn-accion:hover { background: #00a99d; color: white; }
-        .btn-secundario { background: #f1f5f9; color: #475569; }
+        .btn-secundario { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
         .btn-secundario:hover { background: #e2e8f0; color: #0f172a; }
 
         .btn-peligro { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; padding: 11px 22px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; text-transform: uppercase; transition: 0.3s; }
         .btn-peligro:hover { background: #991b1b; color: white; }
 
-        /* TABLA ESTANDARIZADA */
+        .btn-excel { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; padding: 11px 22px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; text-transform: uppercase; transition: 0.3s; display: flex; align-items: center; gap: 8px; }
+        .btn-excel:hover { background: #166534; color: white; }
+
+        /* TABLA */
         .tabla-contenedor { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         table { width: 100%; border-collapse: collapse; }
         th { background: #0f172a; color: white; padding: 15px; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
         td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 14px; color: #334155; }
         
-        /* ESTADOS */
         .status { padding: 5px 10px; border-radius: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase; }
-        .usado { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
-        .pendiente { background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; }
-        .cancelado { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
-        .bloqueado { background: #1e293b; color: #ffffff; }
+        .usado { background: #dcfce7; color: #166534; }
+        .pendiente { background: #fef9c3; color: #854d0e; }
+        .cancelado { background: #fee2e2; color: #991b1b; }
 
-        #msg-status { margin-top: 15px; padding: 10px; border-radius: 6px; font-size: 13px; font-weight: bold; display: none; text-align: center; }
+        #msg-status { margin-top: 15px; padding: 12px; border-radius: 6px; font-size: 13px; font-weight: bold; display: none; text-align: center; }
     </style>
 </head>
 <body>
     <div class="sidebar">
         <div class="sidebar-logo">
-            <img src="logo.png" alt="Logo Valle Esmeralda">
+            <img src="logo.png" alt="Logo">
         </div>
         <div class="sidebar-links">
             <a href="pendientes.html">📋 Ver Pendientes</a>
@@ -70,7 +82,7 @@
             <h2 style="margin: 0 0 20px 0; color: #0f172a;">👥 Gestión de Usuarios</h2>
             <div class="grid-filtros">
                 <div class="campo">
-                    <label>Domicilio / Usuario</label>
+                    <label>Domicilio / ID</label>
                     <input type="text" id="userDom" placeholder="Ej: Valle de Onix 1">
                 </div>
                 <div class="campo">
@@ -86,13 +98,16 @@
                     </select>
                 </div>
                 <button class="btn-accion" id="btnCrearUser">💾 Guardar</button>
-                <button class="btn-peligro" id="btnBloquearUser">🚫 Bloquear / Desactivar</button>
+                <button class="btn-peligro" id="btnBloquearUser">🚫 Bloquear Usuario</button>
             </div>
             <div id="msg-status"></div>
         </div>
 
         <div class="filter-card">
-            <h2 style="margin: 0 0 20px 0; color: #0f172a;">📊 Historial Maestro de Accesos</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0; color: #0f172a;">📊 Historial Maestro</h2>
+                <button class="btn-excel" id="btnExportarExcel">📥 Exportar y Limpiar DB</button>
+            </div>
             <div class="grid-filtros">
                 <div class="campo">
                     <label>Desde</label>
@@ -112,14 +127,14 @@
                 <thead>
                     <tr>
                         <th>Fecha y Hora</th>
-                        <th>Nombre del Invitado</th>
+                        <th>Invitado</th>
                         <th>Casa</th>
                         <th>Tipo</th>
                         <th>Estado</th>
                     </tr>
                 </thead>
                 <tbody id="tabla-cuerpo">
-                    <tr><td colspan="5" style="text-align:center; padding:30px; color:#94a3b8;">Cargando historial...</td></tr>
+                    <tr><td colspan="5" style="text-align:center; padding:30px;">Cargando registros...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -127,34 +142,36 @@
 
     <script type="module">
         import { db } from "./firebase.js";
-        import { collection, query, onSnapshot, orderBy, where, getDocs, addDoc, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { collection, query, onSnapshot, orderBy, where, getDocs, addDoc, updateDoc, doc, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // --- PROTECCIÓN ---
-        if (localStorage.getItem("rol") !== "admin") {
-            window.location.href = "index.html";
-        }
-
+        // Función global de cerrar sesión
         window.cerrarSesion = () => {
             localStorage.clear();
-            window.location.href = "index.html";
+            window.location.replace("index.html");
         };
 
         const tablaCuerpo = document.getElementById("tabla-cuerpo");
         const statusDiv = document.getElementById("msg-status");
         let unsubscribe;
+        let datosParaBorrar = [];
 
-        // --- RENDER TABLA HISTORIAL ---
+        // --- RENDERIZAR TABLA ---
         function renderizarTabla(snapshot) {
             tablaCuerpo.innerHTML = "";
+            datosParaBorrar = [];
             if (snapshot.empty) {
-                tablaCuerpo.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:30px; color:#94a3b8;">No hay datos para mostrar.</td></tr>';
+                tablaCuerpo.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:30px;">Sin resultados.</td></tr>';
                 return;
             }
 
             snapshot.forEach(docSnap => {
                 const d = docSnap.data();
+                const id = docSnap.id;
                 const fecha = d.timestamp ? new Date(d.timestamp).toLocaleString() : "---";
                 const est = d.estado || "pendiente";
+                
+                datosParaBorrar.push({ id, ...d, fechaExcel: fecha });
+
                 const tr = document.createElement("tr");
                 tr.innerHTML = `
                     <td>${fecha}</td>
@@ -170,13 +187,45 @@
         const qIni = query(collection(db, "visitas"), orderBy("timestamp", "desc"));
         unsubscribe = onSnapshot(qIni, renderizarTabla);
 
-        // --- GUARDAR USUARIO ---
+        // --- EXPORTAR Y LIMPIAR ---
+        document.getElementById("btnExportarExcel").onclick = async () => {
+            if (datosParaBorrar.length === 0) return alert("No hay datos para exportar.");
+            
+            const confirmacion = confirm("ATENCIÓN: Se descargará el Excel y se ELIMINARÁN estos registros de Firebase para liberar espacio. ¿Desea continuar?");
+            if (!confirmacion) return;
+
+            try {
+                const dataExcel = datosParaBorrar.map(i => ({
+                    Fecha: i.fechaExcel,
+                    Invitado: i.nombre,
+                    Casa: i.casa,
+                    Tipo: i.tipo || 'Visita',
+                    Estado: i.estado
+                }));
+
+                const ws = XLSX.utils.json_to_sheet(dataExcel);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Historial");
+                XLSX.writeFile(wb, `Historial_${new Date().getTime()}.xlsx`);
+
+                const batch = writeBatch(db);
+                datosParaBorrar.forEach(item => {
+                    batch.delete(doc(db, "visitas", item.id));
+                });
+                await batch.commit();
+                alert("Base de datos optimizada y archivo descargado.");
+            } catch (e) {
+                alert("Error al procesar la limpieza.");
+            }
+        };
+
+        // --- GESTIÓN USUARIOS ---
         document.getElementById("btnCrearUser").onclick = async () => {
             const dom = document.getElementById("userDom").value.trim();
             const pass = document.getElementById("userPass").value.trim();
             const rol = document.getElementById("userRol").value;
 
-            if(!dom || !pass) return alert("Completa domicilio y contraseña.");
+            if(!dom || !pass) return alert("Llena los campos de usuario.");
 
             try {
                 await addDoc(collection(db, "usuarios"), {
@@ -185,57 +234,43 @@
                     rol: rol,
                     activo: true
                 });
-                mostrarStatus("Usuario guardado con éxito", "#10b981", "#dcfce7");
+                mostrarStatus("Usuario guardado correctamente", "#10b981", "#dcfce7");
                 document.getElementById("userDom").value = "";
                 document.getElementById("userPass").value = "";
             } catch (e) {
-                mostrarStatus("Error de permisos en Firebase", "#ef4444", "#fee2e2");
+                mostrarStatus("Error al guardar usuario", "#ef4444", "#fee2e2");
             }
         };
 
-        // --- BLOQUEAR USUARIO ---
         document.getElementById("btnBloquearUser").onclick = async () => {
             const dom = document.getElementById("userDom").value.trim();
-            if(!dom) return alert("Escribe el domicilio del usuario que deseas bloquear.");
-
-            if(!confirm(`¿Estás seguro de bloquear el acceso para: ${dom}?`)) return;
+            if(!dom) return alert("Escribe el domicilio a bloquear.");
 
             try {
                 const q = query(collection(db, "usuarios"), where("domicilio", "==", dom));
                 const snap = await getDocs(q);
+                if(snap.empty) return alert("Usuario no encontrado.");
 
-                if(snap.empty) {
-                    alert("No se encontró ningún usuario con ese domicilio.");
-                    return;
-                }
-
-                // Bloqueamos todos los documentos que coincidan con ese domicilio
-                const promesas = [];
-                snap.forEach((usuarioDoc) => {
-                    const ref = doc(db, "usuarios", usuarioDoc.id);
-                    promesas.push(updateDoc(ref, { activo: false, password: "BLOQUEADO_" + Math.random() }));
+                const batch = writeBatch(db);
+                snap.forEach(uDoc => {
+                    batch.update(doc(db, "usuarios", uDoc.id), { activo: false, password: "BLOQUEADO_" + Math.random() });
                 });
-
-                await Promise.all(promesas);
-                mostrarStatus(`Usuario ${dom} BLOQUEADO correctamente`, "#ffffff", "#1e293b");
-                document.getElementById("userDom").value = "";
-            } catch (e) {
-                console.error(e);
-                alert("Error al intentar bloquear.");
-            }
+                await batch.commit();
+                mostrarStatus("Usuario bloqueado y acceso denegado", "#ffffff", "#1e293b");
+            } catch (e) { alert("Error al bloquear."); }
         };
 
-        // --- FILTROS HISTORIAL ---
+        // --- FILTROS ---
         document.getElementById("btnFiltrar").onclick = async () => {
             const f1 = document.getElementById("fechaInicio").value;
             const f2 = document.getElementById("fechaFin").value;
-            if (!f1 || !f2) return alert("Selecciona fechas.");
+            if(!f1 || !f2) return alert("Seleccione el rango de fechas.");
             
-            unsubscribe();
-            const inicioMs = new Date(f1 + "T00:00:00").getTime();
-            const finMs = new Date(f2 + "T23:59:59").getTime();
-
-            const qF = query(collection(db, "visitas"), where("timestamp", ">=", inicioMs), where("timestamp", "<=", finMs), orderBy("timestamp", "desc"));
+            unsubscribe(); 
+            const inicio = new Date(f1 + "T00:00:00").getTime();
+            const fin = new Date(f2 + "T23:59:59").getTime();
+            
+            const qF = query(collection(db, "visitas"), where("timestamp", ">=", inicio), where("timestamp", "<=", fin), orderBy("timestamp", "desc"));
             const snap = await getDocs(qF);
             renderizarTabla(snap);
         };
@@ -251,7 +286,7 @@
             statusDiv.style.color = color;
             statusDiv.style.backgroundColor = bg;
             statusDiv.style.display = "block";
-            setTimeout(() => { statusDiv.style.display = "none"; }, 5000);
+            setTimeout(() => statusDiv.style.display = "none", 4000);
         }
     </script>
 </body>
