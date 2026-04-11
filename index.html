@@ -3,125 +3,234 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Valle Esmeralda - Acceso</title>
-    <link rel="manifest" href="manifest.json">
+    <title>Acceso - Valle Esmeralda Residencial</title>
     <style>
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #0f172a; display: flex; align-items: center; justify-content: center; height: 100vh; flex-direction: column; }
-        .logo-container { margin-bottom: 25px; text-align: center; }
-        .logo-container img { max-width: 250px; height: auto; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3)); }
-        .login-box { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); width: 90%; max-width: 340px; text-align: center; border-top: 6px solid #00a99d; }
-        h2 { color: #1e293b; margin-bottom: 25px; font-size: 22px; font-weight: bold; }
-        .input-group { text-align: left; margin-bottom: 15px; }
-        label { display: block; font-size: 11px; font-weight: bold; color: #64748b; margin-bottom: 5px; text-transform: uppercase; }
-        input { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; box-sizing: border-box; font-size: 16px; transition: 0.3s; }
-        input:focus { outline: none; border-color: #ec008c; box-shadow: 0 0 0 3px rgba(236, 0, 140, 0.1); }
-        button { width: 100%; padding: 15px; background: #0f172a; color: #38bdf8; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; margin-top: 10px; }
-        button:hover { background: #00a99d; color: white; }
-        button:disabled { opacity: 0.6; cursor: not-allowed; }
-        #error-msg { color: #ef4444; font-size: 13px; margin-top: 15px; display: none; font-weight: 500; padding: 10px; background: #fee2e2; border-radius: 8px; }
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #334155;
+        }
+
+        .login-card {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .logo {
+            margin-bottom: 25px;
+        }
+
+        .logo img {
+            max-width: 180px;
+            height: auto;
+        }
+
+        h2 {
+            margin-bottom: 25px;
+            color: #1e293b;
+            font-size: 24px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: bold;
+            color: #64748b;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+            margin-left: 5px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #00a99d;
+            box-shadow: 0 0 0 3px rgba(0, 169, 157, 0.1);
+        }
+
+        .btn-ingresar {
+            width: 100%;
+            padding: 14px;
+            background: #0f172a;
+            color: #38bdf8;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-ingresar:hover {
+            background: #00a99d;
+            color: white;
+        }
+
+        #error-msg {
+            color: #ef4444;
+            font-size: 14px;
+            margin-top: 15px;
+            display: none;
+            background: #fee2e2;
+            padding: 10px;
+            border-radius: 6px;
+        }
+
+        .footer-text {
+            margin-top: 25px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
     </style>
 </head>
 <body>
 
-    <div class="logo-container">
-        <img src="logo.png" alt="Valle Esmeralda Residencial">
-    </div>
-
-    <div class="login-box">
-        <h2>Panel de Acceso</h2>
+    <div class="login-card">
+        <div class="logo">
+            <img src="logo.png" alt="Valle Esmeralda">
+        </div>
+        
+        <h2>Control de Acceso</h2>
         
         <div class="input-group">
-            <label>Usuario (Domicilio)</label>
-            <input id="domicilioInput" type="text" placeholder="Ej: caseta" autocomplete="username">
+            <label>Usuario / Domicilio</label>
+            <input type="text" id="userEmail" placeholder="Ej: Valle de Onix 1">
         </div>
         
         <div class="input-group">
             <label>Contraseña</label>
-            <input id="passwordInput" type="password" placeholder="••••" autocomplete="current-password">
+            <input type="password" id="userPass" placeholder="••••••••">
         </div>
         
-        <button id="loginBtn">Ingresar</button>
+        <button class="btn-ingresar" id="btnLogin">Entrar al Sistema</button>
+        
         <div id="error-msg"></div>
+        
+        <div class="footer-text">
+            © 2026 Valle Esmeralda Residencial <br>
+            Panel de Administración y Vigilancia
+        </div>
     </div>
 
     <script type="module">
         import { db } from "./firebase.js";
         import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        const btn = document.getElementById("loginBtn");
-        const errorBox = document.getElementById("error-msg");
+        // Limpiar cualquier sesión previa al cargar el login
+        localStorage.clear();
 
-        async function realizarLogin() {
-            // El .trim() elimina espacios accidentales al inicio o final
-            const userVal = document.getElementById("domicilioInput").value.trim();
-            const passVal = document.getElementById("passwordInput").value.trim();
+        const btnLogin = document.getElementById("btnLogin");
+        const errorMsg = document.getElementById("error-msg");
 
-            errorBox.style.display = "none";
+        btnLogin.onclick = async () => {
+            const userVal = document.getElementById("userEmail").value.trim();
+            const passVal = document.getElementById("userPass").value.trim();
 
             if (!userVal || !passVal) {
-                mostrarError("Ingresa usuario y contraseña");
+                mostrarError("Por favor, completa todos los campos.");
                 return;
             }
 
             try {
-                btn.disabled = true;
-                btn.innerText = "Verificando...";
+                btnLogin.innerText = "Verificando...";
+                btnLogin.disabled = true;
 
-                // Consulta exacta al campo 'domicilio'
+                // Buscamos el usuario por su domicilio
                 const q = query(collection(db, "usuarios"), where("domicilio", "==", userVal));
                 const querySnapshot = await getDocs(q);
 
                 if (querySnapshot.empty) {
-                    // Si falla, intentamos una búsqueda ignorando mayúsculas (común en móviles)
-                    console.log("No encontrado con: " + userVal);
-                    mostrarError("El usuario o domicilio no existe.");
+                    mostrarError("El usuario no existe.");
                     resetBtn();
                     return;
                 }
 
-                let userData = null;
-                querySnapshot.forEach((doc) => {
-                    userData = doc.data();
-                });
+                const docEncontrado = querySnapshot.docs[0];
+                const userData = docEncontrado.data();
 
-                // Validación de contraseña
-                if (String(userData.password) === String(passVal)) {
-                    localStorage.setItem("usuario", userVal);
-                    localStorage.setItem("rol", userData.rol);
-                    localStorage.setItem("casa", userData.domicilio);
+                // Verificación de cuenta activa
+                if (userData.activo === false) {
+                    mostrarError("Esta cuenta ha sido bloqueada. Contacte al administrador.");
+                    resetBtn();
+                    return;
+                }
 
-                    // Redirección por rol según tu Firebase
-                    if (userData.rol === "admin") {
-                        window.location.href = "admin.html";
-                    } else if (userData.rol === "caseta") {
-                        window.location.href = "pendientes.html";
+                // Verificación de contraseña (Distinguir mayúsculas/minúsculas)
+                if (userData.password === passVal) {
+                    
+                    // --- GUARDAR CREDENCIALES DE SESIÓN ---
+                    localStorage.setItem("sesionActiva", "true");
+                    localStorage.setItem("usuario", userData.domicilio);
+                    localStorage.setItem("rol", userData.rol.toLowerCase()); // Forzamos minúsculas para seguridad
+
+                    // Redirección según Rol
+                    const rol = userData.rol.toLowerCase();
+                    
+                    if (rol === "admin") {
+                        window.location.replace("admin.html");
+                    } else if (rol === "caseta") {
+                        window.location.replace("pendientes.html");
                     } else {
-                        window.location.href = "generar.html";
+                        window.location.replace("residente.html");
                     }
+
                 } else {
-                    mostrarError("Contraseña incorrecta");
+                    mostrarError("Contraseña incorrecta.");
                     resetBtn();
                 }
 
             } catch (error) {
-                console.error("Error completo:", error);
-                mostrarError("Error de comunicación con Firebase.");
+                console.error("Error Login:", error);
+                mostrarError("Error de conexión con el servidor.");
                 resetBtn();
             }
-        }
+        };
 
         function mostrarError(txt) {
-            errorBox.innerText = txt;
-            errorBox.style.display = "block";
+            errorMsg.innerText = txt;
+            errorMsg.style.display = "block";
+            setTimeout(() => {
+                errorMsg.style.display = "none";
+            }, 5000);
         }
 
         function resetBtn() {
-            btn.disabled = false;
-            btn.innerText = "Ingresar";
+            btnLogin.innerText = "Entrar al Sistema";
+            btnLogin.disabled = false;
         }
 
-        btn.onclick = realizarLogin;
-        document.addEventListener('keypress', (e) => { if (e.key === 'Enter') realizarLogin(); });
+        // Permitir entrar con la tecla "Enter"
+        document.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                btnLogin.click();
+            }
+        });
     </script>
 </body>
 </html>
