@@ -1,58 +1,64 @@
-Sí, te lo entregué completo, pero para asegurarnos de que no falte absolutamente nada de la lógica de búsqueda por fechas y la seguridad de administrador, aquí tienes la versión definitiva de admin.html.
-
-Esta versión incluye el código para renderizar la tabla, la protección de acceso y la integración total con los colores Slate & Sky Blue.
-
-HTML
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin General - Valle Esmeralda</title>
+    <title>Admin General - Valle Esmeralda Residencial</title>
     <style>
-        body { margin: 0; font-family: 'Segoe UI', Arial; background: #f1f5f9; display: flex; }
+        body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background: #f1f5f9; display: flex; }
         
-        /* BARRA LATERAL */
-        .sidebar { width: 220px; background: #0f172a; color: white; height: 100vh; padding: 20px; position: fixed; }
-        .sidebar h2 { font-size: 18px; color: #38bdf8; margin-bottom: 25px; border-bottom: 1px solid #1e293b; padding-bottom: 10px; }
-        .sidebar a { display: block; color: #cbd5f5; text-decoration: none; padding: 12px; border-radius: 8px; margin-bottom: 10px; transition: 0.3s; }
-        .sidebar a:hover { background: #1e293b; color: white; }
+        /* BARRA LATERAL CON LOGO */
+        .sidebar { width: 220px; background: #1e293b; color: white; height: 100vh; padding: 20px; position: fixed; display: flex; flex-direction: column; align-items: center; border-right: 1px solid #334155; }
         
-        .main { margin-left: 240px; width: calc(100% - 240px); padding: 20px; }
+        .sidebar-logo { margin-bottom: 30px; text-align: center; border-bottom: 1px solid #334155; padding-bottom: 20px; width: 100%; }
+        .sidebar-logo img { max-width: 150px; height: auto; }
+        
+        .sidebar-links { width: 100%; }
+        .sidebar a { display: block; color: #cbd5f5; text-decoration: none; padding: 12px; border-radius: 8px; margin-bottom: 10px; transition: 0.3s; font-size: 14px; }
+        .sidebar a:hover { background: #334155; color: #38bdf8; }
+        .sidebar a.active { background: #0f172a; color: #00a99d; font-weight: bold; } /* Verde Esmeralda */
+        
+        .main { margin-left: 260px; width: calc(100% - 260px); padding: 20px; }
         
         /* CARD DE FILTROS */
-        .filter-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 25px; }
+        .filter-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 25px; border-top: 4px solid #00a99d; }
         .grid-filtros { display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; }
         .campo { display: flex; flex-direction: column; gap: 5px; }
         .campo label { font-size: 12px; font-weight: bold; color: #64748b; text-transform: uppercase; }
-        .campo input { padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; }
+        .campo input { padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; transition: 0.3s; }
+        .campo input:focus { border-color: #00a99d; outline: none; box-shadow: 0 0 0 3px rgba(0, 169, 157, 0.1); }
         
-        /* BOTONES */
-        .btn-accion { background: #0f172a; color: #38bdf8; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .btn-accion:hover { background: #1e293b; color: white; }
+        /* BOTONES AJUSTADOS AL LOGO */
+        .btn-accion { background: #0f172a; color: #38bdf8; border: none; padding: 11px 22px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s; font-size: 13px; text-transform: uppercase; }
+        .btn-accion:hover { background: #00a99d; color: white; }
         .btn-secundario { background: #f1f5f9; color: #475569; }
+        .btn-secundario:hover { background: #e2e8f0; color: #0f172a; }
 
-        /* TABLA */
+        /* TABLA ESTANDARIZADA */
         .tabla-contenedor { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         table { width: 100%; border-collapse: collapse; }
-        th { background: #0f172a; color: white; padding: 15px; text-align: left; font-size: 13px; text-transform: uppercase; }
+        th { background: #0f172a; color: white; padding: 15px; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
         td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 14px; color: #334155; }
         
-        /* ESTADOS */
-        .status { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
-        .usado { background: #dcfce7; color: #166534; }
-        .pendiente { background: #fef9c3; color: #854d0e; }
-        .cancelado { background: #fee2e2; color: #991b1b; }
-        .expirado { background: #f1f5f9; color: #64748b; }
+        /* ESTADOS AJUSTADOS AL LOGO */
+        .status { padding: 5px 10px; border-radius: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase; }
+        .usado { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; } /* PERMITIDO */
+        .pendiente { background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; }
+        .cancelado { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; } /* DENEGADO/CANCELADO - ROJO ACENTUADO */
+        .expirado { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
     </style>
 </head>
 <body>
     <div class="sidebar">
-        <h2>🏢 Valle Esmeralda</h2>
-        <a href="escaner.html">🏠 Escáner QR</a>
-        <a href="pendientes.html">📋 Ver Pendientes</a>
-        <a href="admin.html" style="background: #1e293b; color: #38bdf8;">📊 Admin General</a>
-        <a onclick="cerrarSesion()" style="color:#ef4444; cursor:pointer; margin-top:30px; display:block; padding:12px;">🚪 Cerrar Sesión</a>
+        <div class="sidebar-logo">
+            <img src="logo.png" alt="Logo Valle Esmeralda">
+        </div>
+        <div class="sidebar-links">
+            <a href="escaner.html">🏠 Escáner QR</a>
+            <a href="pendientes.html">📋 Ver Pendientes</a>
+            <a href="admin.html" class="active">📊 Admin General</a>
+            <a onclick="cerrarSesion()" style="color:#ec008c; cursor:pointer; margin-top:30px; display:block; padding:12px; font-weight:bold;">🚪 Cerrar Sesión</a>
+        </div>
     </div>
 
     <div class="main">
@@ -60,15 +66,15 @@ HTML
             <h2 style="margin: 0 0 20px 0; color: #0f172a;">📊 Historial Maestro de Accesos</h2>
             <div class="grid-filtros">
                 <div class="campo">
-                    <label>Fecha Inicio</label>
+                    <label>Desde</label>
                     <input type="date" id="fechaInicio">
                 </div>
                 <div class="campo">
-                    <label>Fecha Fin</label>
+                    <label>Hasta</label>
                     <input type="date" id="fechaFin">
                 </div>
-                <button class="btn-accion" id="btnFiltrar">🔍 Filtrar Historial</button>
-                <button class="btn-accion btn-secundario" id="btnLimpiar">🧹 Ver Todo</button>
+                <button class="btn-accion" id="btnFiltrar">🔍 Buscar</button>
+                <button class="btn-accion btn-secundario" id="btnLimpiar">🧹 Limpiar Filtros</button>
             </div>
         </div>
 
@@ -84,7 +90,8 @@ HTML
                     </tr>
                 </thead>
                 <tbody id="tabla-cuerpo">
-                    </tbody>
+                    <tr><td colspan="5" style="text-align:center; padding:30px; color:#94a3b8;">Cargando historial...</td></tr>
+                </tbody>
             </table>
         </div>
     </div>
@@ -95,7 +102,6 @@ HTML
 
         // --- PROTECCIÓN DE RUTA ---
         if (localStorage.getItem("rol") !== "admin") {
-            alert("Acceso denegado. Se requiere perfil de Administrador.");
             window.location.href = "escaner.html";
         }
 
@@ -111,7 +117,7 @@ HTML
         function renderizarTabla(snapshot) {
             tablaCuerpo.innerHTML = "";
             if (snapshot.empty) {
-                tablaCuerpo.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:30px;">No se encontraron registros en este periodo.</td></tr>';
+                tablaCuerpo.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:30px; color:#94a3b8;">No se encontraron registros para este periodo.</td></tr>';
                 return;
             }
 
@@ -126,7 +132,7 @@ HTML
                     <td><b>${d.nombre}</b></td>
                     <td>${d.casa}</td>
                     <td>${d.tipo || 'Visita'}</td>
-                    <td><span class="status ${estadoClass}">${estadoClass.toUpperCase()}</span></td>
+                    <td><span class="status ${estadoClass}">${estadoClass}</span></td>
                 `;
                 tablaCuerpo.appendChild(tr);
             });
@@ -142,11 +148,11 @@ HTML
             const f2 = document.getElementById("fechaFin").value;
 
             if (!f1 || !f2) {
-                alert("Selecciona ambas fechas para realizar la búsqueda.");
+                alert("Selecciona ambas fechas.");
                 return;
             }
 
-            // Detenemos la escucha en tiempo real para mostrar solo el filtro
+            // Detenemos tiempo real
             unsubscribe();
 
             const inicioMs = new Date(f1 + "T00:00:00").getTime();
@@ -165,7 +171,7 @@ HTML
             } catch (error) {
                 console.error("Error al filtrar:", error);
                 if (error.message.includes("index")) {
-                    alert("⚠️ Error de índice: Haz clic en el link que aparece en la consola (F12) para habilitar esta búsqueda.");
+                    alert("⚠️ Falta crear un índice en Firebase. Revisa la consola (F12) para activarlo.");
                 }
             }
         };
