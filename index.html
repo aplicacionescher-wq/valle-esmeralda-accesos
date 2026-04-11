@@ -6,14 +6,38 @@
     <title>Valle Esmeralda - Acceso</title>
     <link rel="manifest" href="manifest.json">
     <style>
-        body { margin: 0; font-family: 'Segoe UI', Arial; background: #0f172a; display: flex; align-items: center; justify-content: center; height: 100vh; }
+        /* Estética Slate & Sky Blue */
+        body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background: #0f172a; display: flex; align-items: center; justify-content: center; height: 100vh; }
         .login-box { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); width: 100%; max-width: 350px; text-align: center; }
-        h2 { color: #0f172a; margin-bottom: 25px; font-size: 24px; }
+        h2 { color: #0f172a; margin-bottom: 25px; font-size: 24px; font-weight: bold; }
+        
         .input-group { text-align: left; margin-bottom: 15px; }
         label { display: block; font-size: 12px; font-weight: bold; color: #64748b; margin-bottom: 5px; text-transform: uppercase; }
-        input { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; box-sizing: border-box; font-size: 16px; transition: 0.3s; }
+        
+        input { 
+            width: 100%; 
+            padding: 12px; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 8px; 
+            box-sizing: border-box; 
+            font-size: 16px; 
+            transition: 0.3s;
+        }
         input:focus { outline: none; border-color: #38bdf8; box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2); }
-        button { width: 100%; padding: 14px; background: #0f172a; color: #38bdf8; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; margin-top: 10px; }
+        
+        button { 
+            width: 100%; 
+            padding: 14px; 
+            background: #0f172a; 
+            color: #38bdf8; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 16px; 
+            transition: 0.3s; 
+            margin-top: 10px; 
+        }
         button:hover { background: #1e293b; color: white; }
         button:disabled { opacity: 0.6; cursor: not-allowed; }
     </style>
@@ -21,14 +45,17 @@
 <body>
     <div class="login-box">
         <h2>🏢 Valle Esmeralda</h2>
+        
         <div class="input-group">
-            <label>Usuario</label>
-            <input id="domicilio" type="text" placeholder="Ej: Calle 5 num 10">
+            <label>Usuario (Calle y Número)</label>
+            <input id="domicilio" type="text" placeholder="Ej: Av. Esmeralda 123">
         </div>
+        
         <div class="input-group">
             <label>Contraseña</label>
             <input id="password" type="password" placeholder="••••••••">
         </div>
+        
         <button id="loginBtn">Ingresar al Sistema</button>
     </div>
 
@@ -37,61 +64,77 @@
         import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         async function login() {
-            const usuario = document.getElementById("domicilio").value.trim();
-            const password = document.getElementById("password").value.trim();
+            const userIn = document.getElementById("domicilio").value.trim();
+            const passIn = document.getElementById("password").value.trim();
             const btn = document.getElementById("loginBtn");
 
-            if (!usuario || !password) return alert("Por favor, completa todos los campos.");
+            if (!userIn || !passIn) {
+                alert("Por favor, ingresa usuario y contraseña.");
+                return;
+            }
 
             try {
                 btn.disabled = true;
                 btn.innerText = "Verificando...";
 
-                const q = query(collection(db, "usuarios"), where("usuario", "==", usuario));
+                // Consulta a la colección 'usuarios' donde el campo 'usuario' coincida
+                const q = query(collection(db, "usuarios"), where("usuario", "==", userIn));
                 const snap = await getDocs(q);
 
                 if (snap.empty) {
-                    alert("Usuario no registrado.");
-                    resetBtn(btn);
+                    alert("El usuario no existe en la base de datos.");
+                    resetBtn();
                     return;
                 }
 
                 let userData = null;
-                snap.forEach(doc => userData = doc.data());
+                snap.forEach(doc => {
+                    userData = doc.data();
+                });
 
-                if (userData.password === password) {
-                    localStorage.setItem("usuario", usuario);
-                    localStorage.setItem("rol", userData.rol); // admin, caseta, residente
-                    localStorage.setItem("casa", userData.casa || "S/N");
+                // Validación de contraseña (sensible a mayúsculas/minúsculas)
+                if (userData.password === passIn) {
+                    // Guardar sesión local
+                    localStorage.setItem("usuario", userIn);
+                    localStorage.setItem("rol", userData.rol || "residente");
+                    localStorage.setItem("casa", userData.casa || userIn);
 
-                    // REDIRECCIÓN INTELIGENTE
-                    if (userData.rol === "admin") {
+                    // Redirección por Rol
+                    const rol = userData.rol;
+                    if (rol === "admin") {
                         window.location.href = "admin.html";
-                    } else if (userData.rol === "caseta") {
+                    } else if (rol === "caseta") {
                         window.location.href = "pendientes.html";
                     } else {
-                        window.location.href = "generar.html";
+                        // Si es un residente normal, lo mandas a su página de generar QR
+                        window.location.href = "generar.html"; 
                     }
                 } else {
                     alert("Contraseña incorrecta.");
-                    resetBtn(btn);
+                    resetBtn();
                 }
-            } catch (e) {
-                console.error(e);
-                alert("Error de conexión con la base de datos.");
-                resetBtn(btn);
+
+            } catch (error) {
+                console.error("Error en login:", error);
+                alert("Error de conexión con Firebase. Revisa tu internet.");
+                resetBtn();
             }
         }
 
-        function resetBtn(btn) {
+        function resetBtn() {
+            const btn = document.getElementById("loginBtn");
             btn.disabled = false;
             btn.innerText = "Ingresar al Sistema";
         }
 
+        // Asignar evento al botón
         document.getElementById("loginBtn").onclick = login;
 
+        // Registro de Service Worker para PWA
         if ("serviceWorker" in navigator) {
-            navigator.serviceWorker.register("./sw.js");
+            navigator.serviceWorker.register("./sw.js")
+                .then(() => console.log("Service Worker Activo"))
+                .catch(err => console.log("Error en SW", err));
         }
     </script>
 </body>
