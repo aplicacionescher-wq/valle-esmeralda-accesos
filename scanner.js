@@ -31,7 +31,7 @@ window.onScanSuccess = async function(decodedText) {
 
         const data = snap.data();
         const ahora = Date.now();
-        const limite = 24 * 60 * 60 * 1000; // 24 horas de validez
+        const limite = 12 * 60 * 60 * 1000; // 24 horas de validez
 
         // CASO A: El pase ya fue usado
         if (data.estado === "usado") {
@@ -39,11 +39,11 @@ window.onScanSuccess = async function(decodedText) {
             mostrarResultado("⚠️ ACCESO DENEGADO", "Este pase ya fue utilizado anteriormente.", "#f59e0b");
         } 
         
-        // CASO B: El pase expiró (más de 24 horas)
+        // CASO B: El pase expiró (más de 12 horas)
         else if (data.timestamp && (ahora - data.timestamp) > limite) {
             await updateDoc(docRef, { estado: "expirado" });
-            await registrarEnHistorial(data.nombre, data.casa, "DENEGADO", "QR expirado (24h)");
-            mostrarResultado("⏰ PASE EXPIRADO", "El tiempo de validez de 24 horas ha terminado.", "#ef4444");
+            await registrarEnHistorial(data.nombre, data.casa, "DENEGADO", "QR expirado (12h)");
+            mostrarResultado("⏰ PASE EXPIRADO", "El tiempo de validez de 12 horas ha terminado.", "#ef4444");
         } 
         
         // CASO C: ACCESO CORRECTO
