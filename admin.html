@@ -19,29 +19,35 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <style>
-        body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background: #f1f5f9; display: flex; }
+        body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background: #f1f5f9; display: flex; min-height: 100vh; }
         
-        /* BARRA LATERAL */
+        /* BARRA LATERAL (SIDEBAR) */
         .sidebar { width: 220px; background: #1e293b; color: white; height: 100vh; padding: 20px; position: fixed; display: flex; flex-direction: column; align-items: center; border-right: 1px solid #334155; box-sizing: border-box; z-index: 1000; }
+        
         .sidebar-logo { margin-bottom: 30px; text-align: center; border-bottom: 1px solid #334155; padding-bottom: 20px; width: 100%; }
         .sidebar-logo img { max-width: 150px; height: auto; }
+        
         .sidebar-links { width: 100%; }
         .sidebar a { display: block; color: #cbd5f5; text-decoration: none; padding: 12px; border-radius: 8px; margin-bottom: 10px; transition: 0.3s; font-size: 14px; cursor: pointer; }
         .sidebar a:hover { background: #334155; color: #38bdf8; }
         .sidebar a.active { background: #0f172a; color: #00a99d; font-weight: bold; }
         
+        /* CONTENIDO PRINCIPAL */
         .main { margin-left: 220px; width: calc(100% - 220px); padding: 20px; box-sizing: border-box; }
         
-        /* CARDS */
+        /* TARJETAS (CARDS) */
         .filter-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 25px; border-top: 4px solid #00a99d; }
         .grid-filtros { display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; }
+        
         .campo { display: flex; flex-direction: column; gap: 5px; }
         .campo label { font-size: 11px; font-weight: bold; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
-        .campo input, .campo select { padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; transition: 0.3s; min-width: 180px; }
+        .campo input, .campo select { padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; transition: 0.3s; min-width: 180px; box-sizing: border-box; }
+        .campo input:focus, .campo select:focus { border-color: #00a99d; outline: none; box-shadow: 0 0 0 3px rgba(0, 169, 157, 0.1); }
         
         /* BOTONES */
         .btn-accion { background: #0f172a; color: #38bdf8; border: none; padding: 11px 22px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s; font-size: 13px; text-transform: uppercase; }
         .btn-accion:hover { background: #00a99d; color: white; }
+        
         .btn-secundario { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
         .btn-secundario:hover { background: #e2e8f0; color: #0f172a; }
 
@@ -57,18 +63,20 @@
         th { background: #0f172a; color: white; padding: 15px; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
         td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 14px; color: #334155; }
         
-        .status { padding: 5px 10px; border-radius: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase; }
+        /* ETIQUETAS DE ESTADO */
+        .status { padding: 5px 10px; border-radius: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase; display: inline-block; }
         .usado { background: #dcfce7; color: #166534; }
         .pendiente { background: #fef9c3; color: #854d0e; }
         .cancelado { background: #fee2e2; color: #991b1b; }
 
+        /* MENSAJES DE ESTADO (TOAST) */
         #msg-status { margin-top: 15px; padding: 12px; border-radius: 6px; font-size: 13px; font-weight: bold; display: none; text-align: center; }
     </style>
 </head>
 <body>
     <div class="sidebar">
         <div class="sidebar-logo">
-            <img src="logo.png" alt="Logo">
+            <img src="logo.png" alt="Logo Residencial">
         </div>
         <div class="sidebar-links">
             <a href="pendientes.html">📋 Ver Pendientes</a>
@@ -82,59 +90,63 @@
             <h2 style="margin: 0 0 20px 0; color: #0f172a;">👥 Gestión de Usuarios</h2>
             <div class="grid-filtros">
                 <div class="campo">
-                    <label>Domicilio / ID</label>
+                    <label>Domicilio / ID de Usuario</label>
                     <input type="text" id="userDom" placeholder="Ej: Valle de Onix 1">
                 </div>
                 <div class="campo">
                     <label>Contraseña</label>
-                    <input type="text" id="userPass" placeholder="Contraseña">
+                    <input type="text" id="userPass" placeholder="Asignar contraseña">
                 </div>
                 <div class="campo">
-                    <label>Rol</label>
+                    <label>Rol de Usuario</label>
                     <select id="userRol">
                         <option value="residente">Residente</option>
-                        <option value="caseta">Caseta</option>
+                        <option value="caseta">Caseta / Guardia</option>
                         <option value="admin">Administrador</option>
                     </select>
                 </div>
-                <button class="btn-accion" id="btnCrearUser">💾 Guardar</button>
-                <button class="btn-peligro" id="btnBloquearUser">🚫 Bloquear Usuario</button>
+                <button class="btn-accion" id="btnCrearUser">💾 Guardar Usuario</button>
+                <button class="btn-peligro" id="btnBloquearUser">🚫 Bloquear Acceso</button>
             </div>
             <div id="msg-status"></div>
         </div>
 
         <div class="filter-card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2 style="margin: 0; color: #0f172a;">📊 Historial Maestro</h2>
-                <button class="btn-excel" id="btnExportarExcel">📥 Exportar y Limpiar DB</button>
+                <h2 style="margin: 0; color: #0f172a;">📊 Historial Maestro de Accesos</h2>
+                <button class="btn-excel" id="btnExportarExcel">📥 Exportar a Excel</button>
             </div>
             <div class="grid-filtros">
                 <div class="campo">
-                    <label>Desde</label>
+                    <label>Desde (Fecha Inicio)</label>
                     <input type="date" id="fechaInicio">
                 </div>
                 <div class="campo">
-                    <label>Hasta</label>
+                    <label>Hasta (Fecha Fin)</label>
                     <input type="date" id="fechaFin">
                 </div>
-                <button class="btn-accion" id="btnFiltrar">🔍 Buscar</button>
+                <button class="btn-accion" id="btnFiltrar">🔍 Aplicar Filtro</button>
                 <button class="btn-accion btn-secundario" id="btnLimpiar">🧹 Limpiar Filtros</button>
             </div>
         </div>
 
         <div class="tabla-contenedor">
-            <table>
+            <table id="tabla-maestra">
                 <thead>
                     <tr>
                         <th>Fecha y Hora</th>
-                        <th>Invitado</th>
-                        <th>Casa</th>
-                        <th>Tipo</th>
-                        <th>Estado</th>
+                        <th>Nombre del Invitado</th>
+                        <th>Casa / Domicilio</th>
+                        <th>Tipo de Acceso</th>
+                        <th>Estado Actual</th>
                     </tr>
                 </thead>
                 <tbody id="tabla-cuerpo">
-                    <tr><td colspan="5" style="text-align:center; padding:30px;">Cargando registros...</td></tr>
+                    <tr>
+                        <td colspan="5" style="text-align:center; padding:30px; color:#94a3b8;">
+                            Conectando con la base de datos...
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -142,9 +154,9 @@
 
     <script type="module">
         import { db } from "./firebase.js";
-        import { collection, query, onSnapshot, orderBy, where, getDocs, addDoc, updateDoc, doc, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { collection, query, onSnapshot, orderBy, where, getDocs, addDoc, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // Función global de cerrar sesión
+        // Función global para cerrar sesión
         window.cerrarSesion = () => {
             localStorage.clear();
             window.location.replace("index.html");
@@ -153,28 +165,35 @@
         const tablaCuerpo = document.getElementById("tabla-cuerpo");
         const statusDiv = document.getElementById("msg-status");
         let unsubscribe;
-        let datosParaBorrar = [];
+        let datosExportar = []; // Almacena los datos filtrados u originales para el Excel
 
-        // --- RENDERIZAR TABLA ---
+        // --- FUNCIÓN PARA RENDERIZAR LA TABLA ---
         function renderizarTabla(snapshot) {
             tablaCuerpo.innerHTML = "";
-            datosParaBorrar = [];
+            datosExportar = [];
+
             if (snapshot.empty) {
-                tablaCuerpo.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:30px;">Sin resultados.</td></tr>';
+                tablaCuerpo.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:30px; color:#94a3b8;">No se encontraron registros en este rango.</td></tr>';
                 return;
             }
 
             snapshot.forEach(docSnap => {
                 const d = docSnap.data();
-                const id = docSnap.id;
-                const fecha = d.timestamp ? new Date(d.timestamp).toLocaleString() : "---";
+                const fechaLegible = d.timestamp ? new Date(d.timestamp).toLocaleString() : "Sin fecha";
                 const est = d.estado || "pendiente";
                 
-                datosParaBorrar.push({ id, ...d, fechaExcel: fecha });
+                // Guardar objeto limpio para el Excel
+                datosExportar.push({
+                    "Fecha y Hora": fechaLegible,
+                    "Nombre Invitado": d.nombre || "N/A",
+                    "Casa": d.casa || "N/A",
+                    "Tipo": d.tipo || "Visita",
+                    "Estado": est.toUpperCase()
+                });
 
                 const tr = document.createElement("tr");
                 tr.innerHTML = `
-                    <td>${fecha}</td>
+                    <td>${fechaLegible}</td>
                     <td><b>${d.nombre}</b></td>
                     <td>${d.casa}</td>
                     <td>${d.tipo || 'Visita'}</td>
@@ -184,48 +203,40 @@
             });
         }
 
-        const qIni = query(collection(db, "visitas"), orderBy("timestamp", "desc"));
-        unsubscribe = onSnapshot(qIni, renderizarTabla);
+        // --- CARGA INICIAL (TIEMPO REAL) ---
+        const consultaInicial = query(collection(db, "visitas"), orderBy("timestamp", "desc"));
+        unsubscribe = onSnapshot(consultaInicial, renderizarTabla);
 
-        // --- EXPORTAR Y LIMPIAR ---
-        document.getElementById("btnExportarExcel").onclick = async () => {
-            if (datosParaBorrar.length === 0) return alert("No hay datos para exportar.");
+        // --- FUNCIÓN: EXPORTAR A EXCEL ---
+        document.getElementById("btnExportarExcel").onclick = () => {
+            if (datosExportar.length === 0) {
+                alert("No hay información en la tabla para exportar.");
+                return;
+            }
             
-            const confirmacion = confirm("ATENCIÓN: Se descargará el Excel y se ELIMINARÁN estos registros de Firebase para liberar espacio. ¿Desea continuar?");
-            if (!confirmacion) return;
-
             try {
-                const dataExcel = datosParaBorrar.map(i => ({
-                    Fecha: i.fechaExcel,
-                    Invitado: i.nombre,
-                    Casa: i.casa,
-                    Tipo: i.tipo || 'Visita',
-                    Estado: i.estado
-                }));
-
-                const ws = XLSX.utils.json_to_sheet(dataExcel);
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "Historial");
-                XLSX.writeFile(wb, `Historial_${new Date().getTime()}.xlsx`);
-
-                const batch = writeBatch(db);
-                datosParaBorrar.forEach(item => {
-                    batch.delete(doc(db, "visitas", item.id));
-                });
-                await batch.commit();
-                alert("Base de datos optimizada y archivo descargado.");
-            } catch (e) {
-                alert("Error al procesar la limpieza.");
+                const hoja = XLSX.utils.json_to_sheet(datosExportar);
+                const libro = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(libro, hoja, "Historial de Accesos");
+                
+                const fechaNombre = new Date().toISOString().slice(0, 10);
+                XLSX.writeFile(libro, `Historial_Valle_Esmeralda_${fechaNombre}.xlsx`);
+            } catch (error) {
+                console.error("Error al exportar:", error);
+                alert("Ocurrió un error al generar el archivo Excel.");
             }
         };
 
-        // --- GESTIÓN USUARIOS ---
+        // --- FUNCIÓN: CREAR USUARIO ---
         document.getElementById("btnCrearUser").onclick = async () => {
             const dom = document.getElementById("userDom").value.trim();
             const pass = document.getElementById("userPass").value.trim();
             const rol = document.getElementById("userRol").value;
 
-            if(!dom || !pass) return alert("Llena los campos de usuario.");
+            if(!dom || !pass) {
+                alert("Debes ingresar el domicilio y la contraseña.");
+                return;
+            }
 
             try {
                 await addDoc(collection(db, "usuarios"), {
@@ -234,59 +245,96 @@
                     rol: rol,
                     activo: true
                 });
-                mostrarStatus("Usuario guardado correctamente", "#10b981", "#dcfce7");
+                mostrarStatus("Usuario creado y guardado con éxito.", "#10b981", "#dcfce7");
                 document.getElementById("userDom").value = "";
                 document.getElementById("userPass").value = "";
             } catch (e) {
-                mostrarStatus("Error al guardar usuario", "#ef4444", "#fee2e2");
+                mostrarStatus("Error de permisos: No se pudo guardar.", "#ef4444", "#fee2e2");
             }
         };
 
+        // --- FUNCIÓN: BLOQUEAR USUARIO ---
         document.getElementById("btnBloquearUser").onclick = async () => {
             const dom = document.getElementById("userDom").value.trim();
-            if(!dom) return alert("Escribe el domicilio a bloquear.");
+            if(!dom) {
+                alert("Ingresa el domicilio del usuario que deseas bloquear.");
+                return;
+            }
+
+            if(!confirm(`¿Deseas bloquear el acceso permanentemente para: ${dom}?`)) return;
 
             try {
                 const q = query(collection(db, "usuarios"), where("domicilio", "==", dom));
                 const snap = await getDocs(q);
-                if(snap.empty) return alert("Usuario no encontrado.");
+                
+                if(snap.empty) {
+                    alert("No se encontró el usuario.");
+                    return;
+                }
 
-                const batch = writeBatch(db);
-                snap.forEach(uDoc => {
-                    batch.update(doc(db, "usuarios", uDoc.id), { activo: false, password: "BLOQUEADO_" + Math.random() });
-                });
-                await batch.commit();
-                mostrarStatus("Usuario bloqueado y acceso denegado", "#ffffff", "#1e293b");
-            } catch (e) { alert("Error al bloquear."); }
+                // Desactivar usuario y cambiar contraseña para impedir login
+                for (const uDoc of snap.docs) {
+                    const ref = doc(db, "usuarios", uDoc.id);
+                    await updateDoc(ref, { 
+                        activo: false, 
+                        password: "ACCESO_BLOQUEADO_" + Date.now() 
+                    });
+                }
+                
+                mostrarStatus(`El usuario ${dom} ha sido bloqueado del sistema.`, "#ffffff", "#1e293b");
+                document.getElementById("userDom").value = "";
+            } catch (e) {
+                alert("Error al intentar bloquear.");
+            }
         };
 
-        // --- FILTROS ---
+        // --- FUNCIÓN: FILTRAR POR FECHAS ---
         document.getElementById("btnFiltrar").onclick = async () => {
             const f1 = document.getElementById("fechaInicio").value;
             const f2 = document.getElementById("fechaFin").value;
-            if(!f1 || !f2) return alert("Seleccione el rango de fechas.");
             
-            unsubscribe(); 
-            const inicio = new Date(f1 + "T00:00:00").getTime();
-            const fin = new Date(f2 + "T23:59:59").getTime();
+            if(!f1 || !f2) {
+                alert("Por favor selecciona ambas fechas (Inicio y Fin).");
+                return;
+            }
             
-            const qF = query(collection(db, "visitas"), where("timestamp", ">=", inicio), where("timestamp", "<=", fin), orderBy("timestamp", "desc"));
-            const snap = await getDocs(qF);
-            renderizarTabla(snap);
+            // Detenemos la escucha en tiempo real para aplicar el filtro estático
+            if(unsubscribe) unsubscribe(); 
+            
+            const msInicio = new Date(f1 + "T00:00:00").getTime();
+            const msFin = new Date(f2 + "T23:59:59").getTime();
+            
+            try {
+                const qFiltro = query(
+                    collection(db, "visitas"), 
+                    where("timestamp", ">=", msInicio), 
+                    where("timestamp", "<=", msFin), 
+                    orderBy("timestamp", "desc")
+                );
+                
+                const snapFiltro = await getDocs(qFiltro);
+                renderizarTabla(snapFiltro);
+            } catch (error) {
+                console.error(error);
+                alert("Hubo un problema al realizar la búsqueda.");
+            }
         };
 
+        // --- FUNCIÓN: LIMPIAR FILTROS ---
         document.getElementById("btnLimpiar").onclick = () => {
             document.getElementById("fechaInicio").value = "";
             document.getElementById("fechaFin").value = "";
-            unsubscribe = onSnapshot(qIni, renderizarTabla);
+            // Volvemos a activar la escucha en tiempo real
+            unsubscribe = onSnapshot(consultaInicial, renderizarTabla);
         };
 
+        // Función auxiliar para mostrar alertas visuales
         function mostrarStatus(txt, color, bg) {
             statusDiv.innerText = txt;
             statusDiv.style.color = color;
             statusDiv.style.backgroundColor = bg;
             statusDiv.style.display = "block";
-            setTimeout(() => statusDiv.style.display = "none", 4000);
+            setTimeout(() => { statusDiv.style.display = "none"; }, 5000);
         }
     </script>
 </body>
