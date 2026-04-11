@@ -6,98 +6,249 @@
     <title>Valle Esmeralda Residencial - Acceso</title>
     <link rel="manifest" href="manifest.json">
     <style>
-        body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background: #0f172a; display: flex; align-items: center; justify-content: center; height: 100vh; flex-direction: column; }
-        .logo-container { margin-bottom: 25px; text-align: center; }
-        .logo-container img { max-width: 220px; height: auto; }
-        .login-box { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); width: 100%; max-width: 320px; text-align: center; border-top: 5px solid #00a99d; }
-        h2 { color: #0f172a; margin-bottom: 20px; font-size: 20px; font-weight: bold; }
-        .input-group { text-align: left; margin-bottom: 15px; }
-        label { display: block; font-size: 11px; font-weight: bold; color: #64748b; margin-bottom: 5px; text-transform: uppercase; }
-        input { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-        input:focus { outline: none; border-color: #ec008c; box-shadow: 0 0 0 3px rgba(236, 0, 140, 0.1); }
-        button { width: 100%; padding: 14px; background: #0f172a; color: #38bdf8; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; margin-top: 10px; transition: 0.3s; }
-        button:hover { background: #00a99d; color: white; }
-        button:disabled { opacity: 0.6; }
+        /* ESTILO INTEGRAL SLATE & SKY BLUE CON ACENTOS DEL LOGO */
+        body { 
+            margin: 0; 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            background: #0f172a; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+            flex-direction: column; 
+        }
+        
+        .logo-container { 
+            margin-bottom: 25px; 
+            text-align: center; 
+        }
+        
+        .logo-container img { 
+            max-width: 240px; 
+            height: auto; 
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+        }
+
+        .login-box { 
+            background: white; 
+            padding: 40px; 
+            border-radius: 16px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4); 
+            width: 90%; 
+            max-width: 340px; 
+            text-align: center; 
+            border-top: 6px solid #00a99d; /* Verde Esmeralda del Logo */
+        }
+
+        h2 { 
+            color: #1e293b; 
+            margin-bottom: 25px; 
+            font-size: 20px; 
+            font-weight: 700; 
+            letter-spacing: -0.5px;
+        }
+        
+        .input-group { 
+            text-align: left; 
+            margin-bottom: 18px; 
+        }
+        
+        label { 
+            display: block; 
+            font-size: 11px; 
+            font-weight: 700; 
+            color: #64748b; 
+            margin-bottom: 6px; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px;
+        }
+        
+        input { 
+            width: 100%; 
+            padding: 13px; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 8px; 
+            box-sizing: border-box; 
+            font-size: 16px; 
+            background: #f8fafc;
+            transition: all 0.3s ease;
+        }
+        
+        input:focus { 
+            outline: none; 
+            border-color: #ec008c; /* Rosa del Logo */
+            background: white;
+            box-shadow: 0 0 0 4px rgba(236, 0, 140, 0.1); 
+        }
+        
+        button { 
+            width: 100%; 
+            padding: 15px; 
+            background: #0f172a; 
+            color: #38bdf8; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: 700; 
+            font-size: 16px; 
+            transition: all 0.3s ease; 
+            margin-top: 10px; 
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        button:hover { 
+            background: #00a99d; 
+            color: white; 
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 169, 157, 0.3);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled { 
+            opacity: 0.6; 
+            cursor: not-allowed; 
+            background: #64748b;
+        }
+
+        /* Error message style */
+        .error-msg {
+            color: #ef4444;
+            font-size: 13px;
+            margin-top: 15px;
+            display: none;
+        }
     </style>
 </head>
 <body>
+
     <div class="logo-container">
-        <img src="logo.png" alt="Logo Valle Esmeralda">
+        <img src="logo.png" alt="Valle Esmeralda Residencial">
     </div>
 
     <div class="login-box">
         <h2>Panel de Acceso</h2>
+        
         <div class="input-group">
-            <label>Usuario / Domicilio</label>
-            <input id="userInput" type="text" placeholder="Ej: caseta">
+            <label>Usuario (Domicilio)</label>
+            <input id="userInput" type="text" placeholder="Ej: caseta" autocomplete="username">
         </div>
+        
         <div class="input-group">
             <label>Contraseña</label>
-            <input id="password" type="password" placeholder="••••">
+            <input id="password" type="password" placeholder="••••" autocomplete="current-password">
         </div>
-        <button id="loginBtn">Entrar</button>
+        
+        <button id="loginBtn">Entrar al Sistema</button>
+        <div id="errorBox" class="error-msg"></div>
     </div>
 
     <script type="module">
+        // Importación de configuración y SDK de Firebase
         import { db } from "./firebase.js";
-        import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { 
+            collection, 
+            query, 
+            where, 
+            getDocs 
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        async function login() {
+        const btn = document.getElementById("loginBtn");
+        const errorBox = document.getElementById("errorBox");
+
+        async function ejecutarLogin() {
             const userIn = document.getElementById("userInput").value.trim();
             const passIn = document.getElementById("password").value.trim();
-            const btn = document.getElementById("loginBtn");
 
-            if (!userIn || !passIn) return alert("Ingresa tus credenciales");
+            // Limpiar errores previos
+            errorBox.style.display = "none";
+            errorBox.innerText = "";
+
+            if (!userIn || !passIn) {
+                mostrarError("Por favor, completa todos los campos.");
+                return;
+            }
 
             try {
                 btn.disabled = true;
                 btn.innerText = "Verificando...";
 
-                // BUSQUEDA POR EL CAMPO 'domicilio' COMO SE VE EN TU CAPTURA
-                const q = query(collection(db, "usuarios"), where("domicilio", "==", userIn));
-                const snap = await getDocs(q);
+                // CONSULTA DIRECTA A FIREBASE
+                // Buscamos en la colección 'usuarios' donde el campo 'domicilio' coincida exactamente
+                const usuariosRef = collection(db, "usuarios");
+                const q = query(usuariosRef, where("domicilio", "==", userIn));
+                
+                const querySnapshot = await getDocs(q);
 
-                if (snap.empty) {
-                    alert("Usuario no encontrado en la base de datos.");
+                if (querySnapshot.empty) {
+                    mostrarError("El usuario o domicilio no existe.");
                     resetBtn();
                     return;
                 }
 
                 let userData = null;
-                snap.forEach(doc => { userData = doc.data(); });
+                querySnapshot.forEach((doc) => {
+                    userData = doc.data();
+                });
 
-                // Verificación de contraseña
-                if (userData.password.toString() === passIn.toString()) {
+                // VALIDACIÓN DE CONTRASEÑA
+                // Convertimos a String para asegurar compatibilidad si en Firebase es numérico
+                if (String(userData.password) === String(passIn)) {
+                    
+                    // PERSISTENCIA DE SESIÓN EN NAVEGADOR
                     localStorage.setItem("usuario", userIn);
                     localStorage.setItem("rol", userData.rol);
                     localStorage.setItem("casa", userData.domicilio);
 
-                    // Redirección según el 'rol' de tu captura
+                    // REDIRECCIÓN SEGÚN ROL DE FIREBASE
                     if (userData.rol === "admin") {
                         window.location.href = "admin.html";
                     } else if (userData.rol === "caseta") {
                         window.location.href = "pendientes.html";
                     } else {
+                        // Rol residente o cualquier otro
                         window.location.href = "generar.html";
                     }
+
                 } else {
-                    alert("Contraseña incorrecta.");
+                    mostrarError("Contraseña incorrecta. Intenta de nuevo.");
                     resetBtn();
                 }
+
             } catch (error) {
-                console.error(error);
-                alert("Error de conexión con Firebase.");
+                console.error("Error en el proceso de Login:", error);
+                mostrarError("Error de conexión. Revisa tu internet.");
                 resetBtn();
             }
         }
 
-        function resetBtn() {
-            const btn = document.getElementById("loginBtn");
-            btn.disabled = false;
-            btn.innerText = "Entrar";
+        function mostrarError(mensaje) {
+            errorBox.innerText = mensaje;
+            errorBox.style.display = "block";
         }
 
-        document.getElementById("loginBtn").onclick = login;
+        function resetBtn() {
+            btn.disabled = false;
+            btn.innerText = "Entrar al Sistema";
+        }
+
+        // Eventos
+        btn.onclick = ejecutarLogin;
+
+        // Permitir entrar con la tecla Enter
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') ejecutarLogin();
+        });
+
+        // Registro de Service Worker para PWA (Opcional pero recomendado)
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.register("./sw.js")
+                .then(() => console.log("SW registrado correctamente"))
+                .catch(err => console.log("Fallo registro SW", err));
+        }
     </script>
 </body>
 </html>
