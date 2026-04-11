@@ -7,42 +7,17 @@
     <link rel="manifest" href="manifest.json">
     <style>
         body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background: #0f172a; display: flex; align-items: center; justify-content: center; height: 100vh; flex-direction: column; }
-        
-        .logo-container { margin-bottom: 30px; text-align: center; }
-        .logo-container img { max-width: 250px; height: auto; }
-
-        .login-box { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); width: 100%; max-width: 350px; text-align: center; border-top: 5px solid #00a99d; }
-        h2 { color: #0f172a; margin-bottom: 25px; font-size: 22px; font-weight: bold; }
-        
+        .logo-container { margin-bottom: 25px; text-align: center; }
+        .logo-container img { max-width: 220px; height: auto; }
+        .login-box { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); width: 100%; max-width: 320px; text-align: center; border-top: 5px solid #00a99d; }
+        h2 { color: #0f172a; margin-bottom: 20px; font-size: 20px; font-weight: bold; }
         .input-group { text-align: left; margin-bottom: 15px; }
-        label { display: block; font-size: 12px; font-weight: bold; color: #64748b; margin-bottom: 5px; text-transform: uppercase; }
-        
-        input { 
-            width: 100%; 
-            padding: 12px; 
-            border: 1px solid #e2e8f0; 
-            border-radius: 8px; 
-            box-sizing: border-box; 
-            font-size: 16px; 
-            transition: 0.3s;
-        }
-        input:focus { outline: none; border-color: #ec008c; box-shadow: 0 0 0 3px rgba(236, 0, 140, 0.2); }
-        
-        button { 
-            width: 100%; 
-            padding: 14px; 
-            background: #0f172a; 
-            color: #38bdf8; 
-            border: none; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-weight: bold; 
-            font-size: 16px; 
-            transition: 0.3s; 
-            margin-top: 10px; 
-        }
+        label { display: block; font-size: 11px; font-weight: bold; color: #64748b; margin-bottom: 5px; text-transform: uppercase; }
+        input { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        input:focus { outline: none; border-color: #ec008c; box-shadow: 0 0 0 3px rgba(236, 0, 140, 0.1); }
+        button { width: 100%; padding: 14px; background: #0f172a; color: #38bdf8; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; margin-top: 10px; transition: 0.3s; }
         button:hover { background: #00a99d; color: white; }
-        button:disabled { opacity: 0.6; cursor: not-allowed; }
+        button:disabled { opacity: 0.6; }
     </style>
 </head>
 <body>
@@ -51,18 +26,15 @@
     </div>
 
     <div class="login-box">
-        <h2>Acceso al Residencial</h2>
-        
+        <h2>Panel de Acceso</h2>
         <div class="input-group">
             <label>Usuario / Domicilio</label>
-            <input id="userInput" type="text" placeholder="Ej: Valle de la Perla 99">
+            <input id="userInput" type="text" placeholder="Ej: caseta">
         </div>
-        
         <div class="input-group">
             <label>Contraseña</label>
-            <input id="password" type="password" placeholder="••••••••">
+            <input id="password" type="password" placeholder="••••">
         </div>
-        
         <button id="loginBtn">Entrar</button>
     </div>
 
@@ -75,21 +47,18 @@
             const passIn = document.getElementById("password").value.trim();
             const btn = document.getElementById("loginBtn");
 
-            if (!userIn || !passIn) {
-                alert("Por favor, ingresa tus datos.");
-                return;
-            }
+            if (!userIn || !passIn) return alert("Ingresa tus credenciales");
 
             try {
                 btn.disabled = true;
                 btn.innerText = "Verificando...";
 
-                // CAMBIO CLAVE: Ahora buscamos en el campo 'domicilio' de tu Firebase
+                // BUSQUEDA POR EL CAMPO 'domicilio' COMO SE VE EN TU CAPTURA
                 const q = query(collection(db, "usuarios"), where("domicilio", "==", userIn));
                 const snap = await getDocs(q);
 
                 if (snap.empty) {
-                    alert("El domicilio o usuario no existe.");
+                    alert("Usuario no encontrado en la base de datos.");
                     resetBtn();
                     return;
                 }
@@ -97,29 +66,27 @@
                 let userData = null;
                 snap.forEach(doc => { userData = doc.data(); });
 
-                // Verificamos la contraseña
-                if (userData.password === passIn) {
-                    // Guardamos la sesión
+                // Verificación de contraseña
+                if (userData.password.toString() === passIn.toString()) {
                     localStorage.setItem("usuario", userIn);
-                    localStorage.setItem("rol", userData.rol || "residente");
-                    localStorage.setItem("casa", userData.domicilio); // Usamos el campo domicilio
+                    localStorage.setItem("rol", userData.rol);
+                    localStorage.setItem("casa", userData.domicilio);
 
-                    // Redirección por Rol
+                    // Redirección según el 'rol' de tu captura
                     if (userData.rol === "admin") {
                         window.location.href = "admin.html";
                     } else if (userData.rol === "caseta") {
                         window.location.href = "pendientes.html";
                     } else {
-                        window.location.href = "generar.html"; 
+                        window.location.href = "generar.html";
                     }
                 } else {
                     alert("Contraseña incorrecta.");
                     resetBtn();
                 }
-
             } catch (error) {
-                console.error("Error:", error);
-                alert("Error de conexión con la base de datos.");
+                console.error(error);
+                alert("Error de conexión con Firebase.");
                 resetBtn();
             }
         }
@@ -131,10 +98,6 @@
         }
 
         document.getElementById("loginBtn").onclick = login;
-
-        if ("serviceWorker" in navigator) {
-            navigator.serviceWorker.register("./sw.js");
-        }
     </script>
 </body>
 </html>
