@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Acceso - Valle Esmeralda Residencial</title>
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#00a99d">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="logo.png">
+
     <style>
         :root {
             --primary: #0f172a;
@@ -27,7 +34,7 @@
             padding: 40px;
             border-radius: 20px;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            width: 100%;
+            width: 90%;
             max-width: 400px;
             text-align: center;
         }
@@ -152,7 +159,16 @@
         import { db } from "./firebase.js";
         import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // Limpiar sesiones antiguas al cargar
+        // Registro del Service Worker para PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(() => console.log("PWA: Service Worker registrado"))
+                    .catch(err => console.log("PWA: Error al registrar SW", err));
+            });
+        }
+
+        // Limpiar sesiones antiguas al cargar para forzar login nuevo
         localStorage.clear();
 
         const btnLogin = document.getElementById("btnLogin");
@@ -171,31 +187,31 @@
                 btnLogin.innerText = "Verificando...";
                 btnLogin.disabled = true;
 
-                // Consulta a la colección 'usuarios' filtrando por 'domicilio'
+                // Consulta a la colección 'usuarios' filtrando por el campo 'domicilio'
                 const q = query(collection(db, "usuarios"), where("domicilio", "==", userVal));
                 const querySnapshot = await getDocs(q);
 
                 if (querySnapshot.empty) {
-                    mostrarError("El usuario no existe en el sistema.");
+                    mostrarError("El usuario no existe.");
                     resetBtn();
                     return;
                 }
 
                 const userData = querySnapshot.docs[0].data();
 
-                // Verificar si la cuenta está activa
+                // Validación de cuenta activa (mantenimiento administrativo)
                 if (userData.activo === false) {
-                    mostrarError("Acceso denegado. Esta cuenta está bloqueada.");
+                    mostrarError("Acceso bloqueado por administración.");
                     resetBtn();
                     return;
                 }
 
-                // Validar contraseña (sensible a mayúsculas)
+                // Validación de contraseña
                 if (userData.password === passVal) {
                     
-                    // --- PERSISTENCIA DE SESIÓN ---
+                    // --- GUARDADO DE SESIÓN ---
                     localStorage.setItem("sesionActiva", "true");
-                    localStorage.setItem("usuario", userData.domicilio); // Usado para mostrar "Casa: X"
+                    localStorage.setItem("usuario", userData.domicilio); 
                     localStorage.setItem("rol", userData.rol.toLowerCase());
 
                     const rol = userData.rol.toLowerCase();
@@ -206,20 +222,21 @@
                     } else if (rol === "caseta") {
                         window.location.replace("pendientes.html");
                     } else if (rol === "residente") {
+                        // Siempre enviar al Dashboard primero
                         window.location.replace("dashboard.html");
                     } else {
-                        mostrarError("Rol de usuario no configurado.");
+                        mostrarError("Error: Rol no definido.");
                         resetBtn();
                     }
 
                 } else {
-                    mostrarError("La contraseña es incorrecta.");
+                    mostrarError("Contraseña incorrecta.");
                     resetBtn();
                 }
 
             } catch (error) {
-                console.error("Error en Login:", error);
-                mostrarError("Error de conexión con la base de datos.");
+                console.error("Error Login:", error);
+                mostrarError("Error de conexión. Revisa tu internet.");
                 resetBtn();
             }
         };
@@ -235,7 +252,7 @@
             btnLogin.disabled = false;
         }
 
-        // Detectar tecla Enter
+        // Tecla Enter para loguear rápido
         document.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') btnLogin.click();
         });
