@@ -6,13 +6,12 @@
     <title>Valle Esmeralda Residencial - Acceso</title>
     <link rel="manifest" href="manifest.json">
     <style>
-        /* Estética Estandarizada con Acentos del Logo */
         body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background: #0f172a; display: flex; align-items: center; justify-content: center; height: 100vh; flex-direction: column; }
         
         .logo-container { margin-bottom: 30px; text-align: center; }
         .logo-container img { max-width: 250px; height: auto; }
 
-        .login-box { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); width: 100%; max-width: 350px; text-align: center; border-top: 5px solid #00a99d; /* Verde Esmeralda del logo */ }
+        .login-box { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); width: 100%; max-width: 350px; text-align: center; border-top: 5px solid #00a99d; }
         h2 { color: #0f172a; margin-bottom: 25px; font-size: 22px; font-weight: bold; }
         
         .input-group { text-align: left; margin-bottom: 15px; }
@@ -27,7 +26,7 @@
             font-size: 16px; 
             transition: 0.3s;
         }
-        input:focus { outline: none; border-color: #ec008c; /* Rosa del logo */ box-shadow: 0 0 0 3px rgba(236, 0, 140, 0.2); }
+        input:focus { outline: none; border-color: #ec008c; box-shadow: 0 0 0 3px rgba(236, 0, 140, 0.2); }
         
         button { 
             width: 100%; 
@@ -42,21 +41,21 @@
             transition: 0.3s; 
             margin-top: 10px; 
         }
-        button:hover { background: #00a99d; /* Verde Esmeralda al hover */ color: white; }
+        button:hover { background: #00a99d; color: white; }
         button:disabled { opacity: 0.6; cursor: not-allowed; }
     </style>
 </head>
 <body>
     <div class="logo-container">
-        <img src="logo.png" alt="Logo Valle Esmeralda Residencial">
+        <img src="logo.png" alt="Logo Valle Esmeralda">
     </div>
 
     <div class="login-box">
-        <h2>Ingreso al Sistema</h2>
+        <h2>Acceso al Residencial</h2>
         
         <div class="input-group">
-            <label>Usuario (Calle y Número)</label>
-            <input id="domicilio" type="text" placeholder="Ej: Av. Esmeralda 123">
+            <label>Usuario / Domicilio</label>
+            <input id="userInput" type="text" placeholder="Ej: Valle de la Perla 99">
         </div>
         
         <div class="input-group">
@@ -72,12 +71,12 @@
         import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         async function login() {
-            const userIn = document.getElementById("domicilio").value.trim();
+            const userIn = document.getElementById("userInput").value.trim();
             const passIn = document.getElementById("password").value.trim();
             const btn = document.getElementById("loginBtn");
 
             if (!userIn || !passIn) {
-                alert("Por favor, ingresa usuario y contraseña.");
+                alert("Por favor, ingresa tus datos.");
                 return;
             }
 
@@ -85,11 +84,12 @@
                 btn.disabled = true;
                 btn.innerText = "Verificando...";
 
-                const q = query(collection(db, "usuarios"), where("usuario", "==", userIn));
+                // CAMBIO CLAVE: Ahora buscamos en el campo 'domicilio' de tu Firebase
+                const q = query(collection(db, "usuarios"), where("domicilio", "==", userIn));
                 const snap = await getDocs(q);
 
                 if (snap.empty) {
-                    alert("El usuario no existe.");
+                    alert("El domicilio o usuario no existe.");
                     resetBtn();
                     return;
                 }
@@ -97,11 +97,14 @@
                 let userData = null;
                 snap.forEach(doc => { userData = doc.data(); });
 
+                // Verificamos la contraseña
                 if (userData.password === passIn) {
+                    // Guardamos la sesión
                     localStorage.setItem("usuario", userIn);
                     localStorage.setItem("rol", userData.rol || "residente");
-                    localStorage.setItem("casa", userData.casa || userIn);
+                    localStorage.setItem("casa", userData.domicilio); // Usamos el campo domicilio
 
+                    // Redirección por Rol
                     if (userData.rol === "admin") {
                         window.location.href = "admin.html";
                     } else if (userData.rol === "caseta") {
@@ -115,8 +118,8 @@
                 }
 
             } catch (error) {
-                console.error("Error en login:", error);
-                alert("Error de conexión.");
+                console.error("Error:", error);
+                alert("Error de conexión con la base de datos.");
                 resetBtn();
             }
         }
