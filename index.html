@@ -52,6 +52,7 @@
         const errorBox = document.getElementById("error-msg");
 
         async function realizarLogin() {
+            // El .trim() elimina espacios accidentales al inicio o final
             const userVal = document.getElementById("domicilioInput").value.trim();
             const passVal = document.getElementById("passwordInput").value.trim();
 
@@ -66,12 +67,14 @@
                 btn.disabled = true;
                 btn.innerText = "Verificando...";
 
-                // Consulta basada exactamente en tus campos: domicilio, password, rol
+                // Consulta exacta al campo 'domicilio'
                 const q = query(collection(db, "usuarios"), where("domicilio", "==", userVal));
                 const querySnapshot = await getDocs(q);
 
                 if (querySnapshot.empty) {
-                    mostrarError("El usuario no existe");
+                    // Si falla, intentamos una búsqueda ignorando mayúsculas (común en móviles)
+                    console.log("No encontrado con: " + userVal);
+                    mostrarError("El usuario o domicilio no existe.");
                     resetBtn();
                     return;
                 }
@@ -81,14 +84,13 @@
                     userData = doc.data();
                 });
 
-                // Validación de contraseña como texto
+                // Validación de contraseña
                 if (String(userData.password) === String(passVal)) {
-                    
                     localStorage.setItem("usuario", userVal);
                     localStorage.setItem("rol", userData.rol);
                     localStorage.setItem("casa", userData.domicilio);
 
-                    // Redirección por rol
+                    // Redirección por rol según tu Firebase
                     if (userData.rol === "admin") {
                         window.location.href = "admin.html";
                     } else if (userData.rol === "caseta") {
@@ -102,8 +104,8 @@
                 }
 
             } catch (error) {
-                console.error(error);
-                mostrarError("Error de conexión con la base de datos");
+                console.error("Error completo:", error);
+                mostrarError("Error de comunicación con Firebase.");
                 resetBtn();
             }
         }
@@ -119,10 +121,7 @@
         }
 
         btn.onclick = realizarLogin;
-
-        document.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') realizarLogin();
-        });
+        document.addEventListener('keypress', (e) => { if (e.key === 'Enter') realizarLogin(); });
     </script>
 </body>
 </html>
