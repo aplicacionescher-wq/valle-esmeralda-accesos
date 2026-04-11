@@ -5,6 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Generar Pase - Valle Esmeralda</title>
     
+    <script>
+        (function() {
+            const sesion = localStorage.getItem("sesionActiva");
+            const rol = localStorage.getItem("rol");
+            if (!sesion || (rol !== "residente" && rol !== "admin")) {
+                window.location.replace("index.html");
+            }
+        })();
+    </script>
+
     <link rel="icon" href="data:,">
 
     <script src="qrcode.min.js"></script>
@@ -16,6 +26,7 @@
             --bg: #0f172a;
             --card: #1e293b;
             --text: #f8fafc;
+            --accent: #00a99d;
         }
 
         body {
@@ -42,10 +53,28 @@
         }
 
         h2 {
-            margin: 0 0 20px 0;
+            margin: 0 0 10px 0;
             color: var(--primary);
             font-size: 1.6rem;
         }
+
+        /* Información de quien genera el pase */
+        .info-autorizacion {
+            background: rgba(15, 23, 42, 0.5);
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: left;
+            border: 1px solid #334155;
+        }
+
+        .info-autorizacion p {
+            margin: 4px 0;
+            font-size: 13px;
+            color: #94a3b8;
+        }
+
+        .info-autorizacion b { color: var(--accent); }
 
         .form-group {
             text-align: left;
@@ -72,10 +101,7 @@
             transition: border-color 0.3s;
         }
 
-        input:focus {
-            border-color: var(--primary);
-            outline: none;
-        }
+        input:focus { border-color: var(--primary); outline: none; }
 
         .btn {
             width: 100%;
@@ -89,24 +115,20 @@
             transition: all 0.2s ease;
         }
 
-        .btn-gen {
-            background-color: var(--primary);
-            color: white;
-        }
-
+        .btn-gen { background-color: var(--primary); color: white; }
         .btn-gen:active { transform: scale(0.98); }
+        .btn-gen:disabled { background-color: #334155; cursor: not-allowed; }
 
         .btn-whats {
             background-color: #25d366;
             color: white;
-            display: none; /* Se activa tras generar el QR */
+            display: none; 
             margin-top: 20px;
         }
 
-        /* ÁREA DEL QR - Crucial para html2canvas */
         #qr-container {
-            display: none; /* Oculto inicialmente */
-            background: white; /* Fondo blanco para contraste del escáner */
+            display: none;
+            background: white;
             padding: 20px;
             border-radius: 16px;
             margin: 25px auto;
@@ -114,10 +136,7 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
 
-        #qr-container canvas, #qr-container img {
-            display: block;
-            margin: 0 auto;
-        }
+        #qr-container canvas, #qr-container img { display: block; margin: 0 auto; }
 
         .loading-text {
             display: none;
@@ -141,6 +160,11 @@
     <div class="container">
         <h2>Crear Invitación</h2>
         
+        <div class="info-autorizacion">
+            <p>Casa (Usuario): <b id="display-casa">---</b></p>
+            <p>Autoriza (Rol): <b id="display-rol">---</b></p>
+        </div>
+        
         <div class="form-group">
             <label>Nombre del Invitado</label>
             <input type="text" id="nombre" placeholder="Nombre completo" autocomplete="off">
@@ -149,34 +173,106 @@
         <div class="form-group">
             <label>Tipo de visita</label>
             <select id="tipo">
-                <option value="visita">Visita Familiar</option>
-                <option value="uber">Servicio (Uber/Didi)</option>
-                <option value="proveedor">Proveedor / Mantenimiento</option>
-                <option value="paqueteria">Paquetería</option>
+                <option value="Visita Familiar">Visita Familiar</option>
+                <option value="Uber/Didi">Servicio (Uber/Didi)</option>
+                <option value="Proveedor">Proveedor / Mantenimiento</option>
+                <option value="Paquetería">Paquetería</option>
             </select>
         </div>
 
-        <div class="loading-text" id="loader">Generando código en Firebase...</div>
+        <div class="loading-text" id="loader">Conectando con Firebase...</div>
 
-        <button class="btn btn-gen" id="btnGen" onclick="crearQR()">✨ Generar Código QR</button>
+        <button class="btn btn-gen" id="btnGen">✨ Generar Código QR</button>
 
         <div id="qr-container">
             <div id="qr"></div>
         </div>
 
-        <button class="btn btn-whats" id="btnWhats" onclick="enviarWhats()">📱 Compartir por WhatsApp</button>
+        <button class="btn btn-whats" id="btnWhats">📱 Compartir por WhatsApp</button>
         
         <a href="dashboard.html" class="btn-back">⬅ Volver al panel</a>
     </div>
 
-    <script type="module" src="qr.js"></script>
+    <script type="module">
+        import { db } from "./firebase.js";
+        import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    <script>
-        // Función de seguridad para verificar librerías al cargar
-        window.addEventListener('load', () => {
-            if (typeof QRCode === 'undefined') console.error('Falta qrcode.min.js');
-            if (typeof html2canvas === 'undefined') console.error('Falta html2canvas.min.js');
-        });
+        // Recuperar datos de sesión
+        const casaSesion = localStorage.getItem("usuario") || "Sin Casa";
+        const rolSesion = localStorage.getItem("rol") || "residente";
+
+        // Mostrar en la tarjeta
+        document.getElementById("display-casa").innerText = casaSesion;
+        document.getElementById("display-rol").innerText = rolSesion.toUpperCase();
+
+        const btnGen = document.getElementById("btnGen");
+        const loader = document.getElementById("loader");
+
+        btnGen.onclick = async () => {
+            const nombre = document.getElementById("nombre").value.trim();
+            const tipo = document.getElementById("tipo").value;
+
+            if (!nombre) {
+                alert("Escribe el nombre del invitado.");
+                return;
+            }
+
+            try {
+                btnGen.disabled = true;
+                loader.style.display = "block";
+
+                // 1. Guardar en Firebase con la estructura solicitada
+                const docRef = await addDoc(collection(db, "visitas"), {
+                    nombre: nombre,
+                    tipo: tipo,
+                    casa: casaSesion,      // Aquí se guarda el USUARIO
+                    autoriza: rolSesion,   // Aquí se guarda el ROL
+                    timestamp: Date.now(),
+                    estado: "pendiente"
+                });
+
+                // 2. Generar el QR visualmente usando el ID del documento
+                loader.innerText = "Generando QR...";
+                document.getElementById("qr").innerHTML = "";
+                new QRCode(document.getElementById("qr"), {
+                    text: docRef.id,
+                    width: 200,
+                    height: 200,
+                    colorDark : "#000000",
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.H
+                });
+
+                // 3. Mostrar interfaz de éxito
+                document.getElementById("qr-container").style.display = "block";
+                document.getElementById("btnWhats").style.display = "block";
+                loader.style.display = "none";
+                btnGen.style.display = "none";
+
+            } catch (error) {
+                console.error(error);
+                alert("Error al conectar con la base de datos.");
+                btnGen.disabled = false;
+                loader.style.display = "none";
+            }
+        };
+
+        // Lógica para enviar por WhatsApp
+        document.getElementById("btnWhats").onclick = async () => {
+            const container = document.getElementById("qr-container");
+            const nombre = document.getElementById("nombre").value;
+            
+            // Convertimos el QR a imagen para que el usuario pueda guardarlo o enviarlo mejor
+            const canvas = await html2canvas(container);
+            const link = document.createElement('a');
+            link.download = `Pase_${nombre}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+
+            // Abrir WhatsApp con texto
+            const msg = encodeURIComponent(`Hola ${nombre}, este es tu pase de acceso para Valle Esmeralda. Por favor muéstralo en caseta.`);
+            window.open(`https://wa.me/?text=${msg}`, '_blank');
+        };
     </script>
 </body>
 </html>
