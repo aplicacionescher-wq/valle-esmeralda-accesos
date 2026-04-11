@@ -3,218 +3,117 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Valle Esmeralda - Login</title>
+    <title>Valle Esmeralda - Acceso</title>
     <link rel="manifest" href="manifest.json">
     <style>
-        /* ESTILO INTEGRAL BASADO EN TU EJEMPLO Y LOGO */
-        body { 
-            font-family: 'Segoe UI', sans-serif; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            height: 100vh; 
-            margin: 0; 
-            background: #0f172a; 
-        }
-
-        .logo-container { 
-            margin-bottom: 20px; 
-            text-align: center; 
-        }
-
-        .logo-container img { 
-            max-width: 220px; 
-            height: auto; 
-        }
-
-        .login-box { 
-            background: white; 
-            padding: 35px; 
-            border-radius: 12px; 
-            box-shadow: 0 8px 20px rgba(0,0,0,0.3); 
-            width: 320px; 
-            text-align: center; 
-            border-top: 5px solid #00a99d; 
-        }
-
-        h2 { 
-            color: #1e293b; 
-            margin-top: 0; 
-            margin-bottom: 20px;
-            font-size: 22px;
-        }
-
-        input { 
-            width: 100%; 
-            padding: 12px; 
-            margin: 10px 0; 
-            border: 1px solid #ddd; 
-            border-radius: 8px; 
-            box-sizing: border-box; 
-            font-size: 16px; 
-            background: #fcfcfc;
-        }
-
-        input:focus {
-            outline: none;
-            border-color: #ec008c;
-            box-shadow: 0 0 0 3px rgba(236, 0, 140, 0.1);
-        }
-
-        button { 
-            width: 100%; 
-            padding: 14px; 
-            background: #0f172a; 
-            color: #38bdf8; 
-            border: none; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-weight: bold; 
-            font-size: 16px; 
-            margin-top: 10px;
-            transition: 0.3s;
-        }
-
-        button:hover { 
-            background: #00a99d; 
-            color: white; 
-        }
-
-        button:disabled { 
-            background: #64748b; 
-            color: #cbd5e1;
-            cursor: not-allowed; 
-        }
-
-        #error-msg { 
-            color: #ef4444; 
-            font-size: 14px; 
-            margin-top: 15px; 
-            display: none; 
-            font-weight: 500;
-        }
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #0f172a; display: flex; align-items: center; justify-content: center; height: 100vh; flex-direction: column; }
+        .logo-container { margin-bottom: 25px; text-align: center; }
+        .logo-container img { max-width: 220px; height: auto; }
+        .login-box { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); width: 100%; max-width: 320px; text-align: center; border-top: 5px solid #00a99d; }
+        h2 { color: #0f172a; margin-bottom: 20px; font-size: 20px; font-weight: bold; }
+        .input-group { text-align: left; margin-bottom: 15px; }
+        label { display: block; font-size: 11px; font-weight: bold; color: #64748b; margin-bottom: 5px; text-transform: uppercase; }
+        input { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        button { width: 100%; padding: 14px; background: #0f172a; color: #38bdf8; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; margin-top: 10px; transition: 0.3s; }
+        button:hover { background: #00a99d; color: white; }
+        #error-msg { color: #ef4444; font-size: 13px; margin-top: 15px; display: none; }
     </style>
 </head>
 <body>
-
     <div class="logo-container">
-        <img src="logo.png" alt="Valle Esmeralda Residencial">
+        <img src="logo.png" alt="Valle Esmeralda">
     </div>
 
     <div class="login-box">
         <h2>Panel de Acceso</h2>
-        <input id="domicilio" type="text" placeholder="Usuario (Calle y Número)" autocomplete="username">
-        <input id="password" type="password" placeholder="Contraseña" autocomplete="current-password">
+        <div class="input-group">
+            <label>Usuario (Domicilio)</label>
+            <input id="domicilio" type="text" placeholder="Ej: caseta o Admin">
+        </div>
+        <div class="input-group">
+            <label>Contraseña</label>
+            <input id="password" type="password" placeholder="••••">
+        </div>
         <button id="loginBtn">Entrar</button>
         <div id="error-msg"></div>
     </div>
 
     <script type="module">
-        // Importamos la base de datos desde tu archivo firebase.js
         import { db } from "./firebase.js";
-        import { 
-            collection, 
-            query, 
-            where, 
-            getDocs 
-        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        const loginBtn = document.getElementById("loginBtn");
-        const errorMsg = document.getElementById("error-msg");
+        // Limpiar cualquier sesión previa al cargar el login
+        localStorage.clear();
 
-        async function realizarLogin() {
+        const btn = document.getElementById("loginBtn");
+        const errorDiv = document.getElementById("error-msg");
+
+        async function login() {
             const userIn = document.getElementById("domicilio").value.trim();
             const passIn = document.getElementById("password").value.trim();
 
-            // Limpiar estado de error
-            errorMsg.style.display = "none";
-            errorMsg.innerText = "";
+            errorDiv.style.display = "none";
 
             if (!userIn || !passIn) {
-                mostrarError("Por favor, llena todos los campos.");
+                errorDiv.innerText = "Ingresa todos los datos";
+                errorDiv.style.display = "block";
                 return;
             }
 
             try {
-                loginBtn.disabled = true;
-                loginBtn.innerText = "Verificando...";
+                btn.disabled = true;
+                btn.innerText = "Verificando...";
 
-                // CONSULTA A FIREBASE:
-                // Buscamos en la colección 'usuarios' el documento donde el campo 'domicilio' coincida
-                const usuariosRef = collection(db, "usuarios");
-                const consulta = query(usuariosRef, where("domicilio", "==", userIn));
-                
-                const querySnapshot = await getDocs(consulta);
+                // CONSULTA DIRECTA A FIREBASE
+                // Filtramos donde el campo 'domicilio' sea igual a lo escrito
+                const q = query(collection(db, "usuarios"), where("domicilio", "==", userIn));
+                const snap = await getDocs(q);
 
-                if (querySnapshot.empty) {
-                    mostrarError("El usuario o domicilio no existe.");
-                    regresarBoton();
+                if (snap.empty) {
+                    errorDiv.innerText = "El usuario no existe en Firebase";
+                    errorDiv.style.display = "block";
+                    resetBtn();
                     return;
                 }
 
-                let datosUsuario = null;
-                querySnapshot.forEach((doc) => {
-                    datosUsuario = doc.data();
-                });
+                let userData = null;
+                snap.forEach(doc => { userData = doc.data(); });
 
-                // VALIDACIÓN DE CONTRASEÑA
-                // Convertimos ambos a String por si en Firebase se guardó como número
-                if (String(datosUsuario.password) === String(passIn)) {
+                // Comparamos contraseña (convertida a texto)
+                if (String(userData.password) === String(passIn)) {
                     
-                    // GUARDAR DATOS EN SESIÓN LOCAL
+                    // Guardamos en el navegador
                     localStorage.setItem("usuario", userIn);
-                    localStorage.setItem("rol", datosUsuario.rol);
-                    localStorage.setItem("casa", datosUsuario.domicilio);
+                    localStorage.setItem("rol", userData.rol);
+                    localStorage.setItem("casa", userData.domicilio);
 
-                    // REDIRECCIÓN POR ROL (Basado en tu captura)
-                    const rolUsuario = datosUsuario.rol;
-
-                    if (rolUsuario === "admin") {
+                    // Redirección según tu campo 'rol'
+                    if (userData.rol === "admin") {
                         window.location.href = "admin.html";
-                    } else if (rolUsuario === "caseta") {
+                    } else if (userData.rol === "caseta") {
                         window.location.href = "pendientes.html";
                     } else {
-                        // Residente o cualquier otro rol
                         window.location.href = "generar.html";
                     }
-
                 } else {
-                    mostrarError("Contraseña incorrecta.");
-                    regresarBoton();
+                    errorDiv.innerText = "Contraseña incorrecta";
+                    errorDiv.style.display = "block";
+                    resetBtn();
                 }
-
-            } catch (error) {
-                console.error("Error en el login:", error);
-                mostrarError("Error de conexión. Revisa tu internet.");
-                regresarBoton();
+            } catch (e) {
+                console.error(e);
+                errorDiv.innerText = "Error de conexión";
+                errorDiv.style.display = "block";
+                resetBtn();
             }
         }
 
-        function mostrarError(texto) {
-            errorMsg.innerText = texto;
-            errorMsg.style.display = "block";
+        function resetBtn() {
+            btn.disabled = false;
+            btn.innerText = "Entrar";
         }
 
-        function regresarBoton() {
-            loginBtn.disabled = false;
-            loginBtn.innerText = "Entrar";
-        }
-
-        // EVENTOS
-        loginBtn.addEventListener("click", realizarLogin);
-
-        // Permitir entrar con la tecla Enter
-        document.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') realizarLogin();
-        });
-
-        // REGISTRO DE SERVICE WORKER (PWA)
-        if ("serviceWorker" in navigator) {
-            navigator.serviceWorker.register("./sw.js")
-                .then(() => console.log("Service Worker: Activado"))
-                .catch(err => console.log("Service Worker: Error", err));
-        }
+        btn.onclick = login;
     </script>
 </body>
 </html>
