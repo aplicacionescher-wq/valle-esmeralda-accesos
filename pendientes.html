@@ -6,21 +6,27 @@
     <title>Panel - Visitas Pendientes</title>
     <style>
         body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background: #f1f5f9; display: flex; }
+        
+        /* BARRA LATERAL ESTANDARIZADA */
         .sidebar { width: 220px; background: #0f172a; color: white; height: 100vh; padding: 20px; position: fixed; }
-        .sidebar h2 { font-size: 18px; margin-bottom: 20px; color: #38bdf8; }
+        .sidebar h2 { font-size: 18px; margin-bottom: 25px; color: #38bdf8; border-bottom: 1px solid #1e293b; padding-bottom: 10px; }
         .sidebar a { display: block; color: #cbd5f5; text-decoration: none; padding: 12px; border-radius: 8px; margin-bottom: 10px; transition: 0.3s; }
         .sidebar a:hover { background: #1e293b; color: white; }
         
         .main { margin-left: 240px; width: calc(100% - 240px); padding: 20px; }
-        .header { background: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .contador-box { background: #0f172a; color: #38bdf8; padding: 5px 15px; border-radius: 20px; font-weight: bold; }
         
-        .card-visita { background: white; padding: 20px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-left: 5px solid #38bdf8; }
-        .info b { font-size: 1.1rem; color: #0f172a; display: block; margin-bottom: 4px; }
-        .info small { color: #64748b; font-size: 0.9rem; }
+        /* HEADER ESTANDARIZADO */
+        .header { background: white; padding: 20px; display: flex; justify-content: space-between; align-items: center; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .contador-box { background: #0f172a; color: #38bdf8; padding: 6px 16px; border-radius: 20px; font-weight: bold; }
         
+        /* TARJETAS DE VISITA */
+        .card-visita { background: white; padding: 20px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-left: 6px solid #38bdf8; }
+        .info b { font-size: 1.2rem; color: #0f172a; display: block; margin-bottom: 4px; }
+        .info p { margin: 0; color: #64748b; font-size: 0.9rem; }
+        
+        /* BOTONES */
         .btn-group { display: flex; gap: 10px; }
-        .btn { padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn { padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 14px; }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
         
         .aprobar { background: #22c55e; color: white; }
@@ -29,25 +35,26 @@
         .cancelar { background: #ef4444; color: white; }
         .cancelar:hover { background: #dc2626; }
         
-        .vacio { text-align: center; padding: 60px; color: #64748b; font-size: 1.1rem; }
+        .vacio { text-align: center; padding: 80px; color: #94a3b8; font-size: 1.2rem; }
     </style>
 </head>
 <body>
     <div class="sidebar">
         <h2>🏢 Valle Esmeralda</h2>
-        <a href="escaner.html">🏠 Inicio (Escáner)</a>
+        <a href="escaner.html">🏠 Escáner QR</a>
         <a href="pendientes.html" style="background: #1e293b; color: #38bdf8;">📋 Ver Pendientes</a>
-        <a href="admin.html">📊 Admin General</a>
+        <a href="admin.html" id="linkAdmin" style="display:none;">📊 Admin General</a>
+        <a onclick="cerrarSesion()" style="color:#ef4444; cursor:pointer; margin-top:30px; display:block; padding:12px;">🚪 Cerrar Sesión</a>
     </div>
 
     <div class="main">
         <div class="header">
-            <div style="font-size: 20px; font-weight: bold; color: #0f172a;">📋 Visitas por Llegar</div>
+            <h2 style="margin:0; color:#0f172a;">📋 Visitas por Llegar</h2>
             <div class="contador-box">Pendientes: <span id="contador">0</span></div>
         </div>
 
         <div id="contenedor-pendientes">
-            <div class="vacio">Cargando lista de acceso...</div>
+            <div class="vacio">Sincronizando con Caseta...</div>
         </div>
     </div>
 
@@ -64,10 +71,20 @@
             addDoc 
         } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+        // --- SEGURIDAD Y NAVEGACIÓN ---
+        const rol = localStorage.getItem("rol");
+        if(!localStorage.getItem("usuario")) window.location.href = "index.html";
+        if(rol === "admin") document.getElementById("linkAdmin").style.display = "block";
+
+        window.cerrarSesion = () => {
+            localStorage.clear();
+            window.location.href = "index.html";
+        };
+
         const contenedor = document.getElementById("contenedor-pendientes");
         const contadorLabel = document.getElementById("contador");
 
-        // Consulta en tiempo real: Solo lo "pendiente" ordenado por fecha
+        // --- CONSULTA EN TIEMPO REAL ---
         const q = query(
             collection(db, "visitas"), 
             where("estado", "==", "pendiente"),
@@ -78,7 +95,7 @@
             contenedor.innerHTML = "";
             let totalActivos = 0;
             const ahora = Date.now();
-            const doceHoras = 12 * 60 * 60 * 1000;
+            const limite12h = 12 * 60 * 60 * 1000;
 
             if (snapshot.empty) {
                 contenedor.innerHTML = '<div class="vacio">✅ No hay visitas pendientes por el momento.</div>';
@@ -90,10 +107,10 @@
                 const data = docSnap.data();
                 const id = docSnap.id;
 
-                // LÓGICA DE AUTO-CANCELACIÓN (12 HORAS)
-                if (data.timestamp && (ahora - data.timestamp) > doceHoras) {
+                // VALIDACIÓN AUTOMÁTICA DE 12 HORAS
+                if (data.timestamp && (ahora - data.timestamp) > limite12h) {
                     updateDoc(doc(db, "visitas", id), { estado: "expirado" });
-                    return; // No lo mostramos en la lista
+                    return; // No se añade a la lista visual
                 }
 
                 totalActivos++;
@@ -104,17 +121,17 @@
                 card.innerHTML = `
                     <div class="info">
                         <b>${data.nombre}</b>
-                        <small>🏠 Casa: ${data.casa} | ⏰ Generado: ${horaLocal} | 🚗 ${data.tipo.toUpperCase()}</small>
+                        <p>🏠 Casa: ${data.casa} | ⏰ Generado: ${horaLocal} | 🚗 ${data.tipo.toUpperCase()}</p>
                     </div>
                     <div class="btn-group">
-                        <button class="btn aprobar" id="btn-in-${id}">Ingresó</button>
-                        <button class="btn cancelar" id="btn-can-${id}">Cancelar</button>
+                        <button class="btn aprobar" id="in-${id}">Ingresó</button>
+                        <button class="btn cancelar" id="can-${id}">Cancelar</button>
                     </div>
                 `;
                 contenedor.appendChild(card);
 
-                // FUNCIÓN: MARCAR INGRESO MANUAL
-                document.getElementById(`btn-in-${id}`).onclick = async () => {
+                // EVENTO: MARCAR INGRESO
+                document.getElementById(`in-${id}`).onclick = async () => {
                     if(confirm(`¿Confirmar ingreso manual de ${data.nombre}?`)) {
                         try {
                             const ref = doc(db, "visitas", id);
@@ -123,7 +140,7 @@
                                 fechaEntrada: Date.now()
                             });
 
-                            // Registro en historial_accesos
+                            // Registro en historial
                             await addDoc(collection(db, "historial_accesos"), {
                                 nombre: data.nombre,
                                 casa: data.casa,
@@ -133,15 +150,15 @@
                                 guardia: localStorage.getItem("usuario") || "Caseta"
                             });
                         } catch (e) {
-                            console.error("Error al ingresar:", e);
-                            alert("Error de permisos en Firebase.");
+                            console.error(e);
+                            alert("Error al actualizar estado.");
                         }
                     }
                 };
 
-                // FUNCIÓN: CANCELAR PASE
-                document.getElementById(`btn-can-${id}`).onclick = async () => {
-                    if(confirm(`¿Seguro que deseas cancelar el pase de ${data.nombre}?`)) {
+                // EVENTO: CANCELAR
+                document.getElementById(`can-${id}`).onclick = async () => {
+                    if(confirm(`¿Deseas cancelar el pase de ${data.nombre}?`)) {
                         try {
                             const ref = doc(db, "visitas", id);
                             await updateDoc(ref, { estado: "cancelado" });
@@ -155,16 +172,16 @@
                                 guardia: localStorage.getItem("usuario") || "Caseta"
                             });
                         } catch (e) {
-                            console.error("Error al cancelar:", e);
+                            console.error(e);
                         }
                     }
                 };
             });
             contadorLabel.innerText = totalActivos;
         }, (error) => {
-            console.error("Error en Snapshot:", error);
+            console.error(error);
             if(error.message.includes("index")) {
-                contenedor.innerHTML = '<div class="vacio">⚠️ Se requiere crear un índice en la consola de Firebase.</div>';
+                contenedor.innerHTML = '<div class="vacio">⚠️ Falta crear un índice en Firebase para ordenar por fecha.</div>';
             }
         });
     </script>
