@@ -5,9 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Acceso - Valle Esmeralda Residencial</title>
     <style>
+        :root {
+            --primary: #0f172a;
+            --accent: #00a99d;
+            --error: #ef4444;
+        }
+
         body {
             margin: 0;
-            font-family: 'Segoe UI', Arial, sans-serif;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
             height: 100vh;
             display: flex;
@@ -19,26 +25,21 @@
         .login-card {
             background: white;
             padding: 40px;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            border-radius: 20px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
             width: 100%;
             max-width: 400px;
             text-align: center;
         }
 
-        .logo {
-            margin-bottom: 25px;
-        }
-
-        .logo img {
-            max-width: 180px;
-            height: auto;
-        }
+        .logo { margin-bottom: 25px; }
+        .logo img { max-width: 180px; height: auto; }
 
         h2 {
             margin-bottom: 25px;
-            color: #1e293b;
+            color: var(--primary);
             font-size: 24px;
+            font-weight: 700;
         }
 
         .input-group {
@@ -48,64 +49,74 @@
 
         .input-group label {
             display: block;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: bold;
             color: #64748b;
             text-transform: uppercase;
-            margin-bottom: 5px;
-            margin-left: 5px;
+            margin-bottom: 6px;
+            margin-left: 4px;
         }
 
         .input-group input {
             width: 100%;
-            padding: 12px 15px;
+            padding: 14px 16px;
             border: 1px solid #e2e8f0;
-            border-radius: 8px;
+            border-radius: 10px;
             font-size: 16px;
             box-sizing: border-box;
-            transition: 0.3s;
+            transition: all 0.3s ease;
+            background: #f8fafc;
         }
 
         .input-group input:focus {
             outline: none;
-            border-color: #00a99d;
-            box-shadow: 0 0 0 3px rgba(0, 169, 157, 0.1);
+            border-color: var(--accent);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(0, 169, 157, 0.1);
         }
 
         .btn-ingresar {
             width: 100%;
-            padding: 14px;
-            background: #0f172a;
+            padding: 16px;
+            background: var(--primary);
             color: #38bdf8;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             font-size: 16px;
             font-weight: bold;
             text-transform: uppercase;
             cursor: pointer;
-            transition: 0.3s;
+            transition: all 0.3s ease;
             margin-top: 10px;
         }
 
         .btn-ingresar:hover {
-            background: #00a99d;
+            background: var(--accent);
             color: white;
+            transform: translateY(-1px);
+        }
+
+        .btn-ingresar:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
         }
 
         #error-msg {
-            color: #ef4444;
+            color: var(--error);
             font-size: 14px;
-            margin-top: 15px;
+            margin-top: 20px;
             display: none;
             background: #fee2e2;
-            padding: 10px;
-            border-radius: 6px;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #fecaca;
         }
 
-        .footer-text {
-            margin-top: 25px;
-            font-size: 12px;
+        .footer {
+            margin-top: 30px;
+            font-size: 11px;
             color: #94a3b8;
+            letter-spacing: 0.5px;
         }
     </style>
 </head>
@@ -113,28 +124,27 @@
 
     <div class="login-card">
         <div class="logo">
-            <img src="logo.png" alt="Valle Esmeralda">
+            <img src="logo.png" alt="Valle Esmeralda Logo">
         </div>
         
-        <h2>Control de Acceso</h2>
+        <h2>Iniciar Sesión</h2>
         
         <div class="input-group">
             <label>Usuario / Domicilio</label>
-            <input type="text" id="userEmail" placeholder="Ej: Valle de Onix 1">
+            <input type="text" id="userEmail" placeholder="Ej: Valle de Onix 1" autocomplete="username">
         </div>
         
         <div class="input-group">
             <label>Contraseña</label>
-            <input type="password" id="userPass" placeholder="••••••••">
+            <input type="password" id="userPass" placeholder="••••••••" autocomplete="current-password">
         </div>
         
         <button class="btn-ingresar" id="btnLogin">Entrar al Sistema</button>
         
         <div id="error-msg"></div>
         
-        <div class="footer-text">
-            © 2026 Valle Esmeralda Residencial <br>
-            Panel de Administración y Vigilancia
+        <div class="footer">
+            SISTEMA DE CONTROL RESIDENCIAL &copy; 2026
         </div>
     </div>
 
@@ -142,7 +152,7 @@
         import { db } from "./firebase.js";
         import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // Limpiar cualquier sesión previa al cargar el login
+        // Limpiar sesiones antiguas al cargar
         localStorage.clear();
 
         const btnLogin = document.getElementById("btnLogin");
@@ -153,7 +163,7 @@
             const passVal = document.getElementById("userPass").value.trim();
 
             if (!userVal || !passVal) {
-                mostrarError("Por favor, completa todos los campos.");
+                mostrarError("Por favor, ingresa tus credenciales.");
                 return;
             }
 
@@ -161,53 +171,55 @@
                 btnLogin.innerText = "Verificando...";
                 btnLogin.disabled = true;
 
-                // Buscamos el usuario por su domicilio
+                // Consulta a la colección 'usuarios' filtrando por 'domicilio'
                 const q = query(collection(db, "usuarios"), where("domicilio", "==", userVal));
                 const querySnapshot = await getDocs(q);
 
                 if (querySnapshot.empty) {
-                    mostrarError("El usuario no existe.");
+                    mostrarError("El usuario no existe en el sistema.");
                     resetBtn();
                     return;
                 }
 
-                const docEncontrado = querySnapshot.docs[0];
-                const userData = docEncontrado.data();
+                const userData = querySnapshot.docs[0].data();
 
-                // Verificación de cuenta activa
+                // Verificar si la cuenta está activa
                 if (userData.activo === false) {
-                    mostrarError("Esta cuenta ha sido bloqueada. Contacte al administrador.");
+                    mostrarError("Acceso denegado. Esta cuenta está bloqueada.");
                     resetBtn();
                     return;
                 }
 
-                // Verificación de contraseña (Distinguir mayúsculas/minúsculas)
+                // Validar contraseña (sensible a mayúsculas)
                 if (userData.password === passVal) {
                     
-                    // --- GUARDAR CREDENCIALES DE SESIÓN ---
+                    // --- PERSISTENCIA DE SESIÓN ---
                     localStorage.setItem("sesionActiva", "true");
-                    localStorage.setItem("usuario", userData.domicilio);
-                    localStorage.setItem("rol", userData.rol.toLowerCase()); // Forzamos minúsculas para seguridad
+                    localStorage.setItem("usuario", userData.domicilio); // Usado para mostrar "Casa: X"
+                    localStorage.setItem("rol", userData.rol.toLowerCase());
 
-                    // Redirección según Rol
                     const rol = userData.rol.toLowerCase();
                     
+                    // --- REDIRECCIÓN POR ROL ---
                     if (rol === "admin") {
                         window.location.replace("admin.html");
                     } else if (rol === "caseta") {
                         window.location.replace("pendientes.html");
+                    } else if (rol === "residente") {
+                        window.location.replace("dashboard.html");
                     } else {
-                        window.location.replace("generar.html");
+                        mostrarError("Rol de usuario no configurado.");
+                        resetBtn();
                     }
 
                 } else {
-                    mostrarError("Contraseña incorrecta.");
+                    mostrarError("La contraseña es incorrecta.");
                     resetBtn();
                 }
 
             } catch (error) {
-                console.error("Error Login:", error);
-                mostrarError("Error de conexión con el servidor.");
+                console.error("Error en Login:", error);
+                mostrarError("Error de conexión con la base de datos.");
                 resetBtn();
             }
         };
@@ -215,9 +227,7 @@
         function mostrarError(txt) {
             errorMsg.innerText = txt;
             errorMsg.style.display = "block";
-            setTimeout(() => {
-                errorMsg.style.display = "none";
-            }, 5000);
+            setTimeout(() => { errorMsg.style.display = "none"; }, 5000);
         }
 
         function resetBtn() {
@@ -225,11 +235,9 @@
             btnLogin.disabled = false;
         }
 
-        // Permitir entrar con la tecla "Enter"
-        document.addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                btnLogin.click();
-            }
+        // Detectar tecla Enter
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') btnLogin.click();
         });
     </script>
 </body>
