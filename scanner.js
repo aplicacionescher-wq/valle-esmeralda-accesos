@@ -1,11 +1,18 @@
 import { db } from "./firebase.js";
-import { doc, getDoc, updateDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { 
+    doc, 
+    getDoc, 
+    updateDoc, 
+    collection, 
+    addDoc 
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+// Función principal que se activa al detectar un QR
 window.onScanSuccess = async function(decodedText) {
     const resDiv = document.getElementById("resultado");
     let idDoc = decodedText;
 
-    // Limpiar el ID si viene dentro de una URL
+    // 1. Limpiar el ID si viene dentro de una URL (ej. de verqr.html?id=...)
     if (decodedText.includes("id=")) {
         const urlParams = new URLSearchParams(decodedText.split('?')[1]);
         idDoc = urlParams.get("id");
@@ -15,58 +22,65 @@ window.onScanSuccess = async function(decodedText) {
         const docRef = doc(db, "visitas", idDoc);
         const snap = await getDoc(docRef);
 
+        // 2. Validar si el documento existe en Firebase
         if (!snap.exists()) {
-            registrarEnHistorial("Desconocido", "N/A", "DENEGADO", "Código inexistente");
-            mostrarResultado("❌ CÓDIGO INVÁLIDO", "Este pase no existe.", "#ef4444");
+            await registrarEnHistorial("Desconocido", "N/A", "DENEGADO", "Código inexistente");
+            mostrarResultado("❌ CÓDIGO INVÁLIDO", "Este pase no existe o es de otra privada.", "#ef4444");
             return;
         }
 
         const data = snap.data();
         const ahora = Date.now();
-        const limite = 24 * 60 * 60 * 1000; // 24 horas
+        const limite = 24 * 60 * 60 * 1000; // 24 horas de validez
 
-        // Caso 1: YA USADO
+        // CASO A: El pase ya fue usado
         if (data.estado === "usado") {
-            registrarEnHistorial(data.nombre, data.casa, "DENEGADO", "QR ya utilizado");
+            await registrarEnHistorial(data.nombre, data.casa, "DENEGADO", "QR ya utilizado");
             mostrarResultado("⚠️ ACCESO DENEGADO", "Este pase ya fue utilizado anteriormente.", "#f59e0b");
         } 
-        // Caso 2: EXPIRADO
-        else if ((ahora - data.timestamp) > limite) {
+        
+        // CASO B: El pase expiró (más de 24 horas)
+        else if (data.timestamp && (ahora - data.timestamp) > limite) {
             await updateDoc(docRef, { estado: "expirado" });
-            registrarEnHistorial(data.nombre, data.casa, "DENEGADO", "QR expirado (24h)");
-            mostrarResultado("⏰ PASE EXPIRADO", "El tiempo de validez ha terminado.", "#ef4444");
+            await registrarEnHistorial(data.nombre, data.casa, "DENEGADO", "QR expirado (24h)");
+            mostrarResultado("⏰ PASE EXPIRADO", "El tiempo de validez de 24 horas ha terminado.", "#ef4444");
         } 
-        // Caso 3: ACCESO CORRECTO
+        
+        // CASO C: ACCESO CORRECTO
         else {
-            // Actualizamos el estado del pase original
+            // Marcamos como usado en la base de datos
             await updateDoc(docRef, { 
                 estado: "usado", 
                 fechaEntrada: ahora 
             });
 
-            // Registramos el éxito en el historial
-            registrarEnHistorial(data.nombre, data.casa, "PERMITIDO", `Acceso tipo: ${data.tipo}`);
+            // Guardamos en el historial de auditoría
+            await registrarEnHistorial(data.nombre, data.casa, "PERMITIDO", `Acceso tipo: ${data.tipo}`);
             
+            // Mostramos el recuadro verde de éxito con los datos
             resDiv.style.backgroundColor = "#064e3b";
             resDiv.style.border = "2px solid #22c55e";
             resDiv.style.display = "block";
             resDiv.innerHTML = `
                 <h2 style="color:#22c55e; margin:0;">✅ ACCESO CORRECTO</h2>
-                <div style="text-align:left; margin-top:10px;">
-                    <p><b>Invitado:</b> ${data.nombre}</p>
-                    <p><b>Casa:</b> ${data.casa}</p>
-                    <p><b>Tipo:</b> ${data.tipo.toUpperCase()}</p>
+                <div style="text-align:left; margin-top:15px; border-top:1px solid #22c55e; padding-top:10px;">
+                    <p style="margin:5px 0;"><b>Invitado:</b> ${data.nombre}</p>
+                    <p style="margin:5px 0;"><b>Casa:</b> ${data.casa}</p>
+                    <p style="margin:5px 0;"><b>Tipo:</b> ${data.tipo.toUpperCase()}</p>
+                    <p style="margin:5px 0;"><b>Autoriza:</b> ${data.autoriza || 'Residente'}</p>
                 </div>
             `;
+
+            // Vibración triple de éxito
             if(navigator.vibrate) navigator.vibrate([100, 50, 100]);
         }
     } catch (e) {
-        console.error(e);
-        mostrarResultado("⚠️ ERROR", "No hay conexión con el servidor.", "#334155");
+        console.error("Error en escaneo:", e);
+        mostrarResultado("⚠️ ERROR", "Error de red o base de datos. Intente de nuevo.", "#334155");
     }
 };
 
-// FUNCIÓN PARA ESCRIBIR EN EL HISTORIAL GENERAL
+// Función para registrar todos los intentos en la colección 'historial_accesos'
 async function registrarEnHistorial(nombre, casa, resultado, motivo) {
     try {
         await addDoc(collection(db, "historial_accesos"), {
@@ -75,18 +89,24 @@ async function registrarEnHistorial(nombre, casa, resultado, motivo) {
             resultado: resultado, // PERMITIDO o DENEGADO
             motivo: motivo,
             timestamp: Date.now(),
-            guardia: localStorage.getItem("usuario") || "Caseta"
+            guardia: localStorage.getItem("usuario") || "Caseta Principal"
         });
     } catch (error) {
         console.error("No se pudo guardar el historial:", error);
     }
 }
 
+// Función auxiliar para mostrar alertas visuales en el cuadro de resultado
 function mostrarResultado(titulo, msg, color) {
     const resDiv = document.getElementById("resultado");
     resDiv.style.display = "block";
     resDiv.style.backgroundColor = "#1e293b";
     resDiv.style.border = `2px solid ${color}`;
-    resDiv.innerHTML = `<h2 style="color:${color}; margin:0;">${titulo}</h2><p>${msg}</p>`;
+    resDiv.innerHTML = `
+        <h2 style="color:${color}; margin:0;">${titulo}</h2>
+        <p style="margin-top:10px; color:#cbd5e1;">${msg}</p>
+    `;
+    
+    // Vibración larga de error/advertencia
     if(navigator.vibrate) navigator.vibrate(500);
 }
